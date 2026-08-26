@@ -5,7 +5,13 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, feat/mobile-foundation]
+    paths:
+      - package.json
+      - app.json
+      - src/**
+      - web/**
+      - scripts/**
 
 concurrency:
   group: android-apk-${{ github.ref }}
