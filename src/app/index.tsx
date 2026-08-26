@@ -76,11 +76,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   state: {
-    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     backgroundColor: '#000000',
+    bottom: 0,
     justifyContent: 'center',
+    left: 0,
     padding: 28,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   stateCopy: {
     color: '#6e6e6e',
