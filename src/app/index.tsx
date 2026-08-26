@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView, type WebViewNavigation } from 'react-native-webview';
+import { WebView } from 'react-native-webview';
 
 const ANDROID_ENTRY = 'file:///android_asset/blackbook/index.html';
-const WEB_ENTRY = '/blackbook/index.html';
+const WEB_ENTRY = 'https://blackbook.modnight.com';
 
 export default function BlackbookMobile() {
   const webView = useRef<WebView>(null);
@@ -25,7 +25,7 @@ export default function BlackbookMobile() {
   const source = Platform.OS === 'android' ? { uri: ANDROID_ENTRY } : { uri: WEB_ENTRY };
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
       <WebView
         ref={webView}
         allowFileAccess
@@ -37,7 +37,7 @@ export default function BlackbookMobile() {
         javaScriptEnabled
         mediaPlaybackRequiresUserAction
         mixedContentMode="compatibility"
-        onNavigationStateChange={(state: WebViewNavigation) => setCanGoBack(state.canGoBack)}
+        onNavigationStateChange={(state) => setCanGoBack(state.canGoBack)}
         originWhitelist={['file://*', 'https://*', 'http://*']}
         renderError={() => (
           <View style={styles.state}>
