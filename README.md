@@ -31,7 +31,7 @@ npm start
 
 ## Build an APK
 
-The `Android APK` GitHub Actions workflow validates the app, generates the native Android project, builds an installable debug APK, and uploads it as a workflow artifact.
+The `Android APK` GitHub Actions workflow validates the app, generates the native Android project, builds a standalone ARM64 release APK, and uploads it as a workflow artifact. The release build embeds the JavaScript bundle, enables R8 and resource shrinking, and excludes emulator and legacy ARM native libraries.
 
 You can also build locally with:
 
@@ -40,10 +40,10 @@ npm install
 npm run build:apk
 ```
 
-The APK will be written to `android/app/build/outputs/apk/debug/app-debug.apk`.
+The APK will be written to `android/app/build/outputs/apk/release/app-release.apk`.
 
 ## Public-repository security
 
-This repository is public by design so APK compilation can use public GitHub Actions capacity. Never commit signing keystores, passwords, private API credentials, service-role keys, or production secrets. Release signing will use encrypted Actions secrets when it is introduced.
+This repository is public by design so APK compilation can use public GitHub Actions capacity. Never commit signing keystores, passwords, private API credentials, service-role keys, or production secrets. Test releases use the generated development signing identity; store releases will use encrypted Actions secrets when signing is introduced.
 
 No license is granted by the presence of this public source repository.

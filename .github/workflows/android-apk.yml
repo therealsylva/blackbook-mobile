@@ -16,9 +16,9 @@ permissions:
 
 jobs:
   build:
-    name: Validate and build debug APK
+    name: Validate and build standalone release APK
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     env:
       CI: "true"
 
@@ -52,14 +52,27 @@ jobs:
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
 
-      - name: Build installable debug APK
+      - name: Build stripped ARM64 release APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: >-
+          ./gradlew assembleRelease --no-daemon
+          -PreactNativeArchitectures=arm64-v8a
+          -Pandroid.enableMinifyInReleaseBuilds=true
+          -Pandroid.enableShrinkResourcesInReleaseBuilds=true
+
+      - name: Verify standalone release package
+        run: |
+          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/index.android.bundle'
+          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'lib/arm64-v8a/'
+          if unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -Eq 'lib/(x86|x86_64|armeabi-v7a)/'; then
+            echo 'Unexpected non-ARM64 native libraries found.'
+            exit 1
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: blackbook-mobile-debug-${{ github.run_number }}
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: blackbook-mobile-arm64-release-${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
