@@ -3,6 +3,7 @@ import { ActivityIndicator, BackHandler, Platform, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
+// The native shell packages index-frontend; its mobile layer changes arrangement only.
 const ANDROID_ENTRY = 'file:///android_asset/blackbook/index.html';
 const WEB_ENTRY = 'https://blackbook.modnight.com';
 
