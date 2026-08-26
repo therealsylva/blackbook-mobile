@@ -8,13 +8,18 @@ const requiredFiles = [
   'app.json',
   'package.json',
   'src/app/_layout.tsx',
-  'src/app/(tabs)/_layout.tsx',
-  'src/app/(tabs)/index.tsx',
-  'src/app/(tabs)/indices.tsx',
-  'src/app/(tabs)/trade.tsx',
-  'src/app/(tabs)/portfolio.tsx',
-  'src/app/(tabs)/menu.tsx',
-  'src/app/market/[symbol].tsx',
+  'src/app/index.tsx',
+  'web/blackbook/index.html',
+  'web/blackbook/index-overview.html',
+  'web/blackbook/terminal.html',
+  'web/blackbook/src/styles/home.css',
+  'web/blackbook/src/styles/overview.css',
+  'web/blackbook/src/styles/terminal.css',
+  'web/blackbook/src/styles/mobile-app.css',
+  'web/blackbook/src/pages/home.js',
+  'web/blackbook/src/pages/overview.js',
+  'web/blackbook/src/pages/terminal.js',
+  'web/blackbook/src/pages/mobile-app.js',
 ];
 
 const failures = [];
@@ -38,8 +43,18 @@ if (appJson.expo?.android?.package !== 'com.modnight.blackbook') {
   failures.push('Unexpected Android application ID.');
 }
 
-if (!appJson.expo?.newArchEnabled) {
-  failures.push('React Native New Architecture must stay enabled.');
+if (!appJson.expo?.newArchEnabled) failures.push('React Native New Architecture must stay enabled.');
+
+if (packageJson.dependencies?.['react-native-webview'] !== '13.16.1') {
+  failures.push('The supported react-native-webview version must stay pinned.');
+}
+
+const webEntrypoints = ['index.html', 'index-overview.html', 'terminal.html'];
+for (const entrypoint of webEntrypoints) {
+  const html = await readFile(join(root, 'web/blackbook', entrypoint), 'utf8');
+  if (!html.includes('mobile-app.css') || !html.includes('mobile-app.js')) {
+    failures.push(`${entrypoint} must load the mobile arrangement layer.`);
+  }
 }
 
 async function sourceFiles(directory) {
@@ -77,5 +92,5 @@ if (failures.length > 0) {
   console.error(failures.join('\n'));
   process.exitCode = 1;
 } else {
-  console.log('Blackbook mobile foundation validation passed.');
+  console.log('Blackbook index-frontend mobile port validation passed.');
 }

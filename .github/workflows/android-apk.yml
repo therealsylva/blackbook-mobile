@@ -52,6 +52,9 @@ jobs:
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
 
+      - name: Bundle canonical index frontend
+        run: npm run bundle:web
+
       - name: Build stripped ARM64 release APK
         working-directory: android
         run: >-
@@ -63,6 +66,9 @@ jobs:
       - name: Verify standalone release package
         run: |
           unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/index.android.bundle'
+          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/blackbook/index.html'
+          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/blackbook/public/assets/brand/blackbook-logo.svg'
+          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/blackbook/public/assets/hero/market-entities-hero.webp'
           unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'lib/arm64-v8a/'
           if unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -Eq 'lib/(x86|x86_64|armeabi-v7a)/'; then
             echo 'Unexpected non-ARM64 native libraries found.'

@@ -15,10 +15,10 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run validate && npm run typecheck",
     "prebuild:android": "expo prebuild --platform android --clean",
-    "build:apk": "npm run prebuild:android && cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true"
+    "bundle:web": "node ./scripts/bundle-web.mjs",
+    "build:apk": "npm run prebuild:android && npm run bundle:web && cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.9",
     "expo-constants": "~57.0.8",
     "expo-font": "~57.0.1",
@@ -36,6 +36,7 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
+    "react-native-webview": "13.16.1",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.1"
   },

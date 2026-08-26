@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" class="auth-pending">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Index pages for people, clubs, products, and culture.">
+  <title>Index overview — Blackbook</title>
+  <link rel="stylesheet" href="./src/styles/home.css?v=20260817-2">
+  <link rel="stylesheet" href="./src/styles/overview.css?v=20260817-13">
+  <link rel="stylesheet" href="./src/styles/auth.css?v=20260812-1">
+  <link rel="preload" href="./public/fonts/mona-sans/MonaSansVF.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./src/styles/typography.css?v=20260817-1">
+  <link rel="stylesheet" href="./src/styles/mobile-app.css?v=20260826-1">\n</head>
+<body class="overview-page">
+  <div class="part1-module overview-header-shell">
+    <header>
+      <div class="header-left">
+        <a href="./index.html" class="logo blackbook-brand" aria-label="Blackbook home">
+          <img src="./public/assets/brand/blackbook-logo.svg" alt="Blackbook" class="blackbook-brand-logo">
+        </a>
+        <div class="search-bar">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" class="search-input" placeholder="Search indices and symbols (Ctrl+K)" readonly
+            role="button" aria-haspopup="dialog" aria-controls="symbolSearchDialog" aria-expanded="false">
+        </div>
+      </div>
+
+      <nav class="nav-menu" aria-label="Primary navigation">
+        <a href="./terminal.html" class="nav-link">Terminal</a>
+        <a href="./index.html#market-overview" class="nav-link">Markets</a>
+        <a href="#methodology" class="nav-link">Methodology</a>
+        <a href="./index.html#stocks" class="nav-link">Paper Trading</a>
+      </nav>
+
+      <div class="header-right auth-actions">
+        <button class="auth-trigger auth-trigger-signin" id="authSignIn" type="button" data-auth-entry data-auth-open-mode="signin" aria-label="Sign in to your Blackbook account" aria-haspopup="dialog" aria-controls="authDialog" aria-expanded="false">Sign in</button>
+        <button class="auth-trigger auth-trigger-signup" id="authSignUp" type="button" data-auth-entry data-auth-open-mode="create" aria-label="Create your Blackbook account" aria-haspopup="dialog" aria-controls="authDialog" aria-expanded="false">Sign up</button>
+        <button class="auth-trigger auth-trigger-account" id="authAccountButton" type="button" data-auth-account data-auth-open-mode="account" aria-label="Open your Blackbook account" aria-haspopup="dialog" aria-controls="authDialog" aria-expanded="false" hidden>
+          <span class="auth-header-avatar" data-auth-header-avatar aria-hidden="true"></span>
+          <span data-auth-header-name>Account</span>
+        </button>
+      </div>
+    </header>
+  </div>
+
+  <div class="symbol-search-overlay" id="symbolSearchOverlay" hidden>
+    <button class="symbol-search-backdrop" type="button" data-search-close aria-label="Close search"></button>
+    <section class="symbol-search-dialog" id="symbolSearchDialog" role="dialog" aria-modal="true" aria-labelledby="symbolSearchTitle">
+      <h2 class="visually-hidden" id="symbolSearchTitle">Search indices and symbols</h2>
+      <div class="symbol-search-field">
+        <svg class="overview-search-dialog-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+        <input id="symbolSearchInput" type="search" autocomplete="off" placeholder="Name, symbol, or pair" aria-label="Search indices and symbols">
+        <button class="symbol-search-clear" id="symbolSearchClear" type="button" hidden>Clear</button>
+        <kbd>Ctrl K</kbd>
+        <button class="symbol-search-close" type="button" data-search-close aria-label="Close search">×</button>
+      </div>
+      <div class="symbol-search-tabs" role="tablist" aria-label="Search type">
+        <button class="active" type="button" role="tab" aria-selected="true" data-search-tab="Indices">Indices</button>
+        <button type="button" role="tab" aria-selected="false" data-search-tab="Entities">Entities</button>
+        <button type="button" role="tab" aria-selected="false" data-search-tab="News">News</button>
+        <button type="button" role="tab" aria-selected="false" data-search-tab="Signals">Signals</button>
+      </div>
+      <div class="symbol-search-filters" id="symbolSearchFilters" aria-label="Index type">
+        <button class="active" type="button" data-search-filter="All">All</button><button type="button" data-search-filter="Artists">Artists</button><button type="button" data-search-filter="Athletes">Athletes</button><button type="button" data-search-filter="Clubs">Clubs</button><button type="button" data-search-filter="Relative Value">Relative Value</button><button type="button" data-search-filter="Products">Products</button><button type="button" data-search-filter="Public Figures">Public Figures</button><button type="button" data-search-filter="Leagues">Leagues</button>
+      </div>
+      <div class="symbol-search-status" aria-live="polite"><span id="symbolSearchCount">21 indices</span><span>Press Enter to select</span></div>
+      <div class="symbol-search-results" id="symbolSearchResults"></div>
+      <div class="symbol-search-empty" id="symbolSearchEmpty" hidden>
+        <svg class="overview-search-empty-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><strong id="symbolSearchEmptyTitle">No results found</strong><span id="symbolSearchEmptyCopy">Try another name, team, product, or symbol.</span>
+      </div>
+    </section>
+  </div>
+
+  <main class="overview-shell" id="overviewRoot">
+    <div class="overview-loading"><span></span>Loading index overview…</div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.min.js" integrity="sha384-fPWur1rx/DE6YtXP/x0MD6dd90RgnVsz5yX/DIg7CcVAnTBZsENWuIcpvVTM39ti" crossorigin="anonymous" defer></script>
+  <script src="./src/auth/auth-config.js?v=20260812-1" defer></script>
+  <script src="./src/auth/auth-client.js?v=20260811-1" defer></script>
+  <script src="./src/auth/auth-captcha.js?v=20260811-1" defer></script>
+  <script src="./src/auth/auth-session.js?v=20260812-1" defer></script>
+  <script src="./src/auth/auth-ui.js?v=20260812-1" defer></script>
+  <script src="./src/catalog/index-catalog.js" defer></script>
+  <script src="./src/api/bff-client.js" defer></script>
+  <script src="./src/pages/overview.js?v=20260817-12" defer></script>
+  <script src="./src/pages/home.js?v=20260812-1" defer></script>
+  <script src="./src/pages/mobile-app.js?v=20260826-1" defer></script>\n</body>
+</html>
+

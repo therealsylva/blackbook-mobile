@@ -1,25 +1,18 @@
 # Blackbook Mobile
 
-The mobile exchange for Blackbook's continuous real-world performance indices.
+The mobile port of Blackbook's existing `index-frontend` product.
 
-Blackbook Mobile is intentionally split into two interfaces over one account and one market state:
+The web frontend is the source of truth. Its home modules, index overview, terminal, search catalogue, copy, market states, charts, assets, icons, auth surface, and availability fences are bundled unchanged. `mobile-app.css` and `mobile-app.js` only rearrange those surfaces for a phone.
 
-- **Basic** — discovery, clear index movement, simple Long/Short execution, and portfolio essentials.
-- **Advanced** — candlesticks, market depth, complete order controls, positions, orders, and risk detail.
+Canonical source snapshot: `therealsylva/index-frontend@df65ecc5235952eef547839a569bc0c4a40ff613`.
 
-The navigation remains stable in both modes: **Home · All Indices · Trade · Portfolio · Menu**.
+- **Home** is the complete Blackbook homepage in its original order.
+- **All Indices** opens the existing index and symbol search.
+- **Trade** opens the existing Blackbook terminal.
+- **Basic / Advanced** maps to the existing Index Overview / Terminal pages.
+- **Portfolio** retains the same unavailable state as `index-frontend`; no fixture portfolio was invented.
 
-## Foundation
-
-- Expo SDK 57
-- React Native 0.86
-- React 19.2
-- TypeScript 6 in strict mode
-- Expo Router
-- React Native New Architecture
-- Android and iOS from one codebase
-
-The first checkpoint is deliberately frontend-only. All displayed markets, positions, balances, and events come from clearly isolated fixture data. Order review is non-executing until the production API contract is connected.
+The Android shell is deliberately thin: Expo SDK 57, React Native 0.86, Expo Router, and `react-native-webview`. It exists to package the canonical frontend and provide native lifecycle/back-navigation behavior—not to redesign Blackbook as a different exchange.
 
 ## Run locally
 
@@ -31,7 +24,7 @@ npm start
 
 ## Build an APK
 
-The `Android APK` GitHub Actions workflow validates the app, generates the native Android project, builds a standalone ARM64 release APK, and uploads it as a workflow artifact. The release build embeds the JavaScript bundle, enables R8 and resource shrinking, and excludes emulator and legacy ARM native libraries.
+The `Android APK` GitHub Actions workflow validates the port, copies the complete frontend into Android assets, builds a standalone ARM64 release APK, and uploads it as a workflow artifact. The verifier rejects an APK missing the homepage, Blackbook logo, hero art, embedded JavaScript bundle, or ARM64 native libraries.
 
 You can also build locally with:
 

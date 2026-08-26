@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en" class="auth-pending">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Blackbook index terminal.">
+  <title>Blackbook Terminal — RMD/USD</title>
+  <link rel="stylesheet" href="./src/styles/terminal.css?v=20260817-1">
+  <link rel="stylesheet" href="./src/styles/auth.css?v=20260812-1">
+  <link rel="preload" href="./public/fonts/mona-sans/MonaSansVF.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./src/styles/typography.css?v=20260817-1">
+  <link rel="stylesheet" href="./src/styles/mobile-app.css?v=20260826-1">\n</head>
+<body>
+  <main class="terminal-app" aria-label="Blackbook index terminal">
+    <header class="terminal-topbar">
+      <div class="terminal-symbol-control">
+        <span class="terminal-search-glyph" aria-hidden="true">⌕</span>
+        <input id="symbol-input" type="search" spellcheck="false" autocomplete="off" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="terminal-symbol-dropdown" placeholder="Search markets" aria-label="Search markets">
+        <button class="terminal-symbol-submit" type="button" id="symbol-submit" aria-label="Load symbol">↵</button>
+        <div class="terminal-symbol-dropdown" id="terminal-symbol-dropdown" data-symbol-dropdown role="listbox" aria-label="Index search results" hidden></div>
+      </div>
+      <div class="terminal-market-tabs" data-market-tabs>
+        <div class="terminal-market-tab-strip" data-tab-strip role="tablist" aria-label="Open markets"></div>
+        <button type="button" class="terminal-market-tab-add" data-tab-add aria-label="Open market" title="Open market">+</button>
+        <button type="button" class="terminal-market-tab-overflow" data-tab-overflow aria-label="More open markets" title="More open markets" aria-expanded="false" hidden>⋯</button>
+        <div class="terminal-market-tab-overflow-menu" data-tab-overflow-menu role="menu" hidden></div>
+      </div>
+      <nav class="terminal-chart-toolbar" aria-label="Chart tools">
+        <button type="button" class="terminal-chart-tool is-active" data-tool="cursor" title="Cursor" aria-label="Cursor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3l5.5 16 2.7-6.1L18 10 4 3Z"></path></svg><span>Cursor</span></button>
+        <button type="button" class="terminal-chart-tool" data-tool="line" title="Trend line" aria-label="Trend line"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19 20 5"></path><circle cx="4" cy="19" r="1.5"></circle><circle cx="20" cy="5" r="1.5"></circle></svg><span>Trend line</span></button>
+        <button type="button" class="terminal-chart-tool" data-tool="levels" title="Horizontal levels" aria-label="Horizontal levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path><circle cx="8" cy="7" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="11" cy="17" r="1.5"></circle></svg><span>Levels</span></button>
+        <button type="button" class="terminal-chart-tool" data-tool="measure" title="Measure" aria-label="Measure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 14-14M7 5l2 2M12 5l2 2M17 5l2 2M5 12l2 2M5 17l2 2"></path></svg><span>Measure</span></button>
+        <button type="button" class="terminal-chart-tool terminal-drawing-action" data-drawing-action="cancel" title="Cancel drawing" aria-label="Cancel drawing" disabled><span aria-hidden="true">×</span><span>Cancel</span></button>
+        <button type="button" class="terminal-chart-tool terminal-drawing-action" data-drawing-action="delete" title="Delete selected drawing" aria-label="Delete selected drawing" disabled><span aria-hidden="true">⌫</span><span>Delete</span></button>
+      </nav>
+      <div class="terminal-position-actions" aria-label="Open position">
+        <button type="button" class="terminal-position terminal-position-long" data-order-side="long" aria-label="Long order unavailable" aria-describedby="trading-unavailable-note" disabled>
+          <span>Long</span><strong data-long-quote>—</strong>
+        </button>
+        <button type="button" class="terminal-position terminal-position-short" data-order-side="short" aria-label="Short order unavailable" aria-describedby="trading-unavailable-note" disabled>
+          <span>Short</span><strong data-short-quote>—</strong>
+        </button>
+        <span class="visually-hidden" id="trading-unavailable-note">Trading is unavailable until an authenticated server capability and market fence are connected.</span>
+      </div>
+      <div class="terminal-actions" aria-label="Chart actions">
+        <button type="button" data-action="fit" title="Fit chart" aria-label="Fit chart">↔</button>
+        <button type="button" data-action="screenshot" title="Download chart image" aria-label="Download chart image">⇩</button>
+        <button type="button" data-action="settings" title="Chart settings" aria-label="Open chart settings" aria-controls="terminal-settings-menu" aria-expanded="false">⚙</button>
+        <button type="button" class="terminal-market-data-toggle" data-market-panel-toggle title="Open market activity" aria-label="Open order book and recent trades" aria-controls="terminal-market-data" aria-expanded="false">▥</button>
+      </div>
+      <div class="terminal-account-controls" aria-label="Account">
+        <button type="button" class="terminal-profile-button auth-terminal-trigger" data-auth-adaptive-trigger data-auth-open-mode="signin" aria-label="Sign in to Blackbook" aria-haspopup="dialog" aria-controls="authDialog" aria-expanded="false">
+          <span data-auth-terminal-label>Sign in</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="terminal-settings-menu" id="terminal-settings-menu" data-settings-menu role="dialog" aria-label="Chart settings" hidden>
+      <div class="terminal-settings-header">
+        <strong>Chart settings</strong>
+        <button type="button" data-settings-close aria-label="Close chart settings">×</button>
+      </div>
+      <label class="terminal-setting-row">
+        <span class="terminal-setting-copy"><strong>Synthetics</strong><small>Candlesticks and volume bars</small></span>
+        <span class="terminal-switch"><input type="checkbox" data-setting="synthetics" aria-label="Enable candlesticks and volume bars" checked><i aria-hidden="true"></i></span>
+      </label>
+      <label class="terminal-setting-row">
+        <span class="terminal-setting-copy"><strong>Grid</strong><small>Show chart grid lines</small></span>
+        <span class="terminal-switch"><input type="checkbox" data-setting="grid" aria-label="Show chart grid" checked><i aria-hidden="true"></i></span>
+      </label>
+    </div>
+
+    <section class="terminal-workspace">
+      <aside class="terminal-toolrail" aria-label="Terminal navigation">
+        <nav class="terminal-side-nav terminal-primary-nav" aria-label="Workspace">
+          <a class="terminal-side-item is-active" data-side-item href="./index.html" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M7 15l3-4 3 2 5-6"></path></svg><span>Markets</span>
+          </a>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="orderbook" title="Open order book" aria-label="Open order book" aria-controls="terminal-market-data" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h8M3 8h6M3 12h8M3 16h6M3 20h8"></path><path d="M13 4h8M15 8h6M13 12h8M15 16h6M13 20h8"></path><path d="M12 2v20"></path></svg><span>Order Book</span>
+          </button>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="portfolio" title="Portfolio unavailable" disabled aria-disabled="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"></path></svg><span>Portfolio</span>
+          </button>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="positions" title="Positions unavailable" disabled aria-disabled="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 17l9 5 9-5"></path></svg><span>Positions</span>
+          </button>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="orders" title="Orders unavailable" disabled aria-disabled="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4V3h6v1M9 9h6M9 13h6M9 17h4"></path><path d="M7 9h.01M7 13h.01M7 17h.01"></path></svg><span>Orders</span>
+          </button>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="watchlist" title="Watchlist unavailable" disabled aria-disabled="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"></path></svg><span>Watchlist</span>
+          </button>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="signals" title="Signals unavailable" disabled aria-disabled="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.86a10 10 0 0 1 14 0"></path><path d="M8.5 16.5a5 5 0 0 1 7 0"></path><path d="M12 20h.01"></path></svg><span>Signals</span>
+          </button>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="journal" title="Journal unavailable" disabled aria-disabled="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h7a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H2z"></path><path d="M22 4h-7a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h7z"></path></svg><span>Journal</span>
+          </button>
+        </nav>
+
+        <span class="terminal-side-spacer" aria-hidden="true"></span>
+
+        <nav class="terminal-side-nav terminal-utility-nav" aria-label="Alerts and settings">
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="alerts" title="Alerts unavailable" disabled aria-disabled="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4M18 5h.01"></path></svg><span>Alerts</span>
+          </button>
+          <button type="button" class="terminal-side-item" data-side-item data-side-action="settings" title="Settings" aria-controls="terminal-settings-menu" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"></path><circle cx="12" cy="12" r="3"></circle></svg><span>Settings</span>
+          </button>
+        </nav>
+      </aside>
+
+      <div class="terminal-chart-shell">
+        <div class="terminal-chart-legend" aria-live="polite">
+          <div class="terminal-chart-title"><span class="terminal-chart-identity" data-chart-identity hidden aria-hidden="true"></span><strong data-chart-symbol>RMD/USD</strong><span>· 1D</span></div>
+          <div class="terminal-ohlc" data-ohlc>O —&nbsp;&nbsp;H —&nbsp;&nbsp;L —&nbsp;&nbsp;C —</div>
+          <div class="terminal-chart-metrics" aria-label="Market metrics">
+            <span class="terminal-chart-metric"><b>Vol</b><strong data-chart-volume>—</strong></span>
+            <span class="terminal-chart-metric"><b>Density</b><strong data-chart-density>—</strong></span>
+            <span class="terminal-chart-metric terminal-chart-band"><b>Band</b><strong><span data-chart-band-min>min —</span><span data-chart-band-max>max —</span></strong></span>
+          </div>
+        </div>
+        <div id="terminal-chart" aria-label="RMD/USD chart"></div>
+        <div class="terminal-chart-message" data-chart-message hidden></div>
+      </div>
+
+      <aside class="terminal-market-data" id="terminal-market-data" data-market-data data-state="idle" aria-label="Trusted market activity">
+        <header class="terminal-market-data-header">
+          <div><strong>Market activity</strong></div>
+          <div>
+            <button type="button" data-market-refresh aria-label="Refresh market activity">↻</button>
+            <button type="button" class="terminal-market-data-close" data-market-panel-close aria-label="Close market activity">×</button>
+          </div>
+        </header>
+        <div class="terminal-market-data-tabs" role="tablist" aria-label="Market activity view">
+          <button type="button" role="tab" data-market-view="book" aria-selected="true" aria-controls="market-book-panel">Order Book</button>
+          <button type="button" role="tab" data-market-view="trades" aria-selected="false" aria-controls="market-trades-panel" tabindex="-1">Recent Trades</button>
+        </div>
+        <section class="terminal-market-panel" id="market-book-panel" data-market-panel="book" role="tabpanel">
+          <p class="terminal-market-state" data-book-state hidden></p>
+          <div class="terminal-book-grid">
+            <table><caption>Bids</caption><thead><tr><th>Price USD</th><th>Size</th></tr></thead><tbody data-book-bids></tbody></table>
+            <table><caption>Asks</caption><thead><tr><th>Price USD</th><th>Size</th></tr></thead><tbody data-book-asks></tbody></table>
+          </div>
+        </section>
+        <section class="terminal-market-panel" id="market-trades-panel" data-market-panel="trades" role="tabpanel" hidden>
+          <p class="terminal-market-state" data-trade-state hidden></p>
+          <table class="terminal-trades-table"><caption class="visually-hidden">Recent trusted trades</caption><thead><tr><th>Price USD</th><th>Size</th><th>Time</th></tr></thead><tbody data-recent-trades></tbody></table>
+        </section>
+      </aside>
+    </section>
+
+    <nav class="terminal-rangebar" aria-label="Chart range">
+      <button type="button" data-range="1D" class="is-active" aria-pressed="true">1D</button>
+      <button type="button" data-range="5D" aria-pressed="false">5D</button>
+      <button type="button" data-range="1M" aria-pressed="false">1M</button>
+      <button type="button" data-range="3M" aria-pressed="false">3M</button>
+      <button type="button" data-range="6M" aria-pressed="false">6M</button>
+      <button type="button" data-range="YTD" aria-pressed="false">YTD</button>
+      <button type="button" data-range="1Y" aria-pressed="false">1Y</button>
+      <button type="button" data-range="5Y" aria-pressed="false">5Y</button>
+      <button type="button" data-range="ALL" aria-pressed="false">All</button>
+      <span class="terminal-range-spacer"></span>
+      <span class="terminal-feed-status" data-feed-status></span>
+    </nav>
+
+    <footer class="terminal-statusbar">
+      <span data-status-message>Loading index data</span>
+      <time data-clock>—</time>
+    </footer>
+
+    <div class="terminal-ticket-backdrop" data-ticket-backdrop hidden></div>
+    <aside class="terminal-ticket" data-ticket hidden aria-labelledby="ticket-title" role="dialog" aria-modal="true">
+      <header class="terminal-ticket-header">
+        <h2 id="ticket-title"><span class="terminal-ticket-identity" data-ticket-identity hidden aria-hidden="true"></span><span data-ticket-symbol>RMD/USD</span></h2>
+        <button type="button" class="terminal-ticket-close" data-ticket-close aria-label="Close ticket">×</button>
+      </header>
+
+      <div class="terminal-ticket-direction" role="group" aria-label="Position direction">
+        <button type="button" class="terminal-ticket-direction-option terminal-ticket-direction-long is-active" data-ticket-direction="long" aria-pressed="true">
+          <span>Long</span>
+          <strong data-ticket-long-quote>—</strong>
+        </button>
+        <button type="button" class="terminal-ticket-direction-option terminal-ticket-direction-short" data-ticket-direction="short" aria-pressed="false">
+          <span>Short</span>
+          <strong data-ticket-short-quote>—</strong>
+        </button>
+        <span class="terminal-ticket-spread-badge" data-ticket-spread-badge aria-label="Execution spread">—</span>
+      </div>
+
+      <div class="terminal-order-tabs" role="tablist" aria-label="Order type">
+        <button type="button" class="is-active" data-order-type="market" role="tab" aria-selected="true">Market</button>
+        <button type="button" data-order-type="limit" role="tab" aria-selected="false">Limit</button>
+      </div>
+
+      <form class="terminal-ticket-form" data-ticket-form>
+        <div class="terminal-ticket-field terminal-entry-price" data-entry-price-row hidden>
+          <label for="order-entry-price">Price</label>
+          <div class="terminal-input-shell"><input id="order-entry-price" data-order-entry type="number" inputmode="decimal" step="any"></div>
+        </div>
+
+        <div class="terminal-order-sizing">
+          <div class="terminal-ticket-field">
+            <label for="order-margin">Margin</label>
+            <div class="terminal-input-shell terminal-input-focused"><span class="terminal-input-prefix">$</span><input id="order-margin" data-order-margin type="number" inputmode="decimal" min="1" step="1" value="1000"></div>
+          </div>
+
+          <div class="terminal-ticket-field terminal-leverage-field">
+            <label for="order-leverage">Leverage</label>
+            <select id="order-leverage" class="terminal-leverage-select" data-order-leverage aria-label="Leverage">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="5">5×</option>
+              <option value="10" selected>10×</option>
+              <option value="20">20×</option>
+              <option value="50">50×</option>
+              <option value="100">100×</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="terminal-exits-grid">
+          <section class="terminal-ticket-section">
+            <div class="terminal-ticket-section-title"><span>Take profit</span><label class="terminal-switch"><input type="checkbox" data-order-tp-toggle><i></i></label></div>
+            <div class="terminal-input-shell terminal-exit-input"><input data-order-tp aria-label="Take-profit price" placeholder="Price" type="number" inputmode="decimal" step="any" disabled></div>
+          </section>
+
+          <section class="terminal-ticket-section">
+            <div class="terminal-ticket-section-title"><span>Stop loss</span><label class="terminal-switch"><input type="checkbox" data-order-sl-toggle><i></i></label></div>
+            <div class="terminal-input-shell terminal-exit-input"><input data-order-sl aria-label="Stop-loss price" placeholder="Price" type="number" inputmode="decimal" step="any" disabled></div>
+          </section>
+        </div>
+
+        <section class="terminal-order-info">
+          <h3>Order info</h3>
+          <div class="terminal-info-list">
+            <div class="terminal-info-row"><span>Position size</span><strong data-info-position-size>—</strong></div>
+            <div class="terminal-info-row"><span>Liquidation price</span><strong data-info-liquidation>—</strong></div>
+            <div class="terminal-info-row"><span>Estimated fee</span><strong data-info-fee>—</strong></div>
+            <div class="terminal-info-row terminal-info-outcome" data-info-tp-row hidden><span>TP PnL</span><strong data-info-tp-pnl>—</strong></div>
+            <div class="terminal-info-row terminal-info-outcome" data-info-sl-row hidden><span>SL loss</span><strong data-info-sl-pnl>—</strong></div>
+          </div>
+        </section>
+
+        <button type="submit" class="terminal-ticket-submit" data-order-submit disabled aria-describedby="trading-unavailable-note"><span data-submit-label>Trading unavailable</span><small data-submit-detail>Awaiting trusted backend capability</small></button>
+        <p class="terminal-ticket-note is-error" data-ticket-note aria-live="polite">Trading is unavailable until an authenticated backend capability and current market fence are connected.</p>
+      </form>
+    </aside>
+
+    <aside class="terminal-order-toast" data-order-toast hidden role="status" aria-live="polite">
+      <span class="terminal-order-toast-check" aria-hidden="true">✓</span>
+      <div class="terminal-order-toast-copy">
+        <strong>Order status update</strong>
+        <span data-order-toast-market>Blackbook Terminal</span>
+        <p><b data-order-toast-side>Long</b> <span data-order-toast-price>at —</span></p>
+      </div>
+      <button type="button" class="terminal-order-toast-close" data-order-toast-close aria-label="Dismiss order notification">×</button>
+    </aside>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.min.js" integrity="sha384-fPWur1rx/DE6YtXP/x0MD6dd90RgnVsz5yX/DIg7CcVAnTBZsENWuIcpvVTM39ti" crossorigin="anonymous" defer></script>
+  <script src="./src/auth/auth-config.js?v=20260812-1" defer></script>
+  <script src="./src/auth/auth-client.js?v=20260811-1" defer></script>
+  <script src="./src/auth/auth-captcha.js?v=20260811-1" defer></script>
+  <script src="./src/auth/auth-session.js?v=20260812-1" defer></script>
+  <script src="./src/auth/auth-ui.js?v=20260812-1" defer></script>
+  <script src="./public/vendor/lightweight-charts.standalone.production.js" defer></script>
+  <script src="./src/catalog/index-catalog.js" defer></script>
+  <script src="./src/api/bff-client.js" defer></script>
+  <script src="./src/pages/terminal-market-data.js?v=20260812-1" defer></script>
+  <script src="./src/pages/terminal.js?v=20260817-4" defer></script>
+  <script src="./src/pages/mobile-app.js?v=20260826-1" defer></script>\n</body>
+</html>
+

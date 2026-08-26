@@ -1,0 +1,182 @@
+@font-face {
+  font-family: "Mona Sans";
+  src: url("../../public/fonts/mona-sans/MonaSansVF.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+  font-display: swap;
+}
+
+:root {
+  --font-ui: "Mona Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  font-family: var(--font-ui);
+  font-optical-sizing: auto;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-ui);
+  font-optical-sizing: auto;
+  font-feature-settings: "ss05" 1, "ss06" 1;
+}
+
+.part1-module,
+.part1-module *,
+.part2-module,
+.part2-module *,
+.part3-module,
+.part3-module *,
+[class^="overview-"],
+[class*=" overview-"],
+[class^="terminal-"],
+[class*=" terminal-"],
+[class^="auth-"],
+[class*=" auth-"] {
+  font-family: var(--font-ui) !important;
+  letter-spacing: normal !important;
+}
+
+.part1-module .fa,
+.part1-module .fas,
+.part1-module .fa-solid,
+.part2-module .fa,
+.part2-module .fas,
+.part2-module .fa-solid,
+.part3-module .fa,
+.part3-module .fas,
+.part3-module .fa-solid {
+  font-family: "Font Awesome 6 Free" !important;
+}
+
+.part1-module .fab,
+.part1-module .fa-brands,
+.part2-module .fab,
+.part2-module .fa-brands,
+.part3-module .fab,
+.part3-module .fa-brands {
+  font-family: "Font Awesome 6 Brands" !important;
+}
+
+.module-divider,
+.part3-module .footer-column h3,
+.overview-eyebrow,
+.overview-chart-topline p,
+.overview-feed-status,
+.overview-stat span,
+.overview-news-meta,
+.terminal-position span,
+.terminal-market-panel th,
+.auth-divider {
+  text-transform: none !important;
+}
+
+.terminal-symbol-control input,
+.terminal-market-tab-symbol,
+.overview-symbol-pill,
+.auth-account-avatar,
+.auth-header-avatar {
+  text-transform: uppercase !important;
+}
+
+.module-divider {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.part2-module .product-photo > span,
+.part2-module .release-visual span,
+.part2-module .idea-ticker-pill,
+.part2-module .calendar-contract-meta,
+.part2-module .contract-badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.part3-module .footer-column h3 {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.part3-module .footer .tagline {
+  font-size: clamp(24px, 2.4vw, 36px);
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.overview-eyebrow,
+.overview-chart-topline p,
+.overview-feed-status,
+.overview-news-meta {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.overview-stat span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.overview-stat strong,
+.overview-quote,
+.overview-change,
+.overview-symbol-pill,
+.overview-range span,
+.overview-sticky-quote,
+.overview-related-price,
+.overview-related-change {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.terminal-side-item span,
+.terminal-search-result-meta strong,
+.terminal-position span,
+.terminal-position strong,
+.terminal-setting-copy small,
+.terminal-chart-tool span,
+.terminal-chart-metric b,
+.terminal-chart-metric strong,
+.terminal-market-panel th,
+.terminal-market-panel td,
+.terminal-ticket-note,
+.terminal-ticket-submit small {
+  font-size: 11px;
+}
+
+.terminal-position span,
+.terminal-chart-metric b,
+.terminal-market-panel th {
+  font-weight: 500;
+}
+
+.terminal-position strong,
+.terminal-chart-metric strong,
+.terminal-market-panel td,
+.terminal-account-balance,
+.terminal-ticket input,
+.terminal-ticket-output,
+.terminal-statusbar,
+.terminal-chart-status {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.auth-divider,
+.auth-legal {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.auth-subtitle,
+.auth-field input,
+.auth-provider-button,
+.auth-email-continue,
+.auth-signout {
+  font-size: 14px;
+}
