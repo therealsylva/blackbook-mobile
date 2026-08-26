@@ -1,7 +1,8 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import type { ColorValue } from 'react-native';
 
 interface TabIconProps {
-  color: string;
+  color: ColorValue;
   focused: boolean;
   name: SymbolViewProps['name'];
   size: number;
