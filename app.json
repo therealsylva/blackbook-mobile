@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Blackbook",
+    "slug": "blackbook-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "blackbook",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.modnight.blackbook",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.modnight.blackbook",
+      "versionCode": 1,
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
