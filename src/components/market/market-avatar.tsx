@@ -15,7 +15,7 @@ const ENTITY_MARKS = new Set([
   'kansas-city-chiefs', 'dallas-cowboys', 'claude-icon',
 ]);
 
-const TILE_MARKS = new Set(['apple', 'openai-icon']);
+const TILE_MARKS = new Set(['openai-icon']);
 
 export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps) {
   const source = marketImage(assetKey);
