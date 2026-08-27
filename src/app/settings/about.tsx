@@ -10,8 +10,8 @@ import { colors, radii, spacing, typography } from '@/theme/tokens';
 type Topic = 'Risk disclosure' | 'Privacy policy' | 'Terms of service' | 'Help centre';
 const COPY: Record<Topic, string> = {
   'Risk disclosure': 'Index perpetuals use leverage. Prices can move quickly, losses can exceed the margin assigned to a position, and liquidation can occur before a market recovers.',
-  'Privacy policy': 'Account preferences and trading activity in this build remain on this device. Production services will publish their data handling terms before account connectivity is introduced.',
-  'Terms of service': 'BlackBook market access is subject to eligibility, regional restrictions, risk controls, and the terms presented when production account services are introduced.',
+  'Privacy policy': 'BlackBook stores app preferences on your device. Account and trading data are protected according to the privacy controls attached to your account.',
+  'Terms of service': 'BlackBook market access is subject to eligibility, regional restrictions, risk controls, and the terms accepted for your account.',
   'Help centre': 'Use Profile for account preferences, All Indices to find a market, Trade to place an order, and Portfolio to manage positions and open orders.',
 };
 
