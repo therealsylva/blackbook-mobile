@@ -16,7 +16,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ExchangeProvider>
-        <StatusBar backgroundColor={colors.bg} style="light" />
+        <StatusBar style="light" />
         <Stack screenOptions={{ animation: 'slide_from_right', contentStyle: { backgroundColor: colors.bg }, headerShown: false }} />
       </ExchangeProvider>
     </SafeAreaProvider>

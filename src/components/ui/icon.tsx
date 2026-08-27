@@ -1,5 +1,6 @@
 import Svg, { Circle, Line, Path, Polyline, Rect } from 'react-native-svg';
 import type { ReactNode } from 'react';
+import type { ColorValue } from 'react-native';
 
 export type IconName =
   | 'home'
@@ -37,7 +38,7 @@ export type IconName =
 interface IconProps {
   name: IconName;
   size?: number;
-  color?: string;
+  color?: ColorValue;
   filled?: boolean;
 }
 
