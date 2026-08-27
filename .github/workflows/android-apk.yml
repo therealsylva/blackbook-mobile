@@ -10,6 +10,7 @@ on:
       - src/**
       - assets/**
       - scripts/**
+      - MOBILE_REBUILD_TODO.md
       - .github/workflows/android-apk.yml
 
 concurrency:
