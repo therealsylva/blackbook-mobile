@@ -2,6 +2,15 @@ name: Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [feat/mobile-foundation]
+    paths:
+      - package.json
+      - app.json
+      - src/**
+      - assets/**
+      - scripts/**
+      - .github/workflows/android-apk.yml
 
 concurrency:
   group: android-apk-${{ github.ref }}

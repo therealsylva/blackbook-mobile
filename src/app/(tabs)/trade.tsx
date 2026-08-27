@@ -197,8 +197,8 @@ export default function TradeScreen() {
             </Pressable>
             {riskControls ? (
               <View style={styles.riskFields}>
-                <View style={[styles.field, styles.riskField]}><Text style={styles.fieldLabel}>Take profit</Text><View style={styles.inputRow}><TextInput keyboardType="decimal-pad" onChangeText={setTakeProfit} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.accent} style={styles.smallInput} value={takeProfit} /><Text style={styles.inputUnit}>POINT</Text></View></View>
-                <View style={[styles.field, styles.riskField]}><Text style={styles.fieldLabel}>Stop loss</Text><View style={styles.inputRow}><TextInput keyboardType="decimal-pad" onChangeText={setStopLoss} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.accent} style={styles.smallInput} value={stopLoss} /><Text style={styles.inputUnit}>POINT</Text></View></View>
+                <View style={[styles.field, styles.riskField]}><Text style={styles.fieldLabel}>Take profit</Text><View style={styles.inputRow}><TextInput keyboardType="decimal-pad" onChangeText={setTakeProfit} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.accent} style={styles.smallInput} value={takeProfit} /><Text style={styles.inputUnit}>PTS</Text></View></View>
+                <View style={[styles.field, styles.riskField]}><Text style={styles.fieldLabel}>Stop loss</Text><View style={styles.inputRow}><TextInput keyboardType="decimal-pad" onChangeText={setStopLoss} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.accent} style={styles.smallInput} value={stopLoss} /><Text style={styles.inputUnit}>PTS</Text></View></View>
               </View>
             ) : null}
 
