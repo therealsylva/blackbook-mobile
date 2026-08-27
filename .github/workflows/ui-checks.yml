@@ -44,7 +44,21 @@ jobs:
       - name: Capture phone screens
         run: |
           mkdir -p ui-renders
-          python3 -m http.server 4173 --directory dist >/tmp/blackbook-ui-server.log 2>&1 &
+          python3 - <<'PY' >/tmp/blackbook-ui-server.log 2>&1 &
+          import os
+          from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+          from urllib.parse import urlsplit
+
+          os.chdir('dist')
+          class CleanRouteHandler(SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  route = urlsplit(self.path).path
+                  if route != '/' and '.' not in route.rsplit('/', 1)[-1] and os.path.isfile('.' + route + '.html'):
+                      self.path = route + '.html'
+                  super().do_GET()
+
+          ThreadingHTTPServer(('127.0.0.1', 4173), CleanRouteHandler).serve_forever()
+          PY
           for attempt in {1..20}; do
             curl -fsS http://127.0.0.1:4173 >/dev/null && break
             sleep 1
@@ -53,7 +67,7 @@ jobs:
           test -n "$BROWSER_BIN"
           for route in home indices trade portfolio profile settings settings/trading settings/security; do
             url_path="$route"
-            if [ "$route" = "home" ]; then url_path=""; else url_path="$route.html"; fi
+            if [ "$route" = "home" ]; then url_path=""; fi
             file_name="$(echo "$route" | tr '/' '-')"
             "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3000 --window-size=390,844 --screenshot="ui-renders/$file_name.png" "http://127.0.0.1:4173/$url_path"
           done
