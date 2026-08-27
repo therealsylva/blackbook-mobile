@@ -8,12 +8,14 @@ interface MarketChartProps {
   positive: boolean;
   height?: number;
   candles?: boolean;
+  grid?: boolean;
+  strokeWidth?: number;
 }
 
 const WIDTH = 360;
 const PAD = 8;
 
-export function MarketChart({ series, positive, height = 190, candles = false }: MarketChartProps) {
+export function MarketChart({ series, positive, height = 190, candles = false, grid = true, strokeWidth = 2 }: MarketChartProps) {
   const chart = useMemo(() => {
     const clean = series.length > 1 ? series : [0, 0];
     const min = Math.min(...clean);
@@ -35,14 +37,14 @@ export function MarketChart({ series, positive, height = 190, candles = false }:
   return (
     <View style={[styles.frame, { height }]}>
       <Svg height="100%" preserveAspectRatio="none" viewBox={`0 0 ${WIDTH} ${height}`} width="100%">
-        {[0.25, 0.5, 0.75].map((ratio) => <Line key={ratio} stroke={colors.divider} strokeDasharray="3 6" strokeWidth="0.6" x1="0" x2={WIDTH} y1={height * ratio} y2={height * ratio} />)}
+        {grid ? [0.25, 0.5, 0.75].map((ratio) => <Line key={ratio} stroke={colors.divider} strokeDasharray="3 6" strokeWidth="0.6" x1="0" x2={WIDTH} y1={height * ratio} y2={height * ratio} />) : null}
         {candles ? chart.candleItems.map((item, index) => {
           const up = item.close >= item.open;
           const color = up ? colors.positive : colors.negative;
           const bodyY = Math.min(item.yOpen, item.yClose);
           const bodyHeight = Math.max(2, Math.abs(item.yClose - item.yOpen));
           return <Path key={index} d={`M ${item.x} ${item.yHigh} L ${item.x} ${item.yLow} M ${item.x - 3.2} ${bodyY} L ${item.x + 3.2} ${bodyY} L ${item.x + 3.2} ${bodyY + bodyHeight} L ${item.x - 3.2} ${bodyY + bodyHeight} Z`} fill={color} stroke={color} strokeWidth="0.8" />;
-        }) : <Path d={chart.path} fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />}
+        }) : <Path d={chart.path} fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />}
       </Svg>
     </View>
   );

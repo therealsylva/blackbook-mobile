@@ -5,7 +5,7 @@ import { Screen } from '@/components/ui/screen';
 import { SettingRow } from '@/components/ui/setting-row';
 import { TopBar } from '@/components/ui/top-bar';
 import { useExchange } from '@/context/exchange-context';
-import { colors } from '@/theme/tokens';
+import { colors, spacing, typography } from '@/theme/tokens';
 
 type Choice = 'interface' | 'orderType' | 'leverage' | null;
 
@@ -47,7 +47,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 28 },
-  section: { marginTop: 20, paddingHorizontal: 16 },
-  sectionTitle: { color: colors.textFaint, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 5, textTransform: 'uppercase' },
-  note: { color: colors.textMuted, fontSize: 11, lineHeight: 17, paddingHorizontal: 16, paddingTop: 20 },
+  section: { marginTop: 22, paddingHorizontal: spacing.page },
+  sectionTitle: { color: colors.textFaint, fontFamily: typography.semibold, fontSize: 10, letterSpacing: 0.8, marginBottom: 5, textTransform: 'uppercase' },
+  note: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, lineHeight: 17, paddingHorizontal: spacing.page, paddingTop: 20 },
 });

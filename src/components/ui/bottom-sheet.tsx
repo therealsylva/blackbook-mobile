@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '@/theme/tokens';
+import { colors, spacing, typography } from '@/theme/tokens';
 import { Icon } from './icon';
 
 interface BottomSheetProps extends PropsWithChildren {
@@ -34,8 +34,8 @@ export function BottomSheet({ visible, title, onClose, children, scroll = true }
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { backgroundColor: colors.overlay, bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
-  sheet: { backgroundColor: colors.surface, borderTopLeftRadius: 14, borderTopRightRadius: 14, maxHeight: '88%', paddingHorizontal: 16 },
+  sheet: { backgroundColor: colors.surface, borderTopLeftRadius: 14, borderTopRightRadius: 14, maxHeight: '88%', paddingHorizontal: spacing.page },
   handle: { alignSelf: 'center', backgroundColor: colors.textFaint, borderRadius: 2, height: 4, marginBottom: 16, marginTop: 8, width: 36 },
   header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
-  title: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  title: { color: colors.text, fontFamily: typography.semibold, fontSize: 18 },
 });

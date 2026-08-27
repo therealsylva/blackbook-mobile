@@ -24,12 +24,15 @@ interface ExchangeContextValue {
   seriesFor: (symbol: string) => number[];
   marketFor: (symbol: string) => MarketDefinition | undefined;
   cashBalance: number;
+  fundingBalance: number;
   totalEquity: number;
   unrealizedPnl: number;
   positions: Position[];
   orders: OpenOrder[];
   history: TradeRecord[];
   addFunds: (amount: number) => void;
+  withdrawFunds: (amount: number) => boolean;
+  transferFunds: (amount: number, direction: 'toFunding' | 'toTrading') => boolean;
   placeOrder: (input: PlaceOrderInput) => { kind: 'position' | 'order'; id: string };
   closePosition: (id: string) => void;
   cancelOrder: (id: string) => void;
@@ -80,6 +83,7 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
   const [favorites, setFavorites] = useState(() => new Set(['RMD', 'CGPT', 'LIV', 'LMY']));
   const [alerts, setAlerts] = useState(() => new Set(['CGPT']));
   const [cashBalance, setCashBalance] = useState(9840.32);
+  const [fundingBalance, setFundingBalance] = useState(0);
   const [positions, setPositions] = useState<Position[]>(initialPositions);
   const [orders, setOrders] = useState<OpenOrder[]>(initialOrders);
   const [history, setHistory] = useState<TradeRecord[]>(initialHistory);
@@ -142,11 +146,31 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
 
   const unrealizedPnl = useMemo(() => positions.reduce((total, position) => total + positionPnl(position), 0), [positionPnl, positions]);
   const usedMargin = useMemo(() => positions.reduce((total, position) => total + position.margin, 0), [positions]);
-  const totalEquity = cashBalance + usedMargin + unrealizedPnl;
+  const totalEquity = cashBalance + fundingBalance + usedMargin + unrealizedPnl;
 
   const addFunds = useCallback((amount: number) => {
     if (Number.isFinite(amount) && amount > 0) setCashBalance((current) => current + amount);
   }, []);
+
+  const withdrawFunds = useCallback((amount: number) => {
+    if (!Number.isFinite(amount) || amount <= 0 || amount > cashBalance) return false;
+    setCashBalance((current) => current - amount);
+    return true;
+  }, [cashBalance]);
+
+  const transferFunds = useCallback((amount: number, direction: 'toFunding' | 'toTrading') => {
+    if (!Number.isFinite(amount) || amount <= 0) return false;
+    if (direction === 'toFunding') {
+      if (amount > cashBalance) return false;
+      setCashBalance((current) => current - amount);
+      setFundingBalance((current) => current + amount);
+      return true;
+    }
+    if (amount > fundingBalance) return false;
+    setFundingBalance((current) => current - amount);
+    setCashBalance((current) => current + amount);
+    return true;
+  }, [cashBalance, fundingBalance]);
 
   const placeOrder = useCallback((input: PlaceOrderInput) => {
     const market = MARKET_LOOKUP.get(input.symbol);
@@ -203,19 +227,22 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
     seriesFor,
     marketFor,
     cashBalance,
+    fundingBalance,
     totalEquity,
     unrealizedPnl,
     positions,
     orders,
     history,
     addFunds,
+    withdrawFunds,
+    transferFunds,
     placeOrder,
     closePosition,
     cancelOrder,
     positionPnl,
     settings,
     updateSetting,
-  }), [activeSymbol, addFunds, alerts, cancelOrder, cashBalance, changeFor, closePosition, favorites, history, marketFor, orders, placeOrder, positionPnl, positions, priceFor, seriesFor, setActiveSymbol, settings, toggleAlert, toggleFavorite, totalEquity, unrealizedPnl, updateSetting]);
+  }), [activeSymbol, addFunds, alerts, cancelOrder, cashBalance, changeFor, closePosition, favorites, fundingBalance, history, marketFor, orders, placeOrder, positionPnl, positions, priceFor, seriesFor, setActiveSymbol, settings, toggleAlert, toggleFavorite, totalEquity, transferFunds, unrealizedPnl, updateSetting, withdrawFunds]);
 
   return <ExchangeContext.Provider value={value}>{children}</ExchangeContext.Provider>;
 }

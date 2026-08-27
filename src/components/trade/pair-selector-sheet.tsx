@@ -43,15 +43,15 @@ export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSh
 }
 
 const styles = StyleSheet.create({
-  search: { alignItems: 'center', backgroundColor: colors.bg, borderRadius: 6, flexDirection: 'row', gap: 8, height: 42, paddingHorizontal: 12 },
-  input: { color: colors.text, flex: 1, fontSize: 13, paddingVertical: 0 },
+  search: { alignItems: 'center', backgroundColor: colors.bg, borderRadius: 10, flexDirection: 'row', gap: 8, height: 44, paddingHorizontal: 12 },
+  input: { color: colors.text, flex: 1, fontFamily: typography.regular, fontSize: 13, paddingVertical: 0 },
   list: { marginTop: 10 },
-  row: { alignItems: 'center', borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 61 },
+  row: { alignItems: 'center', flexDirection: 'row', minHeight: 62 },
   copy: { flex: 1, marginLeft: 10 },
-  symbol: { color: colors.text, fontSize: 13, fontWeight: '700' },
-  name: { color: colors.textMuted, fontSize: 10, marginTop: 3 },
+  symbol: { color: colors.text, fontFamily: typography.semibold, fontSize: 13 },
+  name: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 10, marginTop: 3 },
   quote: { alignItems: 'flex-end' },
-  price: { color: colors.text, fontFamily: typography.mono, fontSize: 12, fontWeight: '600' },
-  change: { fontFamily: typography.mono, fontSize: 10, marginTop: 4 },
+  price: { color: colors.text, fontFamily: typography.medium, fontSize: 12, fontVariant: ['tabular-nums'] },
+  change: { fontFamily: typography.medium, fontSize: 10, fontVariant: ['tabular-nums'], marginTop: 4 },
   pressed: { opacity: 0.62 },
 });

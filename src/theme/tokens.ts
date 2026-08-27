@@ -1,21 +1,22 @@
 export const colors = {
-  bg: '#0B0E11',
-  surface: '#181A20',
-  surfaceRaised: '#1E2329',
-  divider: '#2B3139',
-  text: '#EAECEF',
-  textMuted: '#848E9C',
-  textFaint: '#5E6673',
-  accent: '#D3B673',
-  accentSoft: '#2A251A',
-  positive: '#0ECB81',
-  negative: '#F6465D',
-  overlay: 'rgba(0,0,0,0.68)',
+  bg: '#000000',
+  navigation: '#050506',
+  surface: '#17181B',
+  surfaceRaised: '#1A1B1F',
+  divider: '#1D2025',
+  text: '#F5F6F7',
+  textMuted: '#808690',
+  textFaint: '#4C5159',
+  accent: '#F5F6F7',
+  accentSoft: '#202226',
+  positive: '#00C087',
+  negative: '#FF4D67',
+  overlay: 'rgba(0,0,0,0.76)',
   white: '#FFFFFF',
 } as const;
 
 export const spacing = {
-  page: 16,
+  page: 18,
   xs: 4,
   sm: 8,
   md: 12,
@@ -31,6 +32,9 @@ export const radii = {
 } as const;
 
 export const typography = {
-  regular: 'System',
+  regular: 'MonaSansRegular',
+  medium: 'MonaSansMedium',
+  semibold: 'MonaSansSemiBold',
+  bold: 'MonaSansBold',
   mono: 'monospace',
 } as const;

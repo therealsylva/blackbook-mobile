@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -9,9 +10,18 @@ import { colors } from '@/theme/tokens';
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    MonaSansRegular: require('../assets/fonts/MonaSans-Regular.ttf'),
+    MonaSansMedium: require('../assets/fonts/MonaSans-Medium.ttf'),
+    MonaSansSemiBold: require('../assets/fonts/MonaSans-SemiBold.ttf'),
+    MonaSansBold: require('../assets/fonts/MonaSans-Bold.ttf'),
+  });
+
   useEffect(() => {
-    void SplashScreen.hideAsync();
-  }, []);
+    if (fontsLoaded || fontError) void SplashScreen.hideAsync();
+  }, [fontError, fontsLoaded]);
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <SafeAreaProvider>

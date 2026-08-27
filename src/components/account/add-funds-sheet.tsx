@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useExchange } from '@/context/exchange-context';
 import { formatMoney } from '@/lib/format';
-import { colors } from '@/theme/tokens';
+import { colors, typography } from '@/theme/tokens';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 
 interface AddFundsSheetProps {
@@ -24,7 +24,7 @@ export function AddFundsSheet({ visible, onClose }: AddFundsSheetProps) {
   };
 
   return (
-    <BottomSheet onClose={onClose} title="Add funds" visible={visible}>
+    <BottomSheet onClose={onClose} title="Deposit" visible={visible}>
       <Text style={styles.label}>Amount</Text>
       <View style={styles.inputRow}>
         <Text style={styles.currency}>{settings.currency}</Text>
@@ -58,17 +58,17 @@ export function AddFundsSheet({ visible, onClose }: AddFundsSheetProps) {
 }
 
 const styles = StyleSheet.create({
-  label: { color: colors.textMuted, fontSize: 12, marginBottom: 8 },
+  label: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12, marginBottom: 8 },
   inputRow: { alignItems: 'center', borderBottomColor: colors.accent, borderBottomWidth: 1, flexDirection: 'row', paddingBottom: 10 },
-  currency: { color: colors.textMuted, fontSize: 14, fontWeight: '700', marginRight: 12 },
-  input: { color: colors.text, flex: 1, fontSize: 30, fontWeight: '700', padding: 0 },
+  currency: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 14, marginRight: 12 },
+  input: { color: colors.text, flex: 1, fontFamily: typography.semibold, fontSize: 30, fontVariant: ['tabular-nums'], padding: 0 },
   presets: { flexDirection: 'row', gap: 8, marginTop: 18 },
   preset: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderRadius: 4, flex: 1, minHeight: 40, justifyContent: 'center' },
-  presetText: { color: colors.textMuted, fontSize: 11, fontWeight: '600' },
+  presetText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
   summary: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginTop: 24, paddingTop: 16 },
-  summaryLabel: { color: colors.textMuted, fontSize: 13 },
-  summaryValue: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  summaryLabel: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 13 },
+  summaryValue: { color: colors.text, fontFamily: typography.semibold, fontSize: 13, fontVariant: ['tabular-nums'] },
   button: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 6, justifyContent: 'center', marginTop: 24, minHeight: 52 },
-  buttonText: { color: colors.bg, fontSize: 15, fontWeight: '800' },
+  buttonText: { color: colors.bg, fontFamily: typography.semibold, fontSize: 15 },
   pressed: { opacity: 0.7 },
 });

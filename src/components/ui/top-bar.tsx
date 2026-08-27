@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors } from '@/theme/tokens';
+import { colors, spacing, typography } from '@/theme/tokens';
 import { Icon, type IconName } from './icon';
 
 interface TopBarProps {
@@ -26,10 +26,10 @@ export function TopBar({ title, subtitle, rightIcon, onRightPress, back = false 
 }
 
 const styles = StyleSheet.create({
-  bar: { alignItems: 'center', flexDirection: 'row', minHeight: 52, paddingHorizontal: 16 },
+  bar: { alignItems: 'center', flexDirection: 'row', minHeight: 56, paddingHorizontal: spacing.page },
   leading: { alignItems: 'flex-start', justifyContent: 'center', marginRight: 12, width: 28 },
   trailing: { alignItems: 'flex-end', justifyContent: 'center', marginLeft: 12, width: 28 },
   copy: { flex: 1 },
-  title: { color: colors.text, fontSize: 19, fontWeight: '700' },
-  subtitle: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  title: { color: colors.text, fontFamily: typography.semibold, fontSize: 19 },
+  subtitle: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, marginTop: 2 },
 });

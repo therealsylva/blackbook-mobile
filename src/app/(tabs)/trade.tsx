@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { MarketChart } from '@/components/market/market-chart';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
+import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { OrderBook } from '@/components/trade/order-book';
@@ -11,17 +12,20 @@ import { OrderReviewSheet } from '@/components/trade/order-review-sheet';
 import { PairSelectorSheet } from '@/components/trade/pair-selector-sheet';
 import { useExchange } from '@/context/exchange-context';
 import { formatMoney, formatPercent, formatPrice } from '@/lib/format';
-import { colors, typography } from '@/theme/tokens';
-import type { OrderType, Side } from '@/types/exchange';
+import { colors, spacing, typography } from '@/theme/tokens';
+import type { InterfaceMode, OrderType, Side } from '@/types/exchange';
 
-type ChartFrame = '1m' | '5m' | '15m' | '1H' | '4H';
-const FRAMES: ChartFrame[] = ['1m', '5m', '15m', '1H', '4H'];
+type ChartFrame = '1m' | '5m' | '15m' | '1H' | '4H' | '1D';
+type AdvancedPanel = 'Chart' | 'Order book';
+
+const FRAMES: ChartFrame[] = ['1m', '5m', '15m', '1H', '4H', '1D'];
 const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop'];
+const LEVERAGE_PRESETS = [1, 5, 10, 20];
 const PERCENTAGES = [25, 50, 75, 100];
 
 export default function TradeScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ symbol?: string; side?: Side; mode?: 'advanced' }>();
+  const params = useLocalSearchParams<{ symbol?: string; side?: Side; mode?: 'advanced'; panel?: 'book' }>();
   const {
     activeSymbol,
     setActiveSymbol,
@@ -33,15 +37,19 @@ export default function TradeScreen() {
     positions,
     orders,
     settings,
+    updateSetting,
     placeOrder,
   } = useExchange();
   const [pairOpen, setPairOpen] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const [advancedPanel, setAdvancedPanel] = useState<AdvancedPanel>('Chart');
   const [frame, setFrame] = useState<ChartFrame>('15m');
   const [orderType, setOrderType] = useState<OrderType>(settings.defaultOrderType);
   const [amount, setAmount] = useState('100');
   const [targetPrice, setTargetPrice] = useState('');
   const [leverage, setLeverage] = useState(settings.defaultLeverage);
   const [riskControls, setRiskControls] = useState(settings.attachRiskControls);
+  const [reduceOnly, setReduceOnly] = useState(false);
   const [takeProfit, setTakeProfit] = useState('');
   const [stopLoss, setStopLoss] = useState('');
   const [reviewSide, setReviewSide] = useState<Side | null>(null);
@@ -52,8 +60,13 @@ export default function TradeScreen() {
   }, [params.symbol, setActiveSymbol]);
 
   useEffect(() => {
-    setTargetPrice(formatPrice(priceFor(activeSymbol)));
-  }, [activeSymbol]);
+    const nextMarket = marketFor(activeSymbol);
+    if (nextMarket) setTargetPrice(formatPrice(nextMarket.price));
+  }, [activeSymbol, marketFor]);
+
+  useEffect(() => {
+    if (params.panel === 'book') setAdvancedPanel('Order book');
+  }, [params.panel]);
 
   useEffect(() => {
     setOrderType(settings.defaultOrderType);
@@ -68,10 +81,13 @@ export default function TradeScreen() {
   const numericTarget = Number(targetPrice.replace(/,/g, '')) || price;
   const canSubmit = numericAmount > 0 && numericAmount <= cashBalance;
   const exposure = numericAmount * leverage;
+  const liquidation = price * (1 - 0.9 / Math.max(leverage, 1));
+  const fee = exposure * 0.0006;
   const advanced = params.mode === 'advanced' || settings.interfaceMode === 'advanced';
+
   const series = useMemo(() => {
     const values = seriesFor(activeSymbol);
-    const multiplier = frame === '1m' ? 0.18 : frame === '5m' ? 0.34 : frame === '15m' ? 0.58 : frame === '1H' ? 1 : 1.48;
+    const multiplier = frame === '1m' ? 0.18 : frame === '5m' ? 0.34 : frame === '15m' ? 0.58 : frame === '1H' ? 1 : frame === '4H' ? 1.48 : 1.9;
     const end = values.at(-1) ?? 0;
     return values.map((value) => end + (value - end) * multiplier);
   }, [activeSymbol, frame, seriesFor]);
@@ -80,11 +96,8 @@ export default function TradeScreen() {
 
   const requestOrder = (side: Side) => {
     if (!canSubmit) return;
-    if (settings.confirmOrders) {
-      setReviewSide(side);
-    } else {
-      executeOrder(side);
-    }
+    if (settings.confirmOrders) setReviewSide(side);
+    else executeOrder(side);
   };
 
   const executeOrder = (side: Side) => {
@@ -100,57 +113,72 @@ export default function TradeScreen() {
     setCompleted(result.kind);
   };
 
+  const selectMode = (mode: InterfaceMode) => {
+    updateSetting('interfaceMode', mode);
+    router.replace('/(tabs)/trade');
+  };
+
   return (
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Pressable onPress={() => setPairOpen(true)} style={styles.pair}>
-              <MarketAvatar assetKey={market.assetKey} size={34} symbol={market.symbol} />
+            <Pressable accessibilityLabel="Choose index" onPress={() => setPairOpen(true)} style={styles.pair}>
+              <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
               <View style={styles.pairCopy}>
-                <View style={styles.pairLine}><Text style={styles.symbol}>{market.symbol}/POINT</Text><Icon color={colors.textMuted} name="chevron" size={15} /></View>
+                <View style={styles.pairLine}><Text style={styles.symbol}>{market.symbol} / POINT</Text><Icon color={colors.textMuted} name="chevron" size={15} /></View>
                 <Text style={styles.marketName}>{market.name}</Text>
               </View>
             </Pressable>
-            <Pressable onPress={() => router.push('/settings/trading')} style={styles.interfaceLink}>
+            <Pressable accessibilityLabel="Change trading interface" onPress={() => setModeOpen(true)} style={styles.interfaceLink}>
               <Text style={styles.interfaceText}>{advanced ? 'Advanced' : 'Basic'}</Text>
-              <Icon color={colors.textMuted} name="chevron" size={15} />
+              <Icon color={colors.textMuted} name="chevron" size={16} />
             </Pressable>
           </View>
 
           <View style={styles.quoteRow}>
             <View>
               <Text style={styles.price}>{formatPrice(price)}</Text>
-              <Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text>
+              <Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)} today</Text>
             </View>
             <View style={styles.quoteStats}>
-              <Text style={styles.quoteLabel}>24h high <Text style={styles.quoteValue}>{formatPrice(market.high24h)}</Text></Text>
-              <Text style={styles.quoteLabel}>24h low  <Text style={styles.quoteValue}>{formatPrice(market.low24h)}</Text></Text>
+              <Text style={styles.quoteLabel}>24h high  <Text style={styles.quoteValue}>{formatPrice(market.high24h)}</Text></Text>
+              <Text style={styles.quoteLabel}>24h low   <Text style={styles.quoteValue}>{formatPrice(market.low24h)}</Text></Text>
             </View>
-          </View>
-
-          <MarketChart candles={advanced} height={advanced ? 214 : 178} positive={change >= 0} series={series} />
-          <View style={styles.frames}>
-            {FRAMES.map((item) => (
-              <Pressable key={item} onPress={() => setFrame(item)} style={styles.frame}>
-                <Text style={[styles.frameText, frame === item && styles.frameActive]}>{item}</Text>
-              </Pressable>
-            ))}
-            <Pressable onPress={() => router.push({ pathname: '/market/[symbol]', params: { symbol: market.symbol } })} style={styles.frame}><Icon color={colors.textMuted} name="more" size={17} /></Pressable>
           </View>
 
           {advanced ? (
-            <View style={styles.bookSection}>
-              <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Order book</Text><Text style={styles.tickSize}>0.10 tick</Text></View>
-              <OrderBook compact price={price} />
+            <View style={styles.advancedMarket}>
+              <View style={styles.panelTabs}>
+                {(['Chart', 'Order book'] as AdvancedPanel[]).map((panel) => (
+                  <Pressable accessibilityRole="tab" accessibilityState={{ selected: panel === advancedPanel }} key={panel} onPress={() => setAdvancedPanel(panel)} style={styles.panelTab}>
+                    <Text style={[styles.panelTabText, panel === advancedPanel && styles.panelTabActive]}>{panel}</Text>
+                    {panel === advancedPanel ? <View style={styles.panelTabLine} /> : null}
+                  </Pressable>
+                ))}
+                <Text style={styles.tickSize}>0.10 tick</Text>
+              </View>
+              {advancedPanel === 'Chart' ? (
+                <>
+                  <MarketChart candles height={188} positive={change >= 0} series={series} />
+                  <Timeframes frame={frame} onChange={setFrame} />
+                </>
+              ) : (
+                <View style={styles.book}><OrderBook price={price} /></View>
+              )}
             </View>
-          ) : null}
+          ) : (
+            <>
+              <View style={styles.basicChart}><MarketChart height={214} positive={change >= 0} series={series} /></View>
+              <Timeframes frame={frame} onChange={setFrame} />
+            </>
+          )}
 
-          <View style={styles.ticket}>
+          <View style={[styles.ticket, advanced && styles.advancedTicket]}>
             {advanced ? (
               <View style={styles.orderTypes}>
                 {ORDER_TYPES.map((type) => (
-                  <Pressable key={type} onPress={() => setOrderType(type)} style={styles.orderType}>
+                  <Pressable accessibilityRole="tab" accessibilityState={{ selected: orderType === type }} key={type} onPress={() => setOrderType(type)} style={styles.orderType}>
                     <Text style={[styles.orderTypeText, orderType === type && styles.orderTypeActive]}>{type.charAt(0).toUpperCase() + type.slice(1)}</Text>
                     {orderType === type ? <View style={styles.orderTypeLine} /> : null}
                   </Pressable>
@@ -158,65 +186,106 @@ export default function TradeScreen() {
               </View>
             ) : <Text style={styles.ticketTitle}>Open position</Text>}
 
-            <View style={styles.marginRow}>
-              <Text style={styles.marginMode}>Cross margin</Text>
-              <View style={styles.leverageControl}>
-                <Pressable accessibilityLabel="Decrease leverage" disabled={leverage <= 1} onPress={() => setLeverage((value) => Math.max(1, value - 1))} style={styles.leverageButton}><Text style={styles.leverageButtonText}>−</Text></Pressable>
-                <Text style={styles.leverageValue}>{leverage}x</Text>
-                <Pressable accessibilityLabel="Increase leverage" disabled={leverage >= 20} onPress={() => setLeverage((value) => Math.min(20, value + 1))} style={styles.leverageButton}><Text style={styles.leverageButtonText}>+</Text></Pressable>
-              </View>
-            </View>
-
             {advanced && orderType !== 'market' ? (
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>{orderType === 'limit' ? 'Limit price' : 'Trigger price'}</Text>
-                <View style={styles.inputRow}><TextInput keyboardType="decimal-pad" onChangeText={setTargetPrice} selectionColor={colors.accent} style={styles.input} value={targetPrice} /><Text style={styles.inputUnit}>POINT</Text></View>
-              </View>
+              <Field label={orderType === 'limit' ? 'Limit price' : 'Trigger price'}>
+                <TextInput accessibilityLabel={orderType === 'limit' ? 'Limit price' : 'Trigger price'} keyboardType="decimal-pad" onChangeText={setTargetPrice} selectionColor={colors.text} style={styles.input} value={targetPrice} />
+                <Text style={styles.inputUnit}>POINT</Text>
+              </Field>
             ) : null}
 
             <View style={styles.field}>
-              <View style={styles.fieldHeading}><Text style={styles.fieldLabel}>Margin</Text><Text style={styles.available}>Available {formatMoney(cashBalance, settings.currency)}</Text></View>
+              <View style={styles.fieldHeading}><Text style={styles.fieldLabel}>{advanced ? 'Margin' : 'Amount'}</Text><Text style={styles.available}>Available {formatMoney(cashBalance, settings.currency)}</Text></View>
               <View style={[styles.inputRow, !canSubmit && numericAmount > 0 && styles.inputError]}>
-                <TextInput keyboardType="decimal-pad" onChangeText={setAmount} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.accent} style={styles.input} value={amount} />
+                <TextInput accessibilityLabel="Order amount" keyboardType="decimal-pad" onChangeText={setAmount} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={amount} />
                 <Text style={styles.inputUnit}>{settings.currency}</Text>
               </View>
               {!canSubmit && numericAmount > 0 ? <Text style={styles.error}>Amount exceeds available balance</Text> : null}
             </View>
 
-            <View style={styles.percentages}>
-              {PERCENTAGES.map((percent) => (
-                <Pressable key={percent} onPress={() => setAmount((cashBalance * percent / 100).toFixed(2))} style={({ pressed }) => [styles.percentage, pressed && styles.pressed]}>
-                  <Text style={styles.percentageText}>{percent}%</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable onPress={() => setRiskControls((value) => !value)} style={styles.riskToggle}>
-              <View style={[styles.checkbox, riskControls && styles.checkboxActive]}>{riskControls ? <Icon color={colors.bg} name="check" size={13} /> : null}</View>
-              <Text style={styles.riskToggleText}>Take profit / Stop loss</Text>
-            </Pressable>
-            {riskControls ? (
-              <View style={styles.riskFields}>
-                <View style={[styles.field, styles.riskField]}><Text style={styles.fieldLabel}>Take profit</Text><View style={styles.inputRow}><TextInput keyboardType="decimal-pad" onChangeText={setTakeProfit} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.accent} style={styles.smallInput} value={takeProfit} /><Text style={styles.inputUnit}>PTS</Text></View></View>
-                <View style={[styles.field, styles.riskField]}><Text style={styles.fieldLabel}>Stop loss</Text><View style={styles.inputRow}><TextInput keyboardType="decimal-pad" onChangeText={setStopLoss} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.accent} style={styles.smallInput} value={stopLoss} /><Text style={styles.inputUnit}>PTS</Text></View></View>
+            {advanced ? (
+              <View style={styles.percentages}>
+                {PERCENTAGES.map((percent) => (
+                  <Pressable key={percent} onPress={() => setAmount((cashBalance * percent / 100).toFixed(2))} style={({ pressed }) => [styles.percentage, pressed && styles.pressed]}>
+                    <Text style={styles.percentageText}>{percent}%</Text>
+                  </Pressable>
+                ))}
               </View>
             ) : null}
 
-            <View style={styles.exposureRow}><Text style={styles.exposureLabel}>Position exposure</Text><Text style={styles.exposureValue}>{formatMoney(exposure, settings.currency)}</Text></View>
+            <View style={styles.leverageRow}>
+              <Text style={styles.fieldLabel}>Leverage</Text>
+              {advanced ? (
+                <View style={styles.leverageControl}>
+                  <Pressable accessibilityLabel="Decrease leverage" disabled={leverage <= 1} onPress={() => setLeverage((value) => Math.max(1, value - 1))} style={styles.leverageButton}><Text style={styles.leverageButtonText}>−</Text></Pressable>
+                  <Text style={styles.leverageValue}>{leverage}x</Text>
+                  <Pressable accessibilityLabel="Increase leverage" disabled={leverage >= 20} onPress={() => setLeverage((value) => Math.min(20, value + 1))} style={styles.leverageButton}><Text style={styles.leverageButtonText}>+</Text></Pressable>
+                </View>
+              ) : (
+                <View style={styles.leveragePresets}>
+                  {LEVERAGE_PRESETS.map((value) => (
+                    <Pressable accessibilityState={{ selected: leverage === value }} key={value} onPress={() => setLeverage(value)} style={[styles.leveragePreset, leverage === value && styles.leveragePresetActive]}>
+                      <Text style={[styles.leveragePresetText, leverage === value && styles.leveragePresetTextActive]}>{value}x</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.orderSummary}>
+              <SummaryMetric label="Exposure" value={formatMoney(exposure, settings.currency)} />
+              <SummaryMetric label="Est. liquidation" value={formatPrice(liquidation)} />
+              <SummaryMetric label="Fee" value={formatMoney(fee, settings.currency)} />
+            </View>
+
+            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: riskControls }} onPress={() => setRiskControls((value) => !value)} style={styles.optionRow}>
+              <View style={[styles.checkbox, riskControls && styles.checkboxActive]}>{riskControls ? <Icon color={colors.bg} name="check" size={13} /> : null}</View>
+              <Text style={styles.optionText}>Take profit / Stop loss</Text>
+            </Pressable>
+            {advanced ? (
+              <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: reduceOnly }} onPress={() => setReduceOnly((value) => !value)} style={styles.optionRow}>
+                <View style={[styles.checkbox, reduceOnly && styles.checkboxActive]}>{reduceOnly ? <Icon color={colors.bg} name="check" size={13} /> : null}</View>
+                <Text style={styles.optionText}>Reduce only</Text>
+              </Pressable>
+            ) : null}
+
+            {riskControls ? (
+              <View style={styles.riskFields}>
+                <Field compact label="Take profit">
+                  <TextInput accessibilityLabel="Take profit" keyboardType="decimal-pad" onChangeText={setTakeProfit} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.smallInput} value={takeProfit} />
+                  <Text style={styles.inputUnit}>PTS</Text>
+                </Field>
+                <Field compact label="Stop loss">
+                  <TextInput accessibilityLabel="Stop loss" keyboardType="decimal-pad" onChangeText={setStopLoss} placeholder="Optional" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.smallInput} value={stopLoss} />
+                  <Text style={styles.inputUnit}>PTS</Text>
+                </Field>
+              </View>
+            ) : null}
           </View>
 
-          <Pressable onPress={() => router.push('/(tabs)/portfolio')} style={styles.activity}>
-            <View><Text style={styles.activityTitle}>Your activity</Text><Text style={styles.activityMeta}>{positions.length} positions · {orders.length} open orders</Text></View>
-            <Icon color={colors.textMuted} name="chevron" size={17} />
-          </Pressable>
+          {advanced ? (
+            <Pressable onPress={() => router.push('/(tabs)/portfolio')} style={({ pressed }) => [styles.activity, pressed && styles.pressed]}>
+              <View><Text style={styles.activityTitle}>Positions and orders</Text><Text style={styles.activityMeta}>{positions.length} positions · {orders.length} open order{orders.length === 1 ? '' : 's'}</Text></View>
+              <Icon color={colors.textMuted} name="chevron" size={18} />
+            </Pressable>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
+
       <View style={styles.stickyActions}>
         <Pressable disabled={!canSubmit} onPress={() => requestOrder('short')} style={({ pressed }) => [styles.tradeButton, styles.short, !canSubmit && styles.disabled, pressed && styles.pressed]}><Text style={styles.tradeButtonText}>Short</Text></Pressable>
         <Pressable disabled={!canSubmit} onPress={() => requestOrder('long')} style={({ pressed }) => [styles.tradeButton, styles.long, !canSubmit && styles.disabled, pressed && styles.pressed]}><Text style={styles.tradeButtonText}>Long</Text></Pressable>
       </View>
 
       <PairSelectorSheet onClose={() => setPairOpen(false)} onSelect={setActiveSymbol} visible={pairOpen} />
+      <ChoiceSheet
+        format={(value) => value === 'basic' ? 'Basic' : 'Advanced'}
+        onClose={() => setModeOpen(false)}
+        onSelect={selectMode}
+        options={['basic', 'advanced'] as const}
+        title="Trading interface"
+        value={advanced ? 'advanced' : 'basic'}
+        visible={modeOpen}
+      />
       <OrderReviewSheet
         amount={numericAmount}
         currency={settings.currency}
@@ -233,7 +302,7 @@ export default function TradeScreen() {
       <BottomSheet onClose={() => setCompleted(null)} title={completed === 'position' ? 'Position opened' : 'Order submitted'} visible={completed !== null}>
         <View style={styles.complete}>
           <View style={styles.completeIcon}><Icon color={colors.positive} name="check" size={30} /></View>
-          <Text style={styles.completeTitle}>{market.symbol}/POINT</Text>
+          <Text style={styles.completeTitle}>{market.symbol} / POINT</Text>
           <Text style={styles.completeCopy}>{completed === 'position' ? 'Your position is now active.' : 'Your order is waiting for its target price.'}</Text>
           <Pressable onPress={() => { setCompleted(null); router.push('/(tabs)/portfolio'); }} style={styles.portfolioButton}><Text style={styles.portfolioButtonText}>View portfolio</Text></Pressable>
         </View>
@@ -242,80 +311,118 @@ export default function TradeScreen() {
   );
 }
 
+function Timeframes({ frame, onChange }: { frame: ChartFrame; onChange: (frame: ChartFrame) => void }) {
+  return (
+    <View style={styles.frames}>
+      {FRAMES.map((item) => (
+        <Pressable accessibilityRole="tab" accessibilityState={{ selected: frame === item }} key={item} onPress={() => onChange(item)} style={styles.frame}>
+          <Text style={[styles.frameText, frame === item && styles.frameActive]}>{item}</Text>
+          {frame === item ? <View style={styles.frameLine} /> : null}
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function Field({ label, compact = false, children }: { label: string; compact?: boolean; children: ReactNode }) {
+  return (
+    <View style={[styles.field, compact && styles.riskField]}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.inputRow}>{children}</View>
+    </View>
+  );
+}
+
+function SummaryMetric({ label, value }: { label: string; value: string }) {
+  return <View style={styles.summaryMetric}><Text style={styles.summaryLabel}>{label}</Text><Text numberOfLines={1} style={styles.summaryValue}>{value}</Text></View>;
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { paddingBottom: 22 },
-  header: { alignItems: 'center', borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', minHeight: 58, paddingHorizontal: 16 },
-  pair: { alignItems: 'center', flexDirection: 'row', flex: 1 },
-  pairCopy: { marginLeft: 10 },
-  pairLine: { alignItems: 'center', flexDirection: 'row' },
-  symbol: { color: colors.text, fontSize: 14, fontWeight: '800' },
-  marketName: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
-  interfaceLink: { alignItems: 'center', flexDirection: 'row', gap: 2, minHeight: 40 },
-  interfaceText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
-  quoteRow: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 18 },
-  price: { color: colors.text, fontFamily: typography.mono, fontSize: 25, fontWeight: '700', letterSpacing: -0.5 },
-  change: { fontFamily: typography.mono, fontSize: 11, fontWeight: '700', marginTop: 4 },
-  quoteStats: { alignItems: 'flex-end', gap: 6 },
-  quoteLabel: { color: colors.textFaint, fontSize: 9 },
-  quoteValue: { color: colors.textMuted, fontFamily: typography.mono },
-  frames: { borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 8 },
-  frame: { alignItems: 'center', justifyContent: 'center', minHeight: 37, minWidth: 42 },
-  frameText: { color: colors.textMuted, fontSize: 10, fontWeight: '600' },
-  frameActive: { color: colors.accent },
-  bookSection: { borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingVertical: 14 },
-  sectionHeading: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  sectionTitle: { color: colors.text, fontSize: 13, fontWeight: '700' },
-  tickSize: { color: colors.textFaint, fontSize: 9 },
-  ticket: { paddingHorizontal: 16, paddingTop: 18 },
-  ticketTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginBottom: 16 },
-  orderTypes: { borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', marginBottom: 18 },
-  orderType: { marginRight: 27, paddingBottom: 10 },
-  orderTypeText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-  orderTypeActive: { color: colors.text },
-  orderTypeLine: { backgroundColor: colors.accent, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
-  marginRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
-  marginMode: { color: colors.textMuted, fontSize: 12 },
-  leverageControl: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 4, flexDirection: 'row', height: 34 },
-  leverageButton: { alignItems: 'center', height: 34, justifyContent: 'center', width: 36 },
-  leverageButtonText: { color: colors.text, fontSize: 18 },
-  leverageValue: { color: colors.text, fontFamily: typography.mono, fontSize: 12, fontWeight: '700', minWidth: 36, textAlign: 'center' },
-  field: { marginBottom: 16 },
+  content: { paddingBottom: 24 },
+  header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 64, paddingHorizontal: spacing.page },
+  pair: { alignItems: 'center', flex: 1, flexDirection: 'row', minHeight: 52 },
+  pairCopy: { marginLeft: 11 },
+  pairLine: { alignItems: 'center', flexDirection: 'row', gap: 2 },
+  symbol: { color: colors.text, fontFamily: typography.semibold, fontSize: 15 },
+  marketName: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, marginTop: 3 },
+  interfaceLink: { alignItems: 'center', flexDirection: 'row', gap: 3, minHeight: 48, paddingLeft: 10 },
+  interfaceText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
+  quoteRow: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.page, paddingTop: 13 },
+  price: { color: colors.text, fontFamily: typography.bold, fontSize: 28, fontVariant: ['tabular-nums'], letterSpacing: -0.6 },
+  change: { fontFamily: typography.medium, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 5 },
+  quoteStats: { alignItems: 'flex-end', gap: 7, paddingTop: 5 },
+  quoteLabel: { color: colors.textFaint, fontFamily: typography.regular, fontSize: 10 },
+  quoteValue: { color: colors.textMuted, fontFamily: typography.medium, fontVariant: ['tabular-nums'] },
+  basicChart: { marginTop: 10 },
+  advancedMarket: { marginTop: 15 },
+  panelTabs: { alignItems: 'center', flexDirection: 'row', minHeight: 44, paddingHorizontal: spacing.page },
+  panelTab: { justifyContent: 'center', marginRight: 28, minHeight: 44 },
+  panelTabText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
+  panelTabActive: { color: colors.text, fontFamily: typography.semibold },
+  panelTabLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
+  tickSize: { color: colors.textFaint, flex: 1, fontFamily: typography.regular, fontSize: 10, textAlign: 'right' },
+  book: { paddingBottom: 12, paddingHorizontal: spacing.page, paddingTop: 10 },
+  frames: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.page },
+  frame: { alignItems: 'center', justifyContent: 'center', minHeight: 43, minWidth: 38 },
+  frameText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
+  frameActive: { color: colors.text, fontFamily: typography.semibold },
+  frameLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 8, position: 'absolute', right: 8 },
+  ticket: { paddingHorizontal: spacing.page, paddingTop: 24 },
+  advancedTicket: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 20 },
+  ticketTitle: { color: colors.text, fontFamily: typography.bold, fontSize: 19, letterSpacing: -0.2, marginBottom: 18 },
+  orderTypes: { flexDirection: 'row', marginBottom: 20 },
+  orderType: { marginRight: 30, paddingBottom: 10 },
+  orderTypeText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 14 },
+  orderTypeActive: { color: colors.text, fontFamily: typography.semibold },
+  orderTypeLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
+  field: { marginBottom: 17 },
   fieldHeading: { flexDirection: 'row', justifyContent: 'space-between' },
-  fieldLabel: { color: colors.textMuted, fontSize: 11, marginBottom: 7 },
-  available: { color: colors.textFaint, fontSize: 10 },
-  inputRow: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.divider, borderRadius: 4, borderWidth: 1, flexDirection: 'row', height: 48, paddingHorizontal: 12 },
-  inputError: { borderColor: colors.negative },
-  input: { color: colors.text, flex: 1, fontFamily: typography.mono, fontSize: 16, fontWeight: '600', padding: 0 },
-  smallInput: { color: colors.text, flex: 1, fontFamily: typography.mono, fontSize: 12, padding: 0 },
-  inputUnit: { color: colors.textMuted, fontSize: 10, fontWeight: '700' },
-  error: { color: colors.negative, fontSize: 10, marginTop: 6 },
+  fieldLabel: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12, marginBottom: 8 },
+  available: { color: colors.textFaint, fontFamily: typography.regular, fontSize: 11 },
+  inputRow: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 10, flexDirection: 'row', height: 52, paddingHorizontal: 14 },
+  inputError: { borderColor: colors.negative, borderWidth: 1 },
+  input: { color: colors.text, flex: 1, fontFamily: typography.semibold, fontSize: 16, fontVariant: ['tabular-nums'], padding: 0 },
+  smallInput: { color: colors.text, flex: 1, fontFamily: typography.medium, fontSize: 13, fontVariant: ['tabular-nums'], padding: 0 },
+  inputUnit: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11 },
+  error: { color: colors.negative, fontFamily: typography.regular, fontSize: 10, marginTop: 6 },
   percentages: { flexDirection: 'row', gap: 8, marginBottom: 18 },
-  percentage: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 4, flex: 1, height: 34, justifyContent: 'center' },
-  percentageText: { color: colors.textMuted, fontSize: 10, fontWeight: '700' },
-  riskToggle: { alignItems: 'center', flexDirection: 'row', minHeight: 36 },
-  checkbox: { alignItems: 'center', borderColor: colors.textFaint, borderRadius: 3, borderWidth: 1, height: 18, justifyContent: 'center', marginRight: 9, width: 18 },
-  checkboxActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  riskToggleText: { color: colors.text, fontSize: 12, fontWeight: '600' },
-  riskFields: { flexDirection: 'row', gap: 10, marginTop: 9 },
+  percentage: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 7, flex: 1, height: 36, justifyContent: 'center' },
+  percentageText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11 },
+  leverageRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  leverageControl: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 8, flexDirection: 'row', height: 38 },
+  leverageButton: { alignItems: 'center', height: 38, justifyContent: 'center', width: 40 },
+  leverageButtonText: { color: colors.text, fontFamily: typography.medium, fontSize: 19 },
+  leverageValue: { color: colors.text, fontFamily: typography.semibold, fontSize: 13, fontVariant: ['tabular-nums'], minWidth: 42, textAlign: 'center' },
+  leveragePresets: { flexDirection: 'row', gap: 8 },
+  leveragePreset: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 8, height: 42, justifyContent: 'center', minWidth: 54 },
+  leveragePresetActive: { backgroundColor: colors.text },
+  leveragePresetText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 13 },
+  leveragePresetTextActive: { color: colors.bg },
+  orderSummary: { flexDirection: 'row', gap: 10, marginBottom: 17 },
+  summaryMetric: { flex: 1, minWidth: 0 },
+  summaryLabel: { color: colors.textFaint, fontFamily: typography.regular, fontSize: 10, marginBottom: 5 },
+  summaryValue: { color: colors.text, fontFamily: typography.medium, fontSize: 12, fontVariant: ['tabular-nums'] },
+  optionRow: { alignItems: 'center', flexDirection: 'row', minHeight: 40 },
+  checkbox: { alignItems: 'center', borderColor: colors.textFaint, borderRadius: 4, borderWidth: 1, height: 19, justifyContent: 'center', marginRight: 10, width: 19 },
+  checkboxActive: { backgroundColor: colors.text, borderColor: colors.text },
+  optionText: { color: colors.text, fontFamily: typography.medium, fontSize: 12 },
+  riskFields: { flexDirection: 'row', gap: 10, marginTop: 11 },
   riskField: { flex: 1 },
-  exposureRow: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, paddingTop: 15 },
-  exposureLabel: { color: colors.textMuted, fontSize: 11 },
-  exposureValue: { color: colors.text, fontFamily: typography.mono, fontSize: 12, fontWeight: '700' },
-  stickyActions: { backgroundColor: colors.bg, borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
-  tradeButton: { alignItems: 'center', borderRadius: 6, flex: 1, justifyContent: 'center', minHeight: 50 },
+  activity: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: spacing.page, marginTop: 21, minHeight: 60 },
+  activityTitle: { color: colors.text, fontFamily: typography.semibold, fontSize: 13 },
+  activityMeta: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, marginTop: 4 },
+  stickyActions: { backgroundColor: colors.bg, borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 10, paddingHorizontal: spacing.page, paddingVertical: 10 },
+  tradeButton: { alignItems: 'center', borderRadius: 10, flex: 1, justifyContent: 'center', minHeight: 52 },
   long: { backgroundColor: colors.positive },
   short: { backgroundColor: colors.negative },
   disabled: { opacity: 0.35 },
-  tradeButtonText: { color: colors.white, fontSize: 15, fontWeight: '800' },
-  activity: { alignItems: 'center', borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginTop: 24, minHeight: 62, paddingHorizontal: 16 },
-  activityTitle: { color: colors.text, fontSize: 13, fontWeight: '700' },
-  activityMeta: { color: colors.textMuted, fontSize: 10, marginTop: 4 },
-  complete: { alignItems: 'center', paddingBottom: 4, paddingTop: 10 },
-  completeIcon: { alignItems: 'center', borderColor: colors.positive, borderRadius: 30, borderWidth: 1, height: 58, justifyContent: 'center', width: 58 },
-  completeTitle: { color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 15 },
-  completeCopy: { color: colors.textMuted, fontSize: 12, marginTop: 6 },
-  portfolioButton: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: 6, justifyContent: 'center', marginTop: 22, minHeight: 50, width: '100%' },
-  portfolioButtonText: { color: colors.bg, fontSize: 14, fontWeight: '800' },
-  pressed: { opacity: 0.7 },
+  tradeButtonText: { color: colors.white, fontFamily: typography.semibold, fontSize: 15 },
+  complete: { alignItems: 'center', paddingBottom: 4, paddingTop: 8 },
+  completeIcon: { alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 28, height: 56, justifyContent: 'center', width: 56 },
+  completeTitle: { color: colors.text, fontFamily: typography.semibold, fontSize: 16, marginTop: 15 },
+  completeCopy: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12, marginTop: 6, textAlign: 'center' },
+  portfolioButton: { alignItems: 'center', backgroundColor: colors.text, borderRadius: 10, justifyContent: 'center', marginTop: 22, minHeight: 50, width: '100%' },
+  portfolioButtonText: { color: colors.bg, fontFamily: typography.semibold, fontSize: 14 },
+  pressed: { opacity: 0.68 },
 });

@@ -7,12 +7,12 @@ import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { colors } from '@/theme/tokens';
+import { colors, spacing, typography } from '@/theme/tokens';
 
-type Category = 'All' | 'Sports' | 'Music' | 'Products' | 'People' | 'Relative';
+type Category = 'All' | 'Sports' | 'Music' | 'People' | 'Products' | 'Relative';
 type SortMode = 'Rank' | '24h change' | 'Volume';
 
-const CATEGORIES: Category[] = ['All', 'Sports', 'Music', 'Products', 'People', 'Relative'];
+const CATEGORIES: Category[] = ['All', 'Sports', 'Music', 'People', 'Products', 'Relative'];
 const SORTS: SortMode[] = ['Rank', '24h change', 'Volume'];
 
 function inCategory(market: MarketDefinition, category: Category) {
@@ -60,33 +60,32 @@ export default function AllIndicesScreen() {
       <View style={styles.titleRow}>
         <View>
           <Text style={styles.title}>All Indices</Text>
-          <Text style={styles.count}>{filtered.length} markets</Text>
+          <Text style={styles.count}>{filtered.length} live markets</Text>
         </View>
-        <Pressable accessibilityLabel="Sort indices" onPress={() => setSortOpen(true)} style={styles.sortButton}>
-          <Icon color={colors.textMuted} name="sliders" size={19} />
-          <Text style={styles.sortLabel}>{sortMode}</Text>
+        <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.moreButton, pressed && styles.pressed]}>
+          <Icon color={colors.text} name="more" size={22} />
         </Pressable>
       </View>
 
       <View style={styles.search}>
-        <Icon color={colors.textMuted} name="search" size={18} />
+        <Icon color={colors.textMuted} name="search" size={20} />
         <TextInput
           autoCapitalize="none"
           autoCorrect={false}
           onChangeText={setQuery}
           placeholder="Search by name or symbol"
-          placeholderTextColor={colors.textFaint}
+          placeholderTextColor={colors.textMuted}
           returnKeyType="search"
-          selectionColor={colors.accent}
+          selectionColor={colors.text}
           style={styles.searchInput}
           value={query}
         />
-        {query ? <Pressable accessibilityLabel="Clear search" hitSlop={8} onPress={() => setQuery('')}><Icon color={colors.textMuted} name="close" size={17} /></Pressable> : null}
+        {query ? <Pressable accessibilityLabel="Clear search" hitSlop={10} onPress={() => setQuery('')}><Icon color={colors.textMuted} name="close" size={18} /></Pressable> : null}
       </View>
 
       <ScrollView contentContainerStyle={styles.categories} horizontal showsHorizontalScrollIndicator={false}>
         {CATEGORIES.map((item) => (
-          <Pressable key={item} onPress={() => setCategory(item)} style={styles.category}>
+          <Pressable accessibilityRole="tab" accessibilityState={{ selected: category === item }} key={item} onPress={() => setCategory(item)} style={styles.category}>
             <Text style={[styles.categoryText, category === item && styles.categoryActive]}>{item}</Text>
             {category === item ? <View style={styles.categoryLine} /> : null}
           </Pressable>
@@ -94,9 +93,9 @@ export default function AllIndicesScreen() {
       </ScrollView>
 
       <View style={styles.tableHeader}>
-        <Text style={[styles.column, styles.pair]}>Pair</Text>
-        <Text style={styles.column}>Last price</Text>
-        <Text style={styles.column}>24h change</Text>
+        <Text style={[styles.column, styles.pair]}>Index / 24h vol</Text>
+        <Text style={[styles.column, styles.priceColumn]}>Price</Text>
+        <Text style={[styles.column, styles.changeColumn]}>24h</Text>
         <View style={styles.starSpacer} />
       </View>
 
@@ -113,37 +112,33 @@ export default function AllIndicesScreen() {
         windowSize={7}
       />
 
-      <ChoiceSheet
-        onClose={() => setSortOpen(false)}
-        onSelect={setSortMode}
-        options={SORTS}
-        title="Sort markets"
-        value={sortMode}
-        visible={sortOpen}
-      />
+      <ChoiceSheet onClose={() => setSortOpen(false)} onSelect={setSortMode} options={SORTS} title="Sort indices" value={sortMode} visible={sortOpen} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  titleRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 14, paddingTop: 13 },
-  title: { color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
-  count: { color: colors.textMuted, fontSize: 11, marginTop: 3 },
-  sortButton: { alignItems: 'center', flexDirection: 'row', gap: 6, minHeight: 36 },
-  sortLabel: { color: colors.textMuted, fontSize: 12 },
-  search: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 6, flexDirection: 'row', gap: 9, height: 42, marginHorizontal: 16, paddingHorizontal: 12 },
-  searchInput: { color: colors.text, flex: 1, fontSize: 13, paddingVertical: 0 },
-  categories: { borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10 },
-  category: { justifyContent: 'center', marginHorizontal: 6, minHeight: 47, paddingHorizontal: 2 },
-  categoryText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-  categoryActive: { color: colors.text },
-  categoryLine: { backgroundColor: colors.accent, bottom: 0, height: 2, left: 1, position: 'absolute', right: 1 },
-  tableHeader: { alignItems: 'center', flexDirection: 'row', height: 36, paddingHorizontal: 16 },
-  column: { color: colors.textFaint, flex: 0.65, fontSize: 9, textAlign: 'right', textTransform: 'uppercase' },
-  pair: { flex: 1.3, textAlign: 'left' },
+  titleRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 18, paddingHorizontal: spacing.page, paddingTop: 12 },
+  title: { color: colors.text, fontFamily: typography.bold, fontSize: 27, letterSpacing: -0.7 },
+  count: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12, marginTop: 3 },
+  moreButton: { alignItems: 'center', height: 48, justifyContent: 'center', width: 48 },
+  search: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 11, flexDirection: 'row', gap: 10, height: 48, marginHorizontal: spacing.page, paddingHorizontal: 14 },
+  searchInput: { color: colors.text, flex: 1, fontFamily: typography.regular, fontSize: 14, paddingVertical: 0 },
+  categories: { gap: 25, paddingHorizontal: spacing.page, paddingTop: 7 },
+  category: { justifyContent: 'center', minHeight: 51, paddingBottom: 3 },
+  categoryText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 14 },
+  categoryActive: { color: colors.text, fontFamily: typography.semibold },
+  categoryLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
+  tableHeader: { alignItems: 'center', flexDirection: 'row', height: 38, paddingHorizontal: spacing.page },
+  column: { color: colors.textFaint, fontFamily: typography.semibold, fontSize: 9, letterSpacing: 0.15, textTransform: 'uppercase' },
+  pair: { flex: 1.35, textAlign: 'left' },
+  priceColumn: { flex: 0.76, textAlign: 'right' },
+  changeColumn: { flex: 0.58, textAlign: 'right' },
   starSpacer: { marginLeft: 8, width: 22 },
-  list: { paddingBottom: 14 },
-  empty: { alignItems: 'center', padding: 48 },
-  emptyTitle: { color: colors.text, fontSize: 15, fontWeight: '700' },
-  emptyCopy: { color: colors.textMuted, fontSize: 12, marginTop: 6 },
+  list: { paddingBottom: 18 },
+  empty: { alignItems: 'center', padding: 54 },
+  emptyTitle: { color: colors.text, fontFamily: typography.semibold, fontSize: 15 },
+  emptyCopy: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12, marginTop: 6 },
+  pressed: { opacity: 0.65 },
 });
+

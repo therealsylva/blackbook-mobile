@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { OrderType, Side } from '@/types/exchange';
 import { formatMoney, formatPrice } from '@/lib/format';
-import { colors } from '@/theme/tokens';
+import { colors, typography } from '@/theme/tokens';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 
 interface OrderReviewSheetProps {
@@ -46,15 +46,15 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  heading: { borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 16 },
-  symbol: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  side: { fontSize: 12, fontWeight: '700', marginTop: 5, textTransform: 'uppercase' },
+  heading: { paddingBottom: 16 },
+  symbol: { color: colors.text, fontFamily: typography.semibold, fontSize: 18 },
+  side: { fontFamily: typography.semibold, fontSize: 12, marginTop: 5, textTransform: 'uppercase' },
   rows: { paddingTop: 11 },
   row: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 36 },
-  label: { color: colors.textMuted, fontSize: 12 },
-  value: { color: colors.text, fontSize: 12, fontWeight: '600' },
-  risk: { color: colors.textMuted, fontSize: 11, lineHeight: 17, marginTop: 14 },
-  button: { alignItems: 'center', borderRadius: 6, justifyContent: 'center', marginTop: 20, minHeight: 52 },
-  buttonText: { color: colors.white, fontSize: 15, fontWeight: '800' },
+  label: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12 },
+  value: { color: colors.text, fontFamily: typography.medium, fontSize: 12, fontVariant: ['tabular-nums'] },
+  risk: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, lineHeight: 17, marginTop: 14 },
+  button: { alignItems: 'center', borderRadius: 10, justifyContent: 'center', marginTop: 20, minHeight: 52 },
+  buttonText: { color: colors.white, fontFamily: typography.semibold, fontSize: 15 },
   pressed: { opacity: 0.72 },
 });

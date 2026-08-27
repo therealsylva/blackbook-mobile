@@ -70,16 +70,20 @@ jobs:
             "indices|indices"
             "trade|trade"
             "trade-advanced|trade?mode=advanced"
+            "trade-order-book|trade?mode=advanced&panel=book"
             "portfolio|portfolio"
             "profile|profile"
             "settings|settings"
-            "settings-trading|settings/trading"
-            "settings-security|settings/security"
           )
-          for screen in "${screens[@]}"; do
-            file_name="${screen%%|*}"
-            url_path="${screen#*|}"
-            "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3000 --window-size=390,844 --screenshot="ui-renders/$file_name.png" "http://127.0.0.1:4173/$url_path"
+          dimensions=("360|800" "390|844" "430|932")
+          for dimension in "${dimensions[@]}"; do
+            width="${dimension%%|*}"
+            height="${dimension#*|}"
+            for screen in "${screens[@]}"; do
+              file_name="${screen%%|*}"
+              url_path="${screen#*|}"
+              "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3000 --window-size="$width,$height" --screenshot="ui-renders/$file_name-$width.png" "http://127.0.0.1:4173/$url_path"
+            done
           done
       - name: Upload phone renders
         uses: actions/upload-artifact@v4

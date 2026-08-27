@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/theme/tokens';
+import { colors, typography } from '@/theme/tokens';
 import { BottomSheet } from './bottom-sheet';
 import { Icon } from './icon';
 
@@ -33,8 +33,8 @@ export function ChoiceSheet<T extends string | number>({ visible, title, value, 
 
 const styles = StyleSheet.create({
   list: { paddingBottom: 8 },
-  row: { alignItems: 'center', borderBottomColor: colors.divider, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', minHeight: 54 },
+  row: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 56 },
   pressed: { opacity: 0.6 },
-  label: { color: colors.text, fontSize: 15 },
-  selected: { color: colors.accent, fontWeight: '700' },
+  label: { color: colors.text, fontFamily: typography.regular, fontSize: 15 },
+  selected: { color: colors.text, fontFamily: typography.semibold },
 });

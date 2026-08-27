@@ -4,7 +4,7 @@ import { Screen } from '@/components/ui/screen';
 import { SettingRow } from '@/components/ui/setting-row';
 import { TopBar } from '@/components/ui/top-bar';
 import { useExchange } from '@/context/exchange-context';
-import { colors } from '@/theme/tokens';
+import { colors, spacing, typography } from '@/theme/tokens';
 
 export default function NotificationSettingsScreen() {
   const { settings, updateSetting, alerts } = useExchange();
@@ -30,10 +30,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 28 },
-  status: { alignItems: 'center', backgroundColor: colors.surface, flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 16, minHeight: 48, paddingHorizontal: 13 },
-  statusLabel: { color: colors.text, fontSize: 12, fontWeight: '600' },
-  statusValue: { color: colors.positive, fontSize: 11, fontWeight: '700' },
-  section: { marginTop: 23, paddingHorizontal: 16 },
-  sectionTitle: { color: colors.textFaint, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 5, textTransform: 'uppercase' },
-  note: { color: colors.textMuted, fontSize: 11, lineHeight: 17, paddingHorizontal: 16, paddingTop: 20 },
+  status: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 10, flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: spacing.page, marginTop: 16, minHeight: 48, paddingHorizontal: 13 },
+  statusLabel: { color: colors.text, fontFamily: typography.medium, fontSize: 12 },
+  statusValue: { color: colors.positive, fontFamily: typography.semibold, fontSize: 11 },
+  section: { marginTop: 23, paddingHorizontal: spacing.page },
+  sectionTitle: { color: colors.textFaint, fontFamily: typography.semibold, fontSize: 10, letterSpacing: 0.8, marginBottom: 5, textTransform: 'uppercase' },
+  note: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, lineHeight: 17, paddingHorizontal: spacing.page, paddingTop: 20 },
 });
