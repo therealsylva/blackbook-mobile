@@ -51,9 +51,9 @@ jobs:
           done
           BROWSER_BIN="$(command -v google-chrome || command -v chromium-browser || command -v chromium)"
           test -n "$BROWSER_BIN"
-          for route in home indices trade portfolio profile settings/trading; do
+          for route in home indices trade portfolio profile settings settings/trading settings/security; do
             url_path="$route"
-            if [ "$route" = "home" ]; then url_path=""; fi
+            if [ "$route" = "home" ]; then url_path=""; else url_path="$route.html"; fi
             file_name="$(echo "$route" | tr '/' '-')"
             "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3000 --window-size=390,844 --screenshot="ui-renders/$file_name.png" "http://127.0.0.1:4173/$url_path"
           done
