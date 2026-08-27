@@ -21,31 +21,33 @@ interface MarketRowProps {
 function MarketRowComponent({ market, price, change, favorite, onFavorite, onPress, compact = false, showSparkline = false }: MarketRowProps) {
   const direction = change >= 0 ? colors.positive : colors.negative;
   return (
-    <Pressable accessibilityLabel={`${market.name}, ${formatPrice(price)}, ${formatPercent(change)}`} onPress={() => onPress(market.symbol)} style={({ pressed }) => [styles.row, compact && styles.compact, pressed && styles.pressed]}>
-      <View style={styles.market}>
-        <MarketAvatar assetKey={market.assetKey} size={compact ? 42 : 44} symbol={market.symbol} />
-        <View style={styles.marketCopy}>
-          <View style={styles.symbolLine}>
-            <Text style={styles.symbol}>{market.symbol}</Text>
-            {!compact ? <Text style={styles.quote}>/POINT</Text> : null}
+    <View style={[styles.row, compact && styles.compact]}>
+      <Pressable accessibilityLabel={`${market.name}, ${formatPrice(price)}, ${formatPercent(change)}`} onPress={() => onPress(market.symbol)} style={({ pressed }) => [styles.marketAction, pressed && styles.pressed]}>
+        <View style={styles.market}>
+          <MarketAvatar assetKey={market.assetKey} size={compact ? 42 : 44} symbol={market.symbol} />
+          <View style={styles.marketCopy}>
+            <View style={styles.symbolLine}>
+              <Text style={styles.symbol}>{market.symbol}</Text>
+              {!compact ? <Text style={styles.quote}>/POINT</Text> : null}
+            </View>
+            <Text numberOfLines={1} style={styles.name}>{market.name}</Text>
           </View>
-          <Text numberOfLines={1} style={styles.name}>{market.name}</Text>
         </View>
-      </View>
-      {showSparkline ? <View style={styles.sparkline}><MarketChart grid={false} height={28} positive={change >= 0} series={market.series.slice(-12)} strokeWidth={2.2} /></View> : null}
-      <View style={styles.priceColumn}>
-        <Text style={styles.price}>{formatPrice(price)}</Text>
-        {!compact ? <Text style={styles.volume}>{market.volume} vol</Text> : null}
-      </View>
-      <View style={styles.changeColumn}>
-        <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text>
-      </View>
+        {showSparkline ? <View style={styles.sparkline}><MarketChart grid={false} height={28} positive={change >= 0} series={market.series.slice(-12)} strokeWidth={2.2} /></View> : null}
+        <View style={styles.priceColumn}>
+          <Text style={styles.price}>{formatPrice(price)}</Text>
+          {!compact ? <Text style={styles.volume}>{market.volume} vol</Text> : null}
+        </View>
+        <View style={styles.changeColumn}>
+          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text>
+        </View>
+      </Pressable>
       {onFavorite ? (
         <Pressable accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'} hitSlop={10} onPress={() => onFavorite(market.symbol)} style={styles.star}>
           <Icon color={favorite ? colors.accent : colors.textFaint} filled={favorite} name="star" size={18} />
         </Pressable>
       ) : null}
-    </Pressable>
+    </View>
   );
 }
 
@@ -54,6 +56,7 @@ export const MarketRow = memo(MarketRowComponent);
 const styles = StyleSheet.create({
   row: { alignItems: 'center', flexDirection: 'row', minHeight: 68, paddingHorizontal: 18 },
   compact: { minHeight: 68, paddingHorizontal: 0 },
+  marketAction: { alignItems: 'center', alignSelf: 'stretch', flex: 1, flexDirection: 'row' },
   pressed: { backgroundColor: colors.surface },
   market: { alignItems: 'center', flex: 1.35, flexDirection: 'row', minWidth: 0 },
   marketCopy: { flex: 1, marginLeft: 10, minWidth: 0 },
