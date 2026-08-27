@@ -21,9 +21,9 @@ export default function SecuritySettingsScreen() {
           <SettingRow icon="clock" label="Auto-lock" onPress={() => setAutoLockOpen(true)} value={settings.autoLock} />
         </Section>
         <Section title="Account">
-          <SettingRow icon="security" label="Passcode" onPress={() => undefined} value="Set" />
-          <SettingRow icon="profile" label="Trusted devices" onPress={() => undefined} value="1 device" />
-          <SettingRow icon="clock" label="Login activity" onPress={() => undefined} />
+          <SettingRow icon="security" label="Passcode" value="Set" />
+          <SettingRow icon="profile" label="Trusted devices" value="1 device" />
+          <SettingRow icon="clock" label="Login activity" value="No recent activity" />
         </Section>
       </ScrollView>
       <ChoiceSheet onClose={() => setAutoLockOpen(false)} onSelect={(value) => updateSetting('autoLock', value)} options={['Immediately', 'After 1 minute', 'After 5 minutes'] as const} title="Auto-lock" value={settings.autoLock} visible={autoLockOpen} />

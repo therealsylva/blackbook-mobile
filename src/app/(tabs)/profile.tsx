@@ -27,7 +27,7 @@ export default function ProfileScreen() {
     { label: 'Settings', icon: 'settings', route: '/settings' },
   ];
   const supportLinks: ProfileLink[] = [
-    { label: 'Help centre', icon: 'help' },
+    { label: 'Help centre', icon: 'help', route: '/settings/about' },
     { label: 'Risk disclosure', icon: 'alert', route: '/settings/about' },
     { label: 'About Blackbook', icon: 'info', route: '/settings/about' },
   ];
@@ -63,11 +63,11 @@ function ProfileSection({ title, links, onOpen }: { title: string; links: Profil
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {links.map((link) => (
-        <Pressable key={link.label} onPress={() => onOpen(link.route)} style={({ pressed }) => [styles.link, pressed && styles.pressed]}>
+        <Pressable disabled={!link.route} key={link.label} onPress={() => onOpen(link.route)} style={({ pressed }) => [styles.link, pressed && styles.pressed]}>
           <View style={styles.linkIcon}><Icon color={colors.textMuted} name={link.icon} size={21} /></View>
           <Text style={styles.linkLabel}>{link.label}</Text>
           {link.value ? <Text style={styles.linkValue}>{link.value}</Text> : null}
-          <Icon color={colors.textFaint} name="chevron" size={17} />
+          {link.route ? <Icon color={colors.textFaint} name="chevron" size={17} /> : null}
         </Pressable>
       ))}
     </View>
