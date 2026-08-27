@@ -21,7 +21,7 @@ const PERCENTAGES = [25, 50, 75, 100];
 
 export default function TradeScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ symbol?: string; side?: Side }>();
+  const params = useLocalSearchParams<{ symbol?: string; side?: Side; mode?: 'advanced' }>();
   const {
     activeSymbol,
     setActiveSymbol,
@@ -62,7 +62,7 @@ export default function TradeScreen() {
   const numericTarget = Number(targetPrice.replace(/,/g, '')) || price;
   const canSubmit = numericAmount > 0 && numericAmount <= cashBalance;
   const exposure = numericAmount * leverage;
-  const advanced = settings.interfaceMode === 'advanced';
+  const advanced = params.mode === 'advanced' || settings.interfaceMode === 'advanced';
   const series = useMemo(() => {
     const values = seriesFor(activeSymbol);
     const multiplier = frame === '1m' ? 0.18 : frame === '5m' ? 0.34 : frame === '15m' ? 0.58 : frame === '1H' ? 1 : 1.48;
