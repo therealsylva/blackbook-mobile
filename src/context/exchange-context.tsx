@@ -80,7 +80,7 @@ const MARKET_LOOKUP = new Map(MARKETS.map((market) => [market.symbol, market]));
 export function ExchangeProvider({ children }: PropsWithChildren) {
   const [quotes, setQuotes] = useState<Record<string, number>>(() => Object.fromEntries(MARKETS.map((market) => [market.symbol, market.price])));
   const [activeSymbol, setActiveSymbolState] = useState('RMD');
-  const [favorites, setFavorites] = useState(() => new Set(['RMD', 'CGPT', 'LIV', 'LMY']));
+  const [favorites, setFavorites] = useState(() => new Set<string>());
   const [alerts, setAlerts] = useState(() => new Set(['CGPT']));
   const [cashBalance, setCashBalance] = useState(9840.32);
   const [fundingBalance, setFundingBalance] = useState(0);

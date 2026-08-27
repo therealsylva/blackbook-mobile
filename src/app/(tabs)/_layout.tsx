@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { Icon, type IconName } from '@/components/ui/icon';
-import { colors, typography } from '@/theme/tokens';
+import { colors, layout, typography } from '@/theme/tokens';
 
 const ICONS: Record<string, IconName> = {
   index: 'home',
@@ -20,9 +20,10 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.textFaint,
         tabBarHideOnKeyboard: true,
+        tabBarItemStyle: styles.item,
         tabBarLabelStyle: styles.label,
         tabBarStyle: styles.bar,
-        tabBarIcon: ({ color, focused }) => <Icon color={color} filled={focused} name={ICONS[route.name] ?? 'home'} size={22} />,
+        tabBarIcon: ({ color, focused }) => <Icon color={color} filled={focused} name={ICONS[route.name] ?? 'home'} size={21} />,
       })}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
@@ -36,6 +37,7 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   scene: { backgroundColor: colors.bg },
-  bar: { backgroundColor: colors.navigation, borderTopColor: colors.divider, height: 64, paddingBottom: 7, paddingTop: 7 },
-  label: { fontFamily: typography.semibold, fontSize: 10 },
+  bar: { backgroundColor: colors.navigation, borderTopColor: colors.divider, height: layout.nav, paddingBottom: 4, paddingTop: 5 },
+  item: { paddingVertical: 0 },
+  label: { fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.medium, marginTop: 1 },
 });

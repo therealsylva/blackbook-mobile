@@ -1,13 +1,14 @@
-import { useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Screen } from '@/components/ui/screen';
 import { SettingRow } from '@/components/ui/setting-row';
+import { SettingsSection } from '@/components/ui/settings-section';
 import { TopBar } from '@/components/ui/top-bar';
 import { useExchange } from '@/context/exchange-context';
 import { colors, spacing, typography } from '@/theme/tokens';
 
-type Choice = 'interface' | 'orderType' | 'leverage' | null;
+type Choice = 'interface' | 'orderType' | 'leverage' | 'refresh' | null;
 
 export default function TradingSettingsScreen() {
   const { settings, updateSetting } = useExchange();
@@ -15,39 +16,28 @@ export default function TradingSettingsScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <TopBar back title="Trading preferences" />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Section title="Interface">
-          <SettingRow
-            hint={settings.interfaceMode === 'basic' ? 'Streamlined chart and market execution.' : 'Candles, order book and full order controls.'}
-            icon="trade"
-            label="Trading interface"
-            onPress={() => setChoice('interface')}
-            value={settings.interfaceMode === 'basic' ? 'Basic' : 'Advanced'}
-          />
-        </Section>
-        <Section title="Order defaults">
-          <SettingRow icon="trade" label="Default order type" onPress={() => setChoice('orderType')} value={settings.defaultOrderType.charAt(0).toUpperCase() + settings.defaultOrderType.slice(1)} />
-          <SettingRow icon="sliders" label="Default leverage" onPress={() => setChoice('leverage')} value={String(settings.defaultLeverage) + 'x'} />
-          <SettingRow icon="check" label="Confirm orders" onToggle={(value) => updateSetting('confirmOrders', value)} toggle={settings.confirmOrders} />
-          <SettingRow hint="Show take-profit and stop-loss fields on the order ticket." icon="alert" label="Risk controls" onToggle={(value) => updateSetting('attachRiskControls', value)} toggle={settings.attachRiskControls} />
-        </Section>
-        <Text style={styles.note}>Interface changes apply immediately and use the same balance, positions and orders.</Text>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <SettingsSection title="Trading interface">
+          <SettingRow hint="Basic is streamlined. Advanced adds candles, the order book and complete controls." icon="mode" label="Interface" onPress={() => setChoice('interface')} value={settings.interfaceMode === 'basic' ? 'Basic' : 'Advanced'} />
+          <SettingRow icon="refresh" label="Market refresh" onPress={() => setChoice('refresh')} value={settings.refreshRate} />
+        </SettingsSection>
+        <SettingsSection title="Order defaults">
+          <SettingRow icon="orders" label="Default order type" onPress={() => setChoice('orderType')} value={settings.defaultOrderType.charAt(0).toUpperCase() + settings.defaultOrderType.slice(1)} />
+          <SettingRow icon="sliders" label="Default leverage" onPress={() => setChoice('leverage')} value={`${settings.defaultLeverage}x`} />
+          <SettingRow icon="check" label="Order confirmation" onToggle={(value) => updateSetting('confirmOrders', value)} toggle={settings.confirmOrders} />
+          <SettingRow hint="Attach take-profit and stop-loss fields to new tickets." icon="alert" label="Risk controls" onToggle={(value) => updateSetting('attachRiskControls', value)} toggle={settings.attachRiskControls} />
+        </SettingsSection>
+        <Text style={styles.note}>Interface changes keep the same balance, positions and open orders.</Text>
       </ScrollView>
-
       <ChoiceSheet format={(value) => value === 'basic' ? 'Basic' : 'Advanced'} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('interfaceMode', value)} options={['basic', 'advanced'] as const} title="Trading interface" value={settings.interfaceMode} visible={choice === 'interface'} />
       <ChoiceSheet format={(value) => value.charAt(0).toUpperCase() + value.slice(1)} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('defaultOrderType', value)} options={['market', 'limit', 'stop'] as const} title="Default order type" value={settings.defaultOrderType} visible={choice === 'orderType'} />
-      <ChoiceSheet format={(value) => String(value) + 'x'} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('defaultLeverage', value)} options={[1, 2, 3, 5, 10, 20] as const} title="Default leverage" value={settings.defaultLeverage} visible={choice === 'leverage'} />
+      <ChoiceSheet format={(value) => `${value}x`} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('defaultLeverage', value)} options={[1, 2, 3, 5, 10, 20] as const} title="Default leverage" value={settings.defaultLeverage} visible={choice === 'leverage'} />
+      <ChoiceSheet onClose={() => setChoice(null)} onSelect={(value) => updateSetting('refreshRate', value)} options={['Live', 'Every 5 seconds', 'Every 15 seconds'] as const} title="Market refresh" value={settings.refreshRate} visible={choice === 'refresh'} />
     </Screen>
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return <View style={styles.section}><Text style={styles.sectionTitle}>{title}</Text>{children}</View>;
-}
-
 const styles = StyleSheet.create({
-  content: { paddingBottom: 28 },
-  section: { marginTop: 22, paddingHorizontal: spacing.page },
-  sectionTitle: { color: colors.textFaint, fontFamily: typography.semibold, fontSize: 10, letterSpacing: 0.8, marginBottom: 5, textTransform: 'uppercase' },
-  note: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, lineHeight: 17, paddingHorizontal: spacing.page, paddingTop: 20 },
+  content: { paddingBottom: spacing.xl },
+  note: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.regular, lineHeight: 15, paddingHorizontal: spacing.page, paddingTop: spacing.md },
 });

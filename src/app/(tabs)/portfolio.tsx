@@ -7,7 +7,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
 import { formatMoney, formatPrice } from '@/lib/format';
-import { colors, spacing, typography } from '@/theme/tokens';
+import { colors, radii, spacing, typography } from '@/theme/tokens';
 import type { Position } from '@/types/exchange';
 
 type PortfolioTab = 'Positions' | 'Orders' | 'History' | 'Assets';
@@ -69,14 +69,14 @@ export default function PortfolioScreen() {
 
         <View style={styles.summary}>
           <SummaryStat label="Available" value={masked(cashBalance)} />
-          <SummaryStat label="In use" value={masked(usedMargin)} />
-          <SummaryStat color={realizedPnl >= 0 ? colors.positive : colors.negative} label="Realised P&L" value={masked(realizedPnl)} />
+          <SummaryStat divider label="In use" value={masked(usedMargin)} />
+          <SummaryStat color={realizedPnl >= 0 ? colors.positive : colors.negative} divider label="Realised P&L" value={masked(realizedPnl)} />
         </View>
 
         <View style={styles.quickActions}>
           {ACTIONS.map((item) => (
             <Pressable accessibilityRole="button" key={item.label} onPress={() => runAction(item.action)} style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}>
-              <View style={styles.quickIcon}><Icon name={item.icon} size={23} /></View>
+              <Icon name={item.icon} size={20} />
               <Text style={styles.quickLabel}>{item.label}</Text>
             </Pressable>
           ))}
@@ -230,8 +230,8 @@ function TransferTab({ active, label, onPress }: { active: boolean; label: strin
   return <Pressable onPress={onPress} style={styles.transferTab}><Text style={[styles.transferText, active && styles.transferActive]}>{label}</Text>{active ? <View style={styles.transferLine} /> : null}</Pressable>;
 }
 
-function SummaryStat({ label, value, color = colors.text }: { label: string; value: string; color?: string }) {
-  return <View style={styles.summaryStat}><Text style={styles.summaryLabel}>{label}</Text><Text numberOfLines={1} style={[styles.summaryValue, { color }]}>{value}</Text></View>;
+function SummaryStat({ label, value, color = colors.text, divider = false }: { label: string; value: string; color?: string; divider?: boolean }) {
+  return <View style={[styles.summaryStat, divider && styles.summaryDivider]}><Text style={styles.summaryLabel}>{label}</Text><Text numberOfLines={1} style={[styles.summaryValue, { color }]}>{value}</Text></View>;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -247,85 +247,85 @@ function EmptyState({ title, copy }: { title: string; copy: string }) {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 32 },
-  header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 58, paddingHorizontal: spacing.page },
-  title: { color: colors.text, fontFamily: typography.bold, fontSize: 25, letterSpacing: -0.5 },
-  headerAction: { alignItems: 'center', height: 48, justifyContent: 'center', width: 44 },
-  balance: { paddingHorizontal: spacing.page, paddingTop: 17 },
+  content: { paddingBottom: spacing.xl },
+  header: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 52, justifyContent: 'space-between', paddingHorizontal: spacing.page },
+  title: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 21, letterSpacing: -0.3 },
+  headerAction: { alignItems: 'center', height: 44, justifyContent: 'center', width: 36 },
+  balance: { paddingBottom: spacing.md, paddingHorizontal: spacing.page, paddingTop: spacing.md },
   balanceLabel: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 7, minHeight: 24 },
-  muted: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12 },
-  balanceValue: { color: colors.text, fontFamily: typography.bold, fontSize: 27, fontVariant: ['tabular-nums'], letterSpacing: -0.7, marginTop: 4 },
-  todayPnl: { fontFamily: typography.medium, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 6 },
-  summary: { flexDirection: 'row', gap: 12, paddingHorizontal: spacing.page, paddingTop: 22 },
-  summaryStat: { flex: 1, minWidth: 0 },
-  summaryLabel: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 10 },
-  summaryValue: { fontFamily: typography.semibold, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 5 },
-  quickActions: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, paddingBottom: 24, paddingTop: 27 },
-  quickAction: { alignItems: 'center', minHeight: 72, width: '24%' },
-  quickIcon: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 25, height: 50, justifyContent: 'center', width: 50 },
-  quickLabel: { color: colors.text, fontFamily: typography.medium, fontSize: 11, marginTop: 8 },
-  tabs: { gap: 25, minWidth: '100%', paddingHorizontal: spacing.page },
-  tab: { alignItems: 'center', flexDirection: 'row', gap: 5, minHeight: 47, paddingBottom: 3 },
-  tabText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
-  tabActive: { color: colors.text, fontFamily: typography.semibold },
-  tabCount: { color: colors.textFaint, fontFamily: typography.medium, fontSize: 9 },
+  muted: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
+  balanceValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 25, fontVariant: ['tabular-nums'], letterSpacing: -0.5, marginTop: spacing.xxs },
+  todayPnl: { fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 6 },
+  summary: { backgroundColor: colors.section, borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 62 },
+  summaryStat: { flex: 1, justifyContent: 'center', minWidth: 0, paddingHorizontal: spacing.sm },
+  summaryDivider: { borderLeftColor: colors.divider, borderLeftWidth: StyleSheet.hairlineWidth },
+  summaryLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10 },
+  summaryValue: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 5 },
+  quickActions: { backgroundColor: colors.section, borderColor: colors.dividerSoft, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 70, margin: spacing.page, overflow: 'hidden' },
+  quickAction: { alignItems: 'center', borderRightColor: colors.divider, borderRightWidth: StyleSheet.hairlineWidth, flex: 1, justifyContent: 'center' },
+  quickLabel: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 10, marginTop: spacing.xs },
+  tabs: { borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, gap: spacing.lg, minWidth: '100%', paddingHorizontal: spacing.page },
+  tab: { alignItems: 'center', flexDirection: 'row', gap: spacing.xxs, minHeight: 44, paddingBottom: 2 },
+  tabText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 13 },
+  tabActive: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold },
+  tabCount: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 9 },
   tabLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
   list: { paddingHorizontal: spacing.page },
-  position: { paddingBottom: 20, paddingTop: 19 },
+  position: { borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: spacing.md, paddingTop: spacing.md },
   rowTop: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   marketIdentity: { alignItems: 'center', flexDirection: 'row', gap: 11 },
-  symbol: { color: colors.text, fontFamily: typography.semibold, fontSize: 13 },
-  quote: { color: colors.textFaint, fontFamily: typography.regular, fontSize: 9 },
-  side: { fontFamily: typography.semibold, fontSize: 9, marginTop: 4 },
+  symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13 },
+  quote: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9 },
+  side: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 9, marginTop: 4 },
   pnlColumn: { alignItems: 'flex-end' },
-  pnlValue: { fontFamily: typography.semibold, fontSize: 13, fontVariant: ['tabular-nums'] },
-  pnlLabel: { color: colors.textFaint, fontFamily: typography.regular, fontSize: 9, marginTop: 4 },
+  pnlValue: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13, fontVariant: ['tabular-nums'] },
+  pnlLabel: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9, marginTop: 4 },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', paddingTop: 16, rowGap: 14 },
   metric: { width: '50%' },
-  metricLabel: { color: colors.textFaint, fontFamily: typography.regular, fontSize: 9 },
-  metricValue: { color: colors.text, fontFamily: typography.medium, fontSize: 11, fontVariant: ['tabular-nums'], marginTop: 4 },
-  rowAction: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.surface, borderRadius: 8, justifyContent: 'center', marginTop: 16, minHeight: 38, paddingHorizontal: 14 },
-  rowActionText: { color: colors.text, fontFamily: typography.medium, fontSize: 11 },
-  cancel: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 8, justifyContent: 'center', minHeight: 36, paddingHorizontal: 12 },
-  cancelText: { color: colors.text, fontFamily: typography.medium, fontSize: 10 },
+  metricLabel: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9 },
+  metricValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11, fontVariant: ['tabular-nums'], marginTop: 4 },
+  rowAction: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center', marginTop: spacing.md, minHeight: 36, paddingHorizontal: spacing.sm },
+  rowActionText: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11 },
+  cancel: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center', minHeight: 36, paddingHorizontal: spacing.sm },
+  cancelText: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 10 },
   historyList: { paddingHorizontal: spacing.page, paddingTop: 5 },
-  historyRow: { alignItems: 'center', flexDirection: 'row', minHeight: 68 },
+  historyRow: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 68 },
   historyCopy: { flex: 1, marginLeft: 10 },
-  historyMeta: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 9, marginTop: 4 },
+  historyMeta: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9, marginTop: 4 },
   historyValue: { alignItems: 'flex-end' },
-  historyPrice: { color: colors.text, fontFamily: typography.medium, fontSize: 11, fontVariant: ['tabular-nums'] },
-  historyPnl: { fontFamily: typography.medium, fontSize: 10, fontVariant: ['tabular-nums'], marginTop: 4 },
+  historyPrice: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11, fontVariant: ['tabular-nums'] },
+  historyPnl: { fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 10, fontVariant: ['tabular-nums'], marginTop: 4 },
   assets: { paddingHorizontal: spacing.page, paddingTop: 8 },
-  assetRow: { alignItems: 'center', flexDirection: 'row', minHeight: 78 },
-  assetIcon: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 21, height: 42, justifyContent: 'center', width: 42 },
+  assetRow: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 72 },
+  assetIcon: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderRadius: radii.md, height: 38, justifyContent: 'center', width: 38 },
   assetCopy: { flex: 1, marginLeft: 12 },
-  assetLabel: { color: colors.text, fontFamily: typography.semibold, fontSize: 13 },
-  assetMeta: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 10, marginTop: 3 },
-  assetValue: { color: colors.text, fontFamily: typography.semibold, fontSize: 12, fontVariant: ['tabular-nums'] },
-  empty: { alignItems: 'center', paddingHorizontal: 40, paddingVertical: 70 },
-  emptyTitle: { color: colors.text, fontFamily: typography.semibold, fontSize: 14, marginTop: 13 },
-  emptyCopy: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, marginTop: 6, textAlign: 'center' },
-  closeCopy: { color: colors.text, fontFamily: typography.regular, fontSize: 13, lineHeight: 20 },
+  assetLabel: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13 },
+  assetMeta: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: 3 },
+  assetValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, fontVariant: ['tabular-nums'] },
+  empty: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 40, paddingVertical: 48 },
+  emptyTitle: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14, marginTop: 13 },
+  emptyCopy: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11, marginTop: 6, textAlign: 'center' },
+  closeCopy: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 13, lineHeight: 20 },
   closeSummary: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
-  closePnl: { fontFamily: typography.semibold, fontSize: 12, fontVariant: ['tabular-nums'] },
-  dangerButton: { alignItems: 'center', backgroundColor: colors.negative, borderRadius: 10, justifyContent: 'center', marginTop: 24, minHeight: 52 },
-  dangerButtonText: { color: colors.white, fontFamily: typography.semibold, fontSize: 14 },
+  closePnl: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, fontVariant: ['tabular-nums'] },
+  dangerButton: { alignItems: 'center', backgroundColor: colors.negative, borderRadius: radii.md, justifyContent: 'center', marginTop: spacing.lg, minHeight: 48 },
+  dangerButtonText: { color: colors.white, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14 },
   transferTabs: { flexDirection: 'row', gap: 25, marginBottom: 25 },
   transferTab: { justifyContent: 'center', minHeight: 42 },
-  transferText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
-  transferActive: { color: colors.text, fontFamily: typography.semibold },
+  transferText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 13 },
+  transferActive: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold },
   transferLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
   sheetHeading: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  sheetLabel: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12 },
-  sheetAvailable: { color: colors.textFaint, fontFamily: typography.regular, fontSize: 11 },
-  amountInput: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderRadius: 10, flexDirection: 'row', height: 54, paddingHorizontal: 14 },
+  sheetLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
+  sheetAvailable: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11 },
+  amountInput: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 50, paddingHorizontal: spacing.sm },
   amountInputError: { borderColor: colors.negative, borderWidth: 1 },
-  amountText: { color: colors.text, flex: 1, fontFamily: typography.semibold, fontSize: 18, fontVariant: ['tabular-nums'], padding: 0 },
-  amountUnit: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11 },
-  error: { color: colors.negative, fontFamily: typography.regular, fontSize: 10, marginTop: 6 },
+  amountText: { color: colors.text, flex: 1, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 18, fontVariant: ['tabular-nums'], padding: 0 },
+  amountUnit: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 11 },
+  error: { color: colors.negative, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: 6 },
   maxAction: { alignSelf: 'flex-end', justifyContent: 'center', minHeight: 42 },
-  maxText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
-  primaryButton: { alignItems: 'center', backgroundColor: colors.text, borderRadius: 10, justifyContent: 'center', marginTop: 12, minHeight: 52 },
-  primaryButtonText: { color: colors.bg, fontFamily: typography.semibold, fontSize: 14 },
+  maxText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11 },
+  primaryButton: { alignItems: 'center', backgroundColor: colors.text, borderRadius: radii.md, justifyContent: 'center', marginTop: spacing.sm, minHeight: 48 },
+  primaryButtonText: { color: colors.bg, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14 },
   pressed: { opacity: 0.66 },
 });

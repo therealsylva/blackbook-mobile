@@ -7,7 +7,7 @@ import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
 import { formatPercent, formatPrice } from '@/lib/format';
-import { colors, spacing, typography } from '@/theme/tokens';
+import { colors, radii, spacing, typography } from '@/theme/tokens';
 import type { Side } from '@/types/exchange';
 
 type Timeframe = '1H' | '1D' | '1W' | '1M' | '6M';
@@ -56,10 +56,10 @@ export default function MarketDetailScreen() {
           </View>
         </View>
         <Pressable accessibilityLabel="Price alert" hitSlop={10} onPress={() => toggleAlert(market.symbol)}>
-          <Icon color={alerts.has(market.symbol) ? colors.accent : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} />
+          <Icon color={alerts.has(market.symbol) ? colors.text : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} />
         </Pressable>
         <Pressable accessibilityLabel="Favorite" hitSlop={10} onPress={() => toggleFavorite(market.symbol)}>
-          <Icon color={favorites.has(market.symbol) ? colors.accent : colors.textMuted} filled={favorites.has(market.symbol)} name="star" size={21} />
+          <Icon color={favorites.has(market.symbol) ? colors.text : colors.textMuted} filled={favorites.has(market.symbol)} name="star" size={21} />
         </Pressable>
       </View>
 
@@ -106,7 +106,7 @@ export default function MarketDetailScreen() {
           <View style={styles.infoRow}><Text style={styles.infoLabel}>Settlement</Text><Text style={styles.infoValue}>POINT</Text></View>
           <Pressable onPress={() => openTrade('long', true)} style={styles.advancedLink}>
             <Text style={styles.advancedText}>Open advanced trade</Text>
-            <Icon color={colors.accent} name="chevron" size={16} />
+            <Icon color={colors.textMuted} name="chevron" size={16} />
           </Pressable>
         </View>
       </ScrollView>
@@ -120,35 +120,35 @@ export default function MarketDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { alignItems: 'center', flexDirection: 'row', gap: 14, minHeight: 62, paddingHorizontal: spacing.page },
+  header: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.sm, minHeight: 56, paddingHorizontal: spacing.page },
   identity: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: 10 },
-  symbol: { color: colors.text, fontFamily: typography.semibold, fontSize: 14 },
-  name: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 10, marginTop: 2 },
-  content: { paddingBottom: 20 },
-  lastLabel: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, marginTop: 22, paddingHorizontal: spacing.page },
-  price: { color: colors.text, fontFamily: typography.bold, fontSize: 30, fontVariant: ['tabular-nums'], letterSpacing: -0.8, marginTop: 4, paddingHorizontal: spacing.page },
-  change: { fontFamily: typography.medium, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 6, paddingHorizontal: spacing.page },
-  chart: { marginTop: 12 },
-  timeframes: { flexDirection: 'row', justifyContent: 'space-around', marginHorizontal: spacing.page },
-  timeframe: { alignItems: 'center', minWidth: 44, paddingBottom: 11, paddingTop: 7 },
-  timeframeText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
+  symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14 },
+  name: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: 2 },
+  content: { paddingBottom: spacing.lg },
+  lastLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: spacing.md, paddingHorizontal: spacing.page },
+  price: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 27, fontVariant: ['tabular-nums'], letterSpacing: -0.6, marginTop: spacing.xxs, paddingHorizontal: spacing.page },
+  change: { fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 6, paddingHorizontal: spacing.page },
+  chart: { marginTop: spacing.xs },
+  timeframes: { backgroundColor: colors.section, borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-around', marginTop: spacing.xs, paddingHorizontal: spacing.page },
+  timeframe: { alignItems: 'center', minWidth: 44, paddingBottom: spacing.xs, paddingTop: spacing.xs },
+  timeframeText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11 },
   timeframeActive: { color: colors.text },
-  timeframeLine: { backgroundColor: colors.accent, bottom: 0, height: 2, left: 7, position: 'absolute', right: 7 },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.page, paddingTop: 22, rowGap: 18 },
-  stat: { width: '50%' },
-  statLabel: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11 },
-  statValue: { color: colors.text, fontFamily: typography.semibold, fontSize: 14, fontVariant: ['tabular-nums'], marginTop: 5 },
-  marketInfo: { marginTop: 24, paddingHorizontal: spacing.page, paddingTop: 20 },
-  infoTitle: { color: colors.text, fontFamily: typography.bold, fontSize: 17, marginBottom: 9 },
-  infoRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 38 },
-  infoLabel: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12 },
-  infoValue: { color: colors.text, fontFamily: typography.medium, fontSize: 12 },
-  advancedLink: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, minHeight: 50 },
-  advancedText: { color: colors.text, fontFamily: typography.semibold, fontSize: 13 },
-  actions: { backgroundColor: colors.bg, borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 10, padding: 12 },
-  action: { alignItems: 'center', borderRadius: 10, flex: 1, justifyContent: 'center', minHeight: 52 },
+  timeframeLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 7, position: 'absolute', right: 7 },
+  stats: { backgroundColor: colors.section, borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.lg },
+  stat: { borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderRightColor: colors.dividerSoft, borderRightWidth: StyleSheet.hairlineWidth, justifyContent: 'center', minHeight: 66, paddingHorizontal: spacing.page, width: '50%' },
+  statLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11 },
+  statValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14, fontVariant: ['tabular-nums'], marginTop: 5 },
+  marketInfo: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.lg, paddingHorizontal: spacing.page, paddingTop: spacing.md },
+  infoTitle: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 17, marginBottom: spacing.xs },
+  infoRow: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', minHeight: 42 },
+  infoLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
+  infoValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12 },
+  advancedLink: { alignItems: 'center', backgroundColor: colors.section, borderColor: colors.dividerSoft, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md, minHeight: 48, paddingHorizontal: spacing.sm },
+  advancedText: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13 },
+  actions: { backgroundColor: colors.navigation, borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.xs, padding: spacing.xs },
+  action: { alignItems: 'center', borderRadius: radii.md, flex: 1, justifyContent: 'center', minHeight: 48 },
   long: { backgroundColor: colors.positive },
   short: { backgroundColor: colors.negative },
-  actionText: { color: colors.white, fontFamily: typography.semibold, fontSize: 15 },
+  actionText: { color: colors.white, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 15 },
   pressed: { opacity: 0.72 },
 });

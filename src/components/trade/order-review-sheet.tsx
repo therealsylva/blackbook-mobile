@@ -47,14 +47,14 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   heading: { paddingBottom: 16 },
-  symbol: { color: colors.text, fontFamily: typography.semibold, fontSize: 18 },
-  side: { fontFamily: typography.semibold, fontSize: 12, marginTop: 5, textTransform: 'uppercase' },
+  symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 18 },
+  side: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, marginTop: 5, textTransform: 'uppercase' },
   rows: { paddingTop: 11 },
   row: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 36 },
-  label: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 12 },
-  value: { color: colors.text, fontFamily: typography.medium, fontSize: 12, fontVariant: ['tabular-nums'] },
-  risk: { color: colors.textMuted, fontFamily: typography.regular, fontSize: 11, lineHeight: 17, marginTop: 14 },
+  label: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
+  value: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12, fontVariant: ['tabular-nums'] },
+  risk: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11, lineHeight: 17, marginTop: 14 },
   button: { alignItems: 'center', borderRadius: 10, justifyContent: 'center', marginTop: 20, minHeight: 52 },
-  buttonText: { color: colors.white, fontFamily: typography.semibold, fontSize: 15 },
+  buttonText: { color: colors.white, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 15 },
   pressed: { opacity: 0.72 },
 });
