@@ -16,7 +16,8 @@ const requiredFiles = [
   'src/app/(tabs)/indices.tsx',
   'src/app/(tabs)/trade.tsx',
   'src/app/(tabs)/portfolio.tsx',
-  'src/app/(tabs)/profile.tsx',
+  'src/app/(tabs)/feed.tsx',
+  'src/app/profile.tsx',
   'src/app/market/[symbol].tsx',
   'src/app/settings/index.tsx',
   'src/app/settings/trading.tsx',
@@ -41,6 +42,8 @@ if (packageJson.main !== 'expo-router/entry') failures.push('package.json must u
 if (appJson.expo?.android?.package !== 'com.modnight.blackbook') failures.push('Unexpected Android application ID.');
 if (!appJson.expo?.newArchEnabled) failures.push('React Native New Architecture must stay enabled.');
 if (packageJson.dependencies?.['react-native-webview']) failures.push('WebView is forbidden in the native exchange app.');
+if (packageJson.dependencies?.['expo-symbols']) failures.push('expo-symbols must not replace the Lucide icon system.');
+if (!packageJson.dependencies?.['lucide-react-native']) failures.push('Lucide must be the shared mobile icon system.');
 if (packageJson.scripts?.['bundle:web']) failures.push('Website bundling is forbidden in the native exchange app.');
 if (appJson.expo?.icon !== './assets/icon.png') failures.push('The Blackbook app icon is not configured.');
 if (appJson.expo?.android?.adaptiveIcon?.foregroundImage !== './assets/adaptive-icon.png') failures.push('The adaptive icon is not configured.');
@@ -51,7 +54,8 @@ if (!splashPlugin || splashPlugin[1]?.image !== './assets/splash-icon.png') fail
 const marketSource = await readFile(join(root, 'src/data/markets.ts'), 'utf8');
 const marketCount = (marketSource.match(/"symbol":/g) ?? []).length;
 const priceCount = (marketSource.match(/"price":/g) ?? []).length;
-if (marketCount < 39 || priceCount < 39) failures.push('All Indices must include at least 39 priced markets.');
+if (marketCount < 37 || priceCount < 37) failures.push('All Indices must include the approved 37 priced markets.');
+if (/"symbol":\s*"(?:MUSK|RMD\/LMY)"/.test(marketSource)) failures.push('Removed indices remain in the market catalog.');
 
 const marketAssets = await readdir(join(root, 'src/assets/indices'));
 if (marketAssets.filter((name) => ['.jpg', '.jpeg', '.png'].includes(extname(name).toLowerCase())).length < 35) {
@@ -72,7 +76,7 @@ async function sourceFiles(directory) {
 const forbiddenProductPatterns = [
   { pattern: /\bWebView\b|react-native-webview/i, label: 'WebView code' },
   { pattern: /\b(?:simulat(?:ed|ion)?|fixture|preview|demo|disconnected)\b/i, label: 'scaffolding language' },
-  { pattern: /index methodology|Trade what you know|mobile-app\.css|bundle:web/i, label: 'website-port language' },
+  { pattern: /Trade what you know|mobile-app\.css|bundle:web/i, label: 'website-port language' },
 ];
 const sensitivePatterns = [
   /AKIA[0-9A-Z]{16}/,
@@ -90,9 +94,22 @@ for (const path of await sourceFiles(join(root, 'src'))) {
   }
 }
 
+const tabsSource = await readFile(join(root, 'src/app/(tabs)/_layout.tsx'), 'utf8');
+if (/name=["']profile["']/.test(tabsSource)) failures.push('Profile must not appear in the bottom navigation.');
+if (!/name=["']feed["']/.test(tabsSource)) failures.push('Feed must appear in the bottom navigation.');
+
+const appSource = (await Promise.all((await sourceFiles(join(root, 'src'))).map((path) => readFile(path, 'utf8')))).join('\n');
+if (/fundingBalance|transferFunds|Trading account|Funding account/.test(appSource)) failures.push('Crypto account splits or transfer flows remain in the app.');
+if (/\/POINT/.test(appSource)) failures.push('Hardcoded /POINT labels remain in the UI.');
+
+const indicesSource = await readFile(join(root, 'src/app/(tabs)/indices.tsx'), 'utf8');
+for (const legacy of ["'Sports'", "'Music'", "'People'", "'Relative'"]) {
+  if (indicesSource.includes(legacy)) failures.push(`Legacy directory category remains: ${legacy}.`);
+}
+
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exitCode = 1;
 } else {
-  console.log('Blackbook native exchange validation passed: 39 markets, local trading flow, app icon and splash.');
+  console.log('Blackbook mobile validation passed: locked navigation, Lucide icons, market universe, account model, app icon and splash.');
 }

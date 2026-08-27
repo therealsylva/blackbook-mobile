@@ -1,331 +1,230 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { AddFundsSheet } from '@/components/account/add-funds-sheet';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MarketAvatar } from '@/components/market/market-avatar';
-import { BottomSheet } from '@/components/ui/bottom-sheet';
-import { Icon, type IconName } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { formatMoney, formatPrice } from '@/lib/format';
+import { formatMoney, formatPercent, formatPrice } from '@/lib/format';
 import { colors, radii, spacing, typography } from '@/theme/tokens';
-import type { Position } from '@/types/exchange';
+import type { OpenOrder, Position, TradeRecord } from '@/types/exchange';
 
-type PortfolioTab = 'Positions' | 'Orders' | 'History' | 'Assets';
-type FundsAction = 'withdraw' | 'transfer';
-
-const TABS: PortfolioTab[] = ['Positions', 'Orders', 'History', 'Assets'];
-const ACTIONS: Array<{ label: string; icon: IconName; action: 'deposit' | FundsAction | 'history' }> = [
-  { label: 'Deposit', icon: 'download', action: 'deposit' },
-  { label: 'Withdraw', icon: 'upload', action: 'withdraw' },
-  { label: 'Transfer', icon: 'swap', action: 'transfer' },
-  { label: 'History', icon: 'clock', action: 'history' },
-];
+type PortfolioTab = 'Positions' | 'Orders' | 'Journal';
 
 export default function PortfolioScreen() {
-  const {
-    totalEquity,
-    cashBalance,
-    fundingBalance,
-    unrealizedPnl,
-    positions,
-    orders,
-    history,
-    positionPnl,
-    closePosition,
-    settings,
-  } = useExchange();
+  const { cashBalance, usedMargin, totalEquity, unrealizedPnl, positions, orders, history, settings } = useExchange();
   const [tab, setTab] = useState<PortfolioTab>('Positions');
-  const [balanceVisible, setBalanceVisible] = useState(true);
-  const [depositOpen, setDepositOpen] = useState(false);
-  const [fundsAction, setFundsAction] = useState<FundsAction | null>(null);
-  const [closing, setClosing] = useState<Position | null>(null);
-
-  const usedMargin = useMemo(() => positions.reduce((sum, item) => sum + item.margin, 0), [positions]);
-  const realizedPnl = useMemo(() => history.reduce((sum, item) => sum + (item.pnl ?? 0), 0), [history]);
-  const masked = (value: number) => balanceVisible ? formatMoney(value, settings.currency) : '••••';
-
-  const runAction = (action: (typeof ACTIONS)[number]['action']) => {
-    if (action === 'deposit') setDepositOpen(true);
-    else if (action === 'history') setTab('History');
-    else setFundsAction(action);
-  };
+  const counts = { Positions: positions.length, Orders: orders.length, Journal: history.length };
 
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Portfolio</Text>
-          <Pressable accessibilityLabel="Trade history" hitSlop={10} onPress={() => setTab('History')} style={styles.headerAction}><Icon name="clock" size={22} /></Pressable>
+        <View style={styles.header}><Text style={styles.title}>Portfolio</Text></View>
+
+        <View style={styles.equity}>
+          <Text style={styles.eyebrow}>Total equity</Text>
+          <Text style={styles.equityValue}>{formatMoney(totalEquity, settings.currency)}</Text>
+          <Text style={[styles.today, { color: unrealizedPnl >= 0 ? colors.positive : colors.negative }]}>{unrealizedPnl >= 0 ? '+' : ''}{formatMoney(unrealizedPnl, settings.currency)} today</Text>
+          <View style={styles.balanceMetrics}>
+            <BalanceMetric label="Available" value={formatMoney(cashBalance, settings.currency)} />
+            <BalanceMetric label="In use" value={formatMoney(usedMargin, settings.currency)} />
+          </View>
         </View>
 
-        <View style={styles.balance}>
-          <Pressable accessibilityLabel="Toggle balance visibility" onPress={() => setBalanceVisible((value) => !value)} style={styles.balanceLabel}>
-            <Text style={styles.muted}>Total equity</Text>
-            <Icon color={colors.textMuted} name={balanceVisible ? 'eye' : 'eye-off'} size={16} />
-          </Pressable>
-          <Text style={styles.balanceValue}>{balanceVisible ? formatMoney(totalEquity, settings.currency) : '••••••••'}</Text>
-          <Text style={[styles.todayPnl, { color: unrealizedPnl >= 0 ? colors.positive : colors.negative }]}>{balanceVisible ? `${unrealizedPnl >= 0 ? '+' : ''}${formatMoney(unrealizedPnl, settings.currency)} today` : '••••'}</Text>
-        </View>
-
-        <View style={styles.summary}>
-          <SummaryStat label="Available" value={masked(cashBalance)} />
-          <SummaryStat divider label="In use" value={masked(usedMargin)} />
-          <SummaryStat color={realizedPnl >= 0 ? colors.positive : colors.negative} divider label="Realised P&L" value={masked(realizedPnl)} />
-        </View>
-
-        <View style={styles.quickActions}>
-          {ACTIONS.map((item) => (
-            <Pressable accessibilityRole="button" key={item.label} onPress={() => runAction(item.action)} style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}>
-              <Icon name={item.icon} size={20} />
-              <Text style={styles.quickLabel}>{item.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <ScrollView contentContainerStyle={styles.tabs} horizontal showsHorizontalScrollIndicator={false}>
-          {TABS.map((item) => (
-            <Pressable accessibilityRole="tab" accessibilityState={{ selected: tab === item }} key={item} onPress={() => setTab(item)} style={styles.tab}>
-              <Text style={[styles.tabText, tab === item && styles.tabActive]}>{item}</Text>
-              {item !== 'Assets' ? <Text style={styles.tabCount}>{item === 'Positions' ? positions.length : item === 'Orders' ? orders.length : history.length}</Text> : null}
+        <View style={styles.tabs}>
+          {(['Positions', 'Orders', 'Journal'] as const).map((item) => (
+            <Pressable key={item} onPress={() => setTab(item)} style={styles.tab}>
+              <Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item} <Text style={styles.tabCount}>{counts[item]}</Text></Text>
               {tab === item ? <View style={styles.tabLine} /> : null}
             </Pressable>
           ))}
-        </ScrollView>
+        </View>
 
-        {tab === 'Positions' ? <PositionsList onClosePosition={setClosing} /> : null}
-        {tab === 'Orders' ? <OrdersList /> : null}
-        {tab === 'History' ? <HistoryList /> : null}
-        {tab === 'Assets' ? (
-          <View style={styles.assets}>
-            <AssetRow copy="Used for index orders and margin" icon="trade" label="Trading account" value={masked(cashBalance + usedMargin + unrealizedPnl)} />
-            <AssetRow copy="Available for deposits and withdrawals" icon="wallet" label="Funding account" value={masked(fundingBalance)} />
-          </View>
-        ) : null}
+        <View style={styles.list}>
+          {tab === 'Positions' ? <PositionsList /> : null}
+          {tab === 'Orders' ? <OrdersList /> : null}
+          {tab === 'Journal' ? <JournalList /> : null}
+        </View>
       </ScrollView>
-
-      <AddFundsSheet onClose={() => setDepositOpen(false)} visible={depositOpen} />
-      <FundsActionSheet action={fundsAction} onClose={() => setFundsAction(null)} />
-      <BottomSheet onClose={() => setClosing(null)} title="Close position" visible={closing !== null}>
-        <Text style={styles.closeCopy}>Close the full {closing?.symbol}/POINT position at the current market price?</Text>
-        <View style={styles.closeSummary}><Text style={styles.muted}>Current P&L</Text><Text style={[styles.closePnl, { color: closing && positionPnl(closing) >= 0 ? colors.positive : colors.negative }]}>{closing ? formatMoney(positionPnl(closing), settings.currency) : ''}</Text></View>
-        <Pressable onPress={() => { if (closing) closePosition(closing.id); setClosing(null); }} style={({ pressed }) => [styles.dangerButton, pressed && styles.pressed]}><Text style={styles.dangerButtonText}>Confirm close</Text></Pressable>
-      </BottomSheet>
     </Screen>
   );
-
 }
 
-function PositionsList({ onClosePosition }: { onClosePosition: (position: Position) => void }) {
-  const { positions, marketFor, positionPnl, priceFor, settings } = useExchange();
-  if (!positions.length) return <EmptyState copy="Positions you open will appear here." title="No open positions" />;
-  return <View style={styles.list}>{positions.map((position) => {
-    const market = marketFor(position.symbol);
-    if (!market) return null;
-    const pnl = positionPnl(position);
-    const mark = priceFor(position.symbol);
-    const liquidation = position.side === 'long' ? position.entryPrice * (1 - 0.9 / position.leverage) : position.entryPrice * (1 + 0.9 / position.leverage);
+function BalanceMetric({ label, value }: { label: string; value: string }) {
+  return <View style={styles.balanceMetric}><Text style={styles.balanceLabel}>{label}</Text><Text style={styles.balanceValue}>{value}</Text></View>;
+}
+
+function PositionsList() {
+  const { positions, marketFor, priceFor, positionPnl, closePosition, settings } = useExchange();
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const toggle = (id: string) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+
+  if (!positions.length) return <Empty title="No open positions" />;
+  return <>{positions.map((position) => {
+    const market = marketFor(position.symbol); if (!market) return null;
+    const pnl = positionPnl(position); const current = priceFor(position.symbol); const open = expanded.has(position.id);
+    const pnlPercent = (pnl / Math.max(position.margin, 1)) * 100;
     return (
-      <View key={position.id} style={styles.position}>
-        <View style={styles.rowTop}>
-          <View style={styles.marketIdentity}><MarketAvatar assetKey={market.assetKey} size={40} symbol={market.symbol} /><View><Text style={styles.symbol}>{market.symbol}<Text style={styles.quote}> / POINT</Text></Text><Text style={[styles.side, { color: position.side === 'long' ? colors.positive : colors.negative }]}>{position.side.toUpperCase()} · {position.leverage}x</Text></View></View>
-          <View style={styles.pnlColumn}><Text style={[styles.pnlValue, { color: pnl >= 0 ? colors.positive : colors.negative }]}>{formatMoney(pnl, settings.currency)}</Text><Text style={styles.pnlLabel}>Unrealised P&L</Text></View>
+      <View key={position.id} style={styles.item}>
+        <Pressable onPress={() => toggle(position.id)} style={({ pressed }) => [styles.itemMain, pressed && styles.pressed]}>
+          <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
+          <View style={styles.itemCopy}>
+            <View style={styles.itemTitleLine}><Text style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
+            <Text style={[styles.sideMeta, { color: position.side === 'long' ? colors.positive : colors.negative }]}>{position.side === 'long' ? 'Long' : 'Short'} · {position.leverage}x</Text>
+          </View>
+          <View style={styles.itemQuote}>
+            <Text style={[styles.pnl, { color: pnl >= 0 ? colors.positive : colors.negative }]}>{pnl >= 0 ? '+' : ''}{formatMoney(pnl, settings.currency)}</Text>
+            <Text style={styles.context}>{formatPercent(pnlPercent)}</Text>
+          </View>
+          <Icon color={colors.textMuted} name="chevron" size={17} />
+        </Pressable>
+        <View style={styles.priceContext}>
+          <Text style={styles.context}>Entry <Text style={styles.contextValue}>{formatPrice(position.entryPrice)}</Text></Text>
+          <Icon color={colors.textFaint} name="chevron" size={13} />
+          <Text style={styles.context}>Current <Text style={styles.contextValue}>{formatPrice(current)}</Text></Text>
         </View>
-        <View style={styles.metrics}>
-          <Metric label="Size" value={formatMoney(position.size, settings.currency)} />
-          <Metric label="Entry" value={formatPrice(position.entryPrice)} />
-          <Metric label="Mark" value={formatPrice(mark)} />
-          <Metric label="Liq. price" value={formatPrice(liquidation)} />
-        </View>
-        <Pressable onPress={() => onClosePosition(position)} style={({ pressed }) => [styles.rowAction, pressed && styles.pressed]}><Text style={styles.rowActionText}>Close position</Text></Pressable>
+        {open ? (
+          <View style={styles.details}>
+            <Detail label="Position size" value={formatMoney(position.size, settings.currency)} />
+            <Detail label="Margin" value={formatMoney(position.margin, settings.currency)} />
+            <Detail label="Opened" value={formatAge(position.openedAt)} />
+            <Pressable onPress={() => closePosition(position.id)} style={styles.outlineButton}><Text style={styles.outlineButtonText}>Close position</Text></Pressable>
+          </View>
+        ) : null}
       </View>
     );
-  })}</View>;
+  })}</>;
 }
 
 function OrdersList() {
-  const { orders, marketFor, cancelOrder, settings } = useExchange();
-  if (!orders.length) return <EmptyState copy="Limit and stop orders will appear here." title="No open orders" />;
-  return <View style={styles.list}>{orders.map((order) => {
-    const market = marketFor(order.symbol);
-    if (!market) return null;
+  const { orders, marketFor, priceFor, cancelOrder, settings } = useExchange();
+  if (!orders.length) return <Empty title="No open orders" />;
+  return <>{orders.map((order: OpenOrder) => {
+    const market = marketFor(order.symbol); if (!market) return null;
+    const current = priceFor(order.symbol);
+    const distance = ((order.targetPrice - current) / current) * 100;
     return (
-      <View key={order.id} style={styles.position}>
-        <View style={styles.rowTop}>
-          <View style={styles.marketIdentity}><MarketAvatar assetKey={market.assetKey} size={40} symbol={market.symbol} /><View><Text style={styles.symbol}>{market.symbol}<Text style={styles.quote}> / POINT</Text></Text><Text style={[styles.side, { color: order.side === 'long' ? colors.positive : colors.negative }]}>{order.side.toUpperCase()} · {order.type.toUpperCase()}</Text></View></View>
+      <View key={order.id} style={styles.item}>
+        <View style={styles.itemMain}>
+          <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
+          <View style={styles.itemCopy}>
+            <View style={styles.itemTitleLine}><Text style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
+            <Text style={[styles.sideMeta, { color: order.side === 'long' ? colors.positive : colors.negative }]}>{order.side === 'long' ? 'Long' : 'Short'} · {order.type} · {order.leverage}x</Text>
+          </View>
           <Pressable onPress={() => cancelOrder(order.id)} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
         </View>
-        <View style={styles.metrics}>
-          <Metric label="Size" value={formatMoney(order.size, settings.currency)} />
-          <Metric label="Target" value={formatPrice(order.targetPrice)} />
-          <Metric label="Leverage" value={`${order.leverage}x`} />
-          <Metric label="Status" value="Open" />
+        <View style={styles.priceContext}>
+          <Text style={styles.context}>Target <Text style={styles.contextValue}>{formatPrice(order.targetPrice)}</Text></Text>
+          <Icon color={colors.textFaint} name="chevron" size={13} />
+          <Text style={styles.context}>Current <Text style={styles.contextValue}>{formatPrice(current)}</Text></Text>
+          <Text style={styles.distance}>{distance >= 0 ? '+' : ''}{distance.toFixed(2)}%</Text>
         </View>
+        <Text style={styles.orderMeta}>{formatMoney(order.size, settings.currency)} · placed {formatAge(order.createdAt)}</Text>
       </View>
     );
-  })}</View>;
+  })}</>;
 }
 
-function HistoryList() {
+function JournalList() {
   const { history, marketFor, settings } = useExchange();
-  if (!history.length) return <EmptyState copy="Filled and closed trades will appear here." title="No trade history" />;
-  return <View style={styles.historyList}>{history.map((record) => {
-    const market = marketFor(record.symbol);
-    if (!market) return null;
+  if (!history.length) return <Empty title="No journal entries" />;
+  return <>{history.map((record: TradeRecord, index) => {
+    const market = marketFor(record.symbol); if (!market) return null;
+    const prior = history[index - 1];
+    const showDate = !prior || new Date(prior.createdAt).toDateString() !== new Date(record.createdAt).toDateString();
     return (
-      <View key={record.id} style={styles.historyRow}>
-        <MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} />
-        <View style={styles.historyCopy}><Text style={styles.symbol}>{market.symbol}<Text style={styles.quote}> / POINT</Text></Text><Text style={styles.historyMeta}>{record.side.toUpperCase()} · {record.status.toUpperCase()} · {new Date(record.createdAt).toLocaleDateString()}</Text></View>
-        <View style={styles.historyValue}><Text style={styles.historyPrice}>{formatPrice(record.price)}</Text>{record.pnl !== undefined ? <Text style={[styles.historyPnl, { color: record.pnl >= 0 ? colors.positive : colors.negative }]}>{formatMoney(record.pnl, settings.currency)}</Text> : null}</View>
+      <View key={record.id}>
+        {showDate ? <Text style={styles.dateHeading}>{formatDate(record.createdAt)}</Text> : null}
+        <View style={styles.journalRow}>
+          <View style={[styles.timelineDot, { backgroundColor: record.pnl === undefined ? colors.textMuted : record.pnl >= 0 ? colors.positive : colors.negative }]} />
+          <View style={styles.journalCopy}>
+            <Text style={styles.journalTitle}>{journalTitle(record, market.name)}</Text>
+            <Text style={styles.journalDetail}>{record.side === 'long' ? 'Long' : 'Short'} · {record.leverage}x · {formatMoney(record.size, settings.currency)}</Text>
+            <Text style={styles.journalDetail}>{formatPrice(record.entryPrice)}{record.exitPrice ? ` → ${formatPrice(record.exitPrice)}` : ''} · fee {formatMoney(record.fee, settings.currency)}</Text>
+          </View>
+          {record.pnl !== undefined ? <Text style={[styles.journalPnl, { color: record.pnl >= 0 ? colors.positive : colors.negative }]}>{record.pnl >= 0 ? '+' : ''}{formatMoney(record.pnl, settings.currency)}</Text> : null}
+        </View>
       </View>
     );
-  })}</View>;
+  })}</>;
 }
 
-function FundsActionSheet({ action, onClose }: { action: FundsAction | null; onClose: () => void }) {
-  const { cashBalance, fundingBalance, settings, withdrawFunds, transferFunds } = useExchange();
-  const [amount, setAmount] = useState('');
-  const [direction, setDirection] = useState<'toFunding' | 'toTrading'>('toFunding');
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (action) {
-      setAmount('');
-      setError('');
-      setDirection('toFunding');
-    }
-  }, [action]);
-
-  const available = action === 'transfer' && direction === 'toTrading' ? fundingBalance : cashBalance;
-  const submit = () => {
-    const parsed = Number(amount);
-    const success = action === 'withdraw' ? withdrawFunds(parsed) : action === 'transfer' ? transferFunds(parsed, direction) : false;
-    if (!success) {
-      setError(parsed > available ? 'Amount exceeds available balance' : 'Enter a valid amount');
-      return;
-    }
-    onClose();
-  };
-
-  return (
-    <BottomSheet onClose={onClose} title={action === 'withdraw' ? 'Withdraw' : 'Transfer'} visible={action !== null}>
-      {action === 'transfer' ? (
-        <View style={styles.transferTabs}>
-          <TransferTab active={direction === 'toFunding'} label="Trading → Funding" onPress={() => setDirection('toFunding')} />
-          <TransferTab active={direction === 'toTrading'} label="Funding → Trading" onPress={() => setDirection('toTrading')} />
-        </View>
-      ) : null}
-      <View style={styles.sheetHeading}><Text style={styles.sheetLabel}>Amount</Text><Text style={styles.sheetAvailable}>Available {formatMoney(available, settings.currency)}</Text></View>
-      <View style={[styles.amountInput, Boolean(error) && styles.amountInputError]}>
-        <TextInput accessibilityLabel={`${action ?? 'funds'} amount`} autoFocus keyboardType="decimal-pad" onChangeText={(value) => { setAmount(value); setError(''); }} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.amountText} value={amount} />
-        <Text style={styles.amountUnit}>{settings.currency}</Text>
-      </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable onPress={() => setAmount(available.toFixed(2))} style={styles.maxAction}><Text style={styles.maxText}>Use maximum</Text></Pressable>
-      <Pressable onPress={submit} style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}><Text style={styles.primaryButtonText}>{action === 'withdraw' ? 'Review withdrawal' : 'Confirm transfer'}</Text></Pressable>
-    </BottomSheet>
-  );
+function Detail({ label, value }: { label: string; value: string }) {
+  return <View style={styles.detail}><Text style={styles.detailLabel}>{label}</Text><Text style={styles.detailValue}>{value}</Text></View>;
 }
 
-function TransferTab({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
-  return <Pressable onPress={onPress} style={styles.transferTab}><Text style={[styles.transferText, active && styles.transferActive]}>{label}</Text>{active ? <View style={styles.transferLine} /> : null}</Pressable>;
+function Empty({ title }: { title: string }) {
+  return <View style={styles.empty}><Text style={styles.emptyText}>{title}</Text></View>;
 }
 
-function SummaryStat({ label, value, color = colors.text, divider = false }: { label: string; value: string; color?: string; divider?: boolean }) {
-  return <View style={[styles.summaryStat, divider && styles.summaryDivider]}><Text style={styles.summaryLabel}>{label}</Text><Text numberOfLines={1} style={[styles.summaryValue, { color }]}>{value}</Text></View>;
+function journalTitle(record: TradeRecord, name: string) {
+  if (record.event === 'closed') return `Closed ${name}`;
+  if (record.event === 'cancelled') return `Cancelled ${name} order`;
+  if (record.event === 'opened') return `Opened ${name}`;
+  return `${name} order filled`;
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricValue}>{value}</Text></View>;
+function formatAge(timestamp: number) {
+  const minutes = Math.max(1, Math.round((Date.now() - timestamp) / 60_000));
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`;
 }
 
-function AssetRow({ icon, label, copy, value }: { icon: IconName; label: string; copy: string; value: string }) {
-  return <View style={styles.assetRow}><View style={styles.assetIcon}><Icon name={icon} size={22} /></View><View style={styles.assetCopy}><Text style={styles.assetLabel}>{label}</Text><Text style={styles.assetMeta}>{copy}</Text></View><Text style={styles.assetValue}>{value}</Text></View>;
-}
-
-function EmptyState({ title, copy }: { title: string; copy: string }) {
-  return <View style={styles.empty}><Icon color={colors.textFaint} name="positions" size={28} /><Text style={styles.emptyTitle}>{title}</Text><Text style={styles.emptyCopy}>{copy}</Text></View>;
+function formatDate(timestamp: number) {
+  const date = new Date(timestamp);
+  if (date.toDateString() === new Date().toDateString()) return 'Today';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 const styles = StyleSheet.create({
   content: { paddingBottom: spacing.xl },
-  header: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 52, justifyContent: 'space-between', paddingHorizontal: spacing.page },
-  title: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 21, letterSpacing: -0.3 },
-  headerAction: { alignItems: 'center', height: 44, justifyContent: 'center', width: 36 },
-  balance: { paddingBottom: spacing.md, paddingHorizontal: spacing.page, paddingTop: spacing.md },
-  balanceLabel: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 7, minHeight: 24 },
-  muted: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
-  balanceValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 25, fontVariant: ['tabular-nums'], letterSpacing: -0.5, marginTop: spacing.xxs },
-  todayPnl: { fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 6 },
-  summary: { backgroundColor: colors.section, borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 62 },
-  summaryStat: { flex: 1, justifyContent: 'center', minWidth: 0, paddingHorizontal: spacing.sm },
-  summaryDivider: { borderLeftColor: colors.divider, borderLeftWidth: StyleSheet.hairlineWidth },
-  summaryLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10 },
-  summaryValue: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 5 },
-  quickActions: { backgroundColor: colors.section, borderColor: colors.dividerSoft, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 70, margin: spacing.page, overflow: 'hidden' },
-  quickAction: { alignItems: 'center', borderRightColor: colors.divider, borderRightWidth: StyleSheet.hairlineWidth, flex: 1, justifyContent: 'center' },
-  quickLabel: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 10, marginTop: spacing.xs },
-  tabs: { borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, gap: spacing.lg, minWidth: '100%', paddingHorizontal: spacing.page },
-  tab: { alignItems: 'center', flexDirection: 'row', gap: spacing.xxs, minHeight: 44, paddingBottom: 2 },
-  tabText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 13 },
-  tabActive: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold },
-  tabCount: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 9 },
-  tabLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
-  list: { paddingHorizontal: spacing.page },
-  position: { borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: spacing.md, paddingTop: spacing.md },
-  rowTop: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  marketIdentity: { alignItems: 'center', flexDirection: 'row', gap: 11 },
-  symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13 },
-  quote: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9 },
-  side: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 9, marginTop: 4 },
-  pnlColumn: { alignItems: 'flex-end' },
-  pnlValue: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13, fontVariant: ['tabular-nums'] },
-  pnlLabel: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9, marginTop: 4 },
-  metrics: { flexDirection: 'row', flexWrap: 'wrap', paddingTop: 16, rowGap: 14 },
-  metric: { width: '50%' },
-  metricLabel: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9 },
-  metricValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11, fontVariant: ['tabular-nums'], marginTop: 4 },
-  rowAction: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center', marginTop: spacing.md, minHeight: 36, paddingHorizontal: spacing.sm },
-  rowActionText: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11 },
-  cancel: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center', minHeight: 36, paddingHorizontal: spacing.sm },
-  cancelText: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 10 },
-  historyList: { paddingHorizontal: spacing.page, paddingTop: 5 },
-  historyRow: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 68 },
-  historyCopy: { flex: 1, marginLeft: 10 },
-  historyMeta: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 9, marginTop: 4 },
-  historyValue: { alignItems: 'flex-end' },
-  historyPrice: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11, fontVariant: ['tabular-nums'] },
-  historyPnl: { fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 10, fontVariant: ['tabular-nums'], marginTop: 4 },
-  assets: { paddingHorizontal: spacing.page, paddingTop: 8 },
-  assetRow: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 72 },
-  assetIcon: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderRadius: radii.md, height: 38, justifyContent: 'center', width: 38 },
-  assetCopy: { flex: 1, marginLeft: 12 },
-  assetLabel: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13 },
-  assetMeta: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: 3 },
-  assetValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, fontVariant: ['tabular-nums'] },
-  empty: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 40, paddingVertical: 48 },
-  emptyTitle: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14, marginTop: 13 },
-  emptyCopy: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11, marginTop: 6, textAlign: 'center' },
-  closeCopy: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 13, lineHeight: 20 },
-  closeSummary: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
-  closePnl: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, fontVariant: ['tabular-nums'] },
-  dangerButton: { alignItems: 'center', backgroundColor: colors.negative, borderRadius: radii.md, justifyContent: 'center', marginTop: spacing.lg, minHeight: 48 },
-  dangerButtonText: { color: colors.white, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14 },
-  transferTabs: { flexDirection: 'row', gap: 25, marginBottom: 25 },
-  transferTab: { justifyContent: 'center', minHeight: 42 },
-  transferText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 13 },
-  transferActive: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold },
-  transferLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 0, position: 'absolute', right: 0 },
-  sheetHeading: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  sheetLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
-  sheetAvailable: { color: colors.textFaint, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11 },
-  amountInput: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 50, paddingHorizontal: spacing.sm },
-  amountInputError: { borderColor: colors.negative, borderWidth: 1 },
-  amountText: { color: colors.text, flex: 1, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 18, fontVariant: ['tabular-nums'], padding: 0 },
-  amountUnit: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 11 },
-  error: { color: colors.negative, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: 6 },
-  maxAction: { alignSelf: 'flex-end', justifyContent: 'center', minHeight: 42 },
-  maxText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11 },
-  primaryButton: { alignItems: 'center', backgroundColor: colors.text, borderRadius: radii.md, justifyContent: 'center', marginTop: spacing.sm, minHeight: 48 },
-  primaryButtonText: { color: colors.bg, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14 },
-  pressed: { opacity: 0.66 },
+  header: { justifyContent: 'center', minHeight: 62, paddingHorizontal: spacing.page },
+  title: { color: colors.text, fontFamily: typography.bold, fontSize: 27, letterSpacing: -0.8 },
+  equity: { paddingHorizontal: spacing.page, paddingTop: spacing.md },
+  eyebrow: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
+  equityValue: { color: colors.text, fontFamily: typography.monoBold, fontSize: 34, letterSpacing: -1.6, marginTop: 3 },
+  today: { fontFamily: typography.monoSemibold, fontSize: 11, marginTop: spacing.xs },
+  balanceMetrics: { flexDirection: 'row', gap: spacing.xl, marginTop: spacing.lg },
+  balanceMetric: { minWidth: 100 },
+  balanceLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
+  balanceValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 12, marginTop: 4 },
+  tabs: { flexDirection: 'row', marginTop: spacing.xl, paddingHorizontal: spacing.page },
+  tab: { alignItems: 'center', flex: 1, minHeight: 42, paddingBottom: 4 },
+  tabText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 13 },
+  tabTextActive: { color: colors.text },
+  tabCount: { fontFamily: typography.mono, fontSize: 9 },
+  tabLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 18, position: 'absolute', right: 18 },
+  list: { paddingHorizontal: spacing.page, paddingTop: spacing.xs },
+  item: { paddingVertical: spacing.md },
+  itemMain: { alignItems: 'center', flexDirection: 'row', minHeight: 48 },
+  itemCopy: { flex: 1, marginLeft: spacing.sm, minWidth: 0 },
+  itemTitleLine: { alignItems: 'baseline', flexDirection: 'row', gap: spacing.xs },
+  itemTitle: { color: colors.text, flexShrink: 1, fontFamily: typography.bold, fontSize: 15, letterSpacing: -0.3 },
+  ticker: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 9 },
+  sideMeta: { fontFamily: typography.monoSemibold, fontSize: 10, marginTop: 4, textTransform: 'capitalize' },
+  itemQuote: { alignItems: 'flex-end', marginRight: spacing.xs },
+  pnl: { fontFamily: typography.monoSemibold, fontSize: 12 },
+  context: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
+  contextValue: { color: colors.text, fontFamily: typography.monoSemibold },
+  priceContext: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs, marginLeft: 54, marginTop: spacing.sm },
+  details: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginLeft: 54, marginTop: spacing.md },
+  detail: { minWidth: 84 },
+  detailLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 9 },
+  detailValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 11, marginTop: 4 },
+  outlineButton: { alignItems: 'center', borderColor: colors.divider, borderRadius: radii.pill, borderWidth: 1, height: 34, justifyContent: 'center', paddingHorizontal: spacing.md },
+  outlineButtonText: { color: colors.text, fontFamily: typography.semibold, fontSize: 10 },
+  cancel: { alignItems: 'center', borderColor: colors.divider, borderRadius: radii.pill, borderWidth: 1, height: 32, justifyContent: 'center', paddingHorizontal: spacing.md },
+  cancelText: { color: colors.text, fontFamily: typography.semibold, fontSize: 10 },
+  distance: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginLeft: 'auto' },
+  orderMeta: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginLeft: 54, marginTop: spacing.sm },
+  dateHeading: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11, marginBottom: spacing.sm, marginTop: spacing.md },
+  journalRow: { flexDirection: 'row', minHeight: 84 },
+  timelineDot: { borderRadius: 4, height: 8, marginRight: spacing.sm, marginTop: 7, width: 8 },
+  journalCopy: { flex: 1 },
+  journalTitle: { color: colors.text, fontFamily: typography.bold, fontSize: 14 },
+  journalDetail: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginTop: 5 },
+  journalPnl: { fontFamily: typography.monoSemibold, fontSize: 11 },
+  empty: { alignItems: 'center', paddingVertical: 64 },
+  emptyText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
+  pressed: { opacity: 0.65 },
 });

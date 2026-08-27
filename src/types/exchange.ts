@@ -1,6 +1,7 @@
 export type Side = 'long' | 'short';
 export type OrderType = 'market' | 'limit' | 'stop';
 export type InterfaceMode = 'basic' | 'advanced';
+export type ChartRange = '1m' | '5m' | '15m' | '1H' | '4H' | '1D' | '1W' | '1M' | '6M';
 
 export interface Position {
   id: string;
@@ -28,11 +29,25 @@ export interface TradeRecord {
   id: string;
   symbol: string;
   side: Side;
+  event: 'opened' | 'filled' | 'closed' | 'cancelled';
+  orderType: OrderType;
   size: number;
-  price: number;
-  status: 'filled' | 'closed' | 'cancelled';
+  leverage: number;
+  entryPrice: number;
+  exitPrice?: number;
+  fee: number;
   pnl?: number;
+  openedAt: number;
   createdAt: number;
+}
+
+export interface UserProfile {
+  displayName: string;
+  uid: string;
+  email: string;
+  phone: string;
+  verified: boolean;
+  avatarUri?: string;
 }
 
 export interface ExchangeSettings {
@@ -45,9 +60,7 @@ export interface ExchangeSettings {
   defaultLeverage: number;
   confirmOrders: boolean;
   attachRiskControls: boolean;
-  priceAlerts: boolean;
-  orderUpdates: boolean;
-  positionRisk: boolean;
+  pushNotifications: boolean;
   appLock: boolean;
   biometrics: boolean;
   autoLock: 'Immediately' | 'After 1 minute' | 'After 5 minutes';

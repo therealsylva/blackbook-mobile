@@ -8,28 +8,30 @@ import { BottomSheet } from '@/components/ui/bottom-sheet';
 interface AddFundsSheetProps {
   visible: boolean;
   onClose: () => void;
+  mode?: 'deposit' | 'withdraw';
 }
 
 const PRESETS = [250, 500, 1000, 2500];
 
-export function AddFundsSheet({ visible, onClose }: AddFundsSheetProps) {
-  const { addFunds, settings } = useExchange();
+export function AddFundsSheet({ visible, onClose, mode = 'deposit' }: AddFundsSheetProps) {
+  const { addFunds, withdrawFunds, cashBalance, settings } = useExchange();
   const [amount, setAmount] = useState('500');
 
   const submit = () => {
     const parsed = Number(amount);
     if (!Number.isFinite(parsed) || parsed <= 0) return;
-    addFunds(parsed);
+    if (mode === 'withdraw' && !withdrawFunds(parsed)) return;
+    if (mode === 'deposit') addFunds(parsed);
     onClose();
   };
 
   return (
-    <BottomSheet onClose={onClose} title="Deposit" visible={visible}>
+    <BottomSheet onClose={onClose} title={mode === 'deposit' ? 'Deposit' : 'Withdraw'} visible={visible}>
       <Text style={styles.label}>Amount</Text>
       <View style={styles.inputRow}>
         <Text style={styles.currency}>{settings.currency}</Text>
         <TextInput
-          accessibilityLabel="Amount to add"
+          accessibilityLabel={mode === 'deposit' ? 'Deposit amount' : 'Withdrawal amount'}
           keyboardType="decimal-pad"
           onChangeText={setAmount}
           placeholder="0.00"
@@ -47,11 +49,11 @@ export function AddFundsSheet({ visible, onClose }: AddFundsSheetProps) {
         ))}
       </View>
       <View style={styles.summary}>
-        <Text style={styles.summaryLabel}>Available instantly</Text>
-        <Text style={styles.summaryValue}>{formatMoney(Number(amount) || 0, settings.currency)}</Text>
+        <Text style={styles.summaryLabel}>{mode === 'deposit' ? 'Deposit amount' : 'Available balance'}</Text>
+        <Text style={styles.summaryValue}>{mode === 'deposit' ? formatMoney(Number(amount) || 0, settings.currency) : formatMoney(cashBalance, settings.currency)}</Text>
       </View>
       <Pressable accessibilityRole="button" onPress={submit} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-        <Text style={styles.buttonText}>Continue</Text>
+        <Text style={styles.buttonText}>{mode === 'deposit' ? 'Deposit' : 'Withdraw'}</Text>
       </Pressable>
     </BottomSheet>
   );

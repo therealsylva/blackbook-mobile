@@ -1,24 +1,46 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
-import { SettingRow } from '@/components/ui/setting-row';
-import { SettingsSection } from '@/components/ui/settings-section';
 import { TopBar } from '@/components/ui/top-bar';
 import { useExchange } from '@/context/exchange-context';
 import { colors, spacing, typography } from '@/theme/tokens';
 
-export default function NotificationSettingsScreen() {
+const FEEDS: Array<{ icon: IconName; label: string; count?: (alerts: number) => string }> = [
+  { icon: 'bell', label: 'Price alerts', count: (alerts) => `${alerts} active` },
+  { icon: 'orders', label: 'Order updates' },
+  { icon: 'alert', label: 'Position risk' },
+  { icon: 'security', label: 'Account notices' },
+  { icon: 'feed', label: 'Market updates' },
+];
+
+export default function NotificationsScreen() {
+  const router = useRouter();
   const { settings, updateSetting, alerts } = useExchange();
   return (
     <Screen edges={['top', 'bottom']}>
       <TopBar back title="Notifications" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.status}><Text style={styles.statusLabel}>Push notifications</Text><Text style={styles.statusValue}>On</Text></View>
-        <SettingsSection title="Trading">
-          <SettingRow hint={`${alerts.size} active price alert${alerts.size === 1 ? '' : 's'}`} icon="bell" label="Price alerts" onToggle={(value) => updateSetting('priceAlerts', value)} toggle={settings.priceAlerts} />
-          <SettingRow hint="Fills, cancellations and rejected orders." icon="orders" label="Order updates" onToggle={(value) => updateSetting('orderUpdates', value)} toggle={settings.orderUpdates} />
-          <SettingRow hint="Liquidation proximity and margin changes." icon="alert" label="Position risk" onToggle={(value) => updateSetting('positionRisk', value)} toggle={settings.positionRisk} />
-        </SettingsSection>
-        <Text style={styles.note}>Critical security notices stay enabled.</Text>
+        <View style={styles.pushRow}>
+          <Text style={styles.pushLabel}>Push notifications</Text>
+          <Switch
+            ios_backgroundColor="#313131"
+            onValueChange={(value) => updateSetting('pushNotifications', value)}
+            thumbColor={colors.white}
+            trackColor={{ false: '#313131', true: colors.positive }}
+            value={settings.pushNotifications}
+          />
+        </View>
+
+        <Text style={styles.heading}>Notification feeds</Text>
+        {FEEDS.map((feed) => (
+          <Pressable key={feed.label} onPress={() => router.push('/(tabs)/feed')} style={({ pressed }) => [styles.feedRow, pressed && styles.pressed]}>
+            <Icon name={feed.icon} size={22} />
+            <Text style={styles.feedLabel}>{feed.label}</Text>
+            {feed.count ? <Text style={styles.count}>{feed.count(alerts.size)}</Text> : null}
+            <Icon color={colors.textMuted} name="chevron" size={18} />
+          </Pressable>
+        ))}
       </ScrollView>
     </Screen>
   );
@@ -26,8 +48,11 @@ export default function NotificationSettingsScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: spacing.xl },
-  status: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: spacing.page },
-  statusLabel: { color: colors.text, fontFamily: typography.family, fontSize: 13, fontWeight: typography.weights.medium },
-  statusValue: { color: colors.positive, fontFamily: typography.family, fontSize: 11, fontWeight: typography.weights.semibold },
-  note: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.regular, paddingHorizontal: spacing.page, paddingTop: spacing.md },
+  pushRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 76, paddingHorizontal: spacing.page },
+  pushLabel: { color: colors.text, fontFamily: typography.semibold, fontSize: 16 },
+  heading: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11, letterSpacing: 0.3, marginBottom: spacing.xs, marginTop: spacing.lg, paddingHorizontal: spacing.page },
+  feedRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, minHeight: 66, paddingHorizontal: spacing.page },
+  feedLabel: { color: colors.text, flex: 1, fontFamily: typography.semibold, fontSize: 15 },
+  count: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 10 },
+  pressed: { backgroundColor: colors.section },
 });

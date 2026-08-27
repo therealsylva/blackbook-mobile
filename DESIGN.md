@@ -1,44 +1,47 @@
 # BlackBook mobile design contract
 
-BlackBook mobile is a native real-world index exchange. It is not the desktop website inside a phone shell and it is not a generic crypto dashboard. Every screen must support the loop: discover a priced index, inspect it, trade it and manage the resulting position or order.
+This contract is locked to the approved mobile audit. The web frontend is the visual and product source of truth. Mobile adapts its hierarchy to a phone; it does not invent a crypto-exchange theme, a second account model, or replacement chart behavior.
 
 ## Brand
 
-- Canvas is pitch black (`#000000`). Dark neutral surfaces create hierarchy; copper, gold, gradients, glass, neon and decorative glow are forbidden.
-- Use the exact path-based BlackBook logo from `index-frontend/apps/web/public/assets/brand/blackbook-logo.svg`. Never rebuild the logo with a font.
-- `BK` is the launcher/adaptive icon only. Profile uses a human silhouette until an actual user image exists.
-- UI typography uses the platform system family. Brand lettering comes only from the canonical SVG.
-- Green and red communicate market direction and trade intent only. They are not decorative accents.
-- BlackBook identity comes from the wordmark, real-world entity art, sharp geometry, tabular market data and ledger-like separator rules.
+- Use the canonical BlackBook wordmark asset. Never typeset the brand name as a substitute.
+- The application canvas is void black (`#000000`). Chart plotting areas use the frontend terminal black (`#080808`).
+- Terminal candles use `#08B996` / `#F04A59`. Overview performance lines use `#089981` / `#F23645`.
+- UI text uses the bundled Mona Sans family. Market numbers use a deliberate tabular numeric treatment.
+- Utility icons use Lucide React Native. Entity marks remain their canonical brand/portrait assets.
+- Primary icons are bright white. Muted color communicates hierarchy, never disabled-looking navigation.
 
-## Spacing and hierarchy
+## Layout language
 
-- All layout spacing follows a 4dp grid: `4 / 8 / 12 / 16 / 24 / 32`.
-- Page gutter is 16dp. Standard header is 52dp, search is 42dp, market row is 66dp and minimum touch target is 44dp.
-- Use near-black grouped surfaces and partial row dividers to create structure. Do not leave unrelated controls floating in empty black space.
-- Do not box every item. Market rows use a divider beginning after the entity artwork; settings use one grouped surface with internal dividers.
-- Radius is `4 / 6 / 8 / 10dp`. Capsules are reserved for genuine tags. Tabs use rails or underlines, not fat pills.
+- Typography, alignment, and whitespace establish hierarchy. Full-width panels and grids are exceptional.
+- Dividers are quiet hairlines used only between repeated rows. Do not construct entire pages from slabs and vertical rules.
+- Pills are reserved for meaningful state and compact switching: category filters, chart/book, ranges, side/leverage, and status.
+- Market and content rows live directly on the black canvas. Avoid blue-grey backplates behind ordinary icons.
+- Prefer confident type sizes and fewer, stronger labels. Do not shrink the interface to fit unnecessary descriptions.
 
-## Icons and imagery
+## Navigation
 
-- UI icons come from `expo-symbols`: SF Symbols on iOS and Material Symbols on Android/web. Do not hand-draw replacement glyphs.
-- Navigation and utility icons use one optical weight and a 20–22dp visual size inside 44dp targets.
-- People use dedicated square, face-first source crops with a circular mask. Runtime scale/translate crop hacks are forbidden.
-- Club, league and product marks are trimmed to visible bounds, uniformly padded and rendered with `contain`. Never stretch a mark or inherit portrait styling.
-- Entity artwork must carry more visual weight than utility glyphs.
+- Bottom navigation is exactly: Home, Indices, Trade, Portfolio, Feed.
+- Profile/User Center is opened only from the Home avatar.
+- Settings are consolidated inside User Center. There is no duplicate Profile bottom tab or duplicate settings page.
 
 ## Product structure
 
-- Bottom navigation: Home, All Indices, Trade, Portfolio, Profile.
-- Home contains compact balance, four exchange actions and `Hot / New / Gainers / Losers`. `Hot` is the default. Website hero, news, explainers and footer are forbidden.
-- Favorites are user-created saved markets, never the default state of a new account.
-- All Indices is a searchable, sortable priced market directory with categories and saved-market controls.
-- Basic Trade prioritises the chart, amount, leverage, risk and Long/Short.
-- Advanced Trade opens on Chart and switches between Chart and Order Book. Basic/Advanced is a mode action, never a large segmented pill.
-- Portfolio contains balances, Deposit, Withdraw, Transfer, positions, orders, history and assets. It has no decorative equity chart.
-- Settings contain account security, trading preferences, notifications, language, currency, appearance, support, legal and about. Methodology does not belong in Settings.
-- Product behaviour is locally simulated for full interaction testing. The interface never displays `simulated`, `demo` or placeholder disclaimers.
+- Home: profile avatar, search, notifications, balance, compact Deposit/Withdraw actions, and a full-width `Hot / New / Gainers / Losers / Favorites` market switcher. `Hot` is default and Favorites remains user-created.
+- Indices: categories are All, Clubs, Leagues, Athletes, Artists, Products. No Sports, Music, People, Public Figures, `/POINT`, star column, or RMD/LMY relative-value market. Include a dedicated Major Pairs section.
+- Overview: a distinct index overview with the frontend area-line aesthetic, compact quote context, favorite and alert actions, and secondary data below the chart.
+- Basic Trade: compact chart plus a focused order ticket. Basic/Advanced is selected only in Preferences.
+- Advanced Trade: a dense terminal workspace with a compact Chart/Order Book pill, real range data, frontend-style candles/volume, and a compact ticket. No fixed giant Long/Short footer.
+- Portfolio: one USD account model. No Assets wallet tab, Funding account, Trading account, or internal Transfer flow.
+- Positions: compact by default and expandable. Show Entry and Current explicitly; reserve Mark for a distinct risk price.
+- Orders: show target against current market price and retain time/type context.
+- History: a journal timeline with opening, fill/cancel/close context, size, leverage, fees, duration, entry/exit, and realised P&L.
+- Notifications: Push notifications is the toggle. Price alerts, order updates, and position risk are navigable feeds.
+- User Center: editable My Info plus Security, Preferences, and General. Do not repeat live trading counts or interface selectors as panels.
+- Feed: restore frontend news, index tools, strategies, market trends, trade ideas, gainers, losers, volume, volatility, listings, and entity/product coverage.
 
 ## Verification
 
-Every material UI change must render at 360×800, 390×844 and 430×932. Check safe areas, long names, keyboard-open forms, sheets, Chart/Order Book switching, portrait crops, crest optical sizing and bottom navigation before releasing an APK.
+- Run validation and TypeScript checks.
+- Render and inspect 360x800, 390x844, and 430x932.
+- Verify long names, safe areas, keyboard forms, chart/book switching, real range changes, crest sizing, compact positions, journal detail, Feed navigation, and the five-tab bar.

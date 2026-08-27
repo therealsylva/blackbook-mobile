@@ -23,7 +23,7 @@ export function SettingRow({ icon, label, value, hint, onPress, toggle, onToggle
       onPress={onPress ?? (onToggle ? () => onToggle(!toggle) : undefined)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      {icon ? <View style={styles.icon}><Icon color={destructive ? colors.negative : colors.textMuted} name={icon} size={20} /></View> : null}
+      {icon ? <View style={styles.icon}><Icon color={destructive ? colors.negative : colors.text} name={icon} size={20} /></View> : null}
       <View style={[styles.body, divider && styles.divider]}>
         <View style={styles.copy}>
           <Text style={[styles.label, destructive && styles.destructive]}>{label}</Text>
@@ -32,12 +32,12 @@ export function SettingRow({ icon, label, value, hint, onPress, toggle, onToggle
         {onToggle ? (
           <Switch
             accessibilityLabel={label}
-            ios_backgroundColor={colors.control}
+            ios_backgroundColor="#313131"
             onValueChange={onToggle}
             style={styles.switch}
             value={Boolean(toggle)}
-            trackColor={{ false: colors.control, true: colors.text }}
-            thumbColor={toggle ? colors.bg : colors.textMuted}
+            trackColor={{ false: '#313131', true: colors.positive }}
+            thumbColor={colors.white}
           />
         ) : null}
         {!onToggle && value ? <Text numberOfLines={1} style={styles.value}>{value}</Text> : null}
@@ -48,15 +48,15 @@ export function SettingRow({ icon, label, value, hint, onPress, toggle, onToggle
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: 'stretch', flexDirection: 'row', minHeight: 56, paddingLeft: 14 },
+  row: { alignItems: 'stretch', flexDirection: 'row', minHeight: 62 },
   pressed: { backgroundColor: colors.surfaceRaised },
   icon: { alignItems: 'center', justifyContent: 'center', marginRight: 12, width: 22 },
-  body: { alignItems: 'center', flex: 1, flexDirection: 'row', minHeight: 56, paddingRight: 12, paddingVertical: 8 },
+  body: { alignItems: 'center', flex: 1, flexDirection: 'row', minHeight: 62, paddingRight: 0, paddingVertical: 8 },
   divider: { borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth },
   copy: { flex: 1 },
-  label: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 13 },
+  label: { color: colors.text, fontFamily: typography.semibold, fontSize: 15 },
   destructive: { color: colors.negative },
-  hint: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, lineHeight: 14, marginTop: 3 },
-  value: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11, marginRight: 4, maxWidth: '42%', textAlign: 'right' },
+  hint: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10, lineHeight: 14, marginTop: 3 },
+  value: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 12, marginRight: 4, maxWidth: '42%', textAlign: 'right' },
   switch: { marginLeft: 8, transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }], width: layout.touch },
 });

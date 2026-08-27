@@ -3,9 +3,7 @@ export type MarketCategory =
   | 'Athletes'
   | 'Artists'
   | 'Products'
-  | 'Public Figures'
-  | 'Leagues'
-  | 'Relative Value';
+  | 'Leagues';
 
 export interface MarketDefinition {
   rank: number;
@@ -22,7 +20,7 @@ export interface MarketDefinition {
   series: number[];
 }
 
-export const MARKETS: MarketDefinition[] = [
+const MARKET_CATALOG: MarketDefinition[] = [
   {
     "rank": 1,
     "symbol": "RMD",
@@ -336,45 +334,6 @@ export const MARKETS: MarketDefinition[] = [
     ]
   },
   {
-    "rank": 9,
-    "symbol": "MUSK",
-    "name": "Elon Musk",
-    "category": "Public Figures",
-    "price": 5173.73,
-    "change24h": -3.13,
-    "volume": "13.4M",
-    "density": 71,
-    "high24h": 5462.93,
-    "low24h": 5076.77,
-    "assetKey": "elon-musk",
-    "series": [
-      5340.9,
-      5334.72,
-      5334.41,
-      5325.34,
-      5327.26,
-      5258.37,
-      5299.14,
-      5263.14,
-      5242.46,
-      5288.1,
-      5285.29,
-      5247.94,
-      5252.55,
-      5241.22,
-      5268.62,
-      5274.76,
-      5264.57,
-      5248,
-      5219.66,
-      5230.88,
-      5200.14,
-      5181.42,
-      5179.45,
-      5173.73
-    ]
-  },
-  {
     "rank": 10,
     "symbol": "EPL",
     "name": "Premier League",
@@ -489,45 +448,6 @@ export const MARKETS: MarketDefinition[] = [
       4180.42,
       4177.61,
       4182.65
-    ]
-  },
-  {
-    "rank": 13,
-    "symbol": "RMD/LMY",
-    "name": "Real Madrid / Lamine Yamal",
-    "category": "Relative Value",
-    "price": 1.1907,
-    "change24h": 3.08,
-    "volume": "7.8M",
-    "density": 95,
-    "high24h": 1.2167,
-    "low24h": 1.1345,
-    "assetKey": "",
-    "series": [
-      1.1551,
-      1.1577,
-      1.1569,
-      1.157,
-      1.1548,
-      1.1587,
-      1.1611,
-      1.169,
-      1.1607,
-      1.1616,
-      1.1607,
-      1.1664,
-      1.1823,
-      1.1755,
-      1.1727,
-      1.1818,
-      1.1904,
-      1.1917,
-      1.1848,
-      1.1895,
-      1.1882,
-      1.1879,
-      1.1899,
-      1.1907
     ]
   },
   {
@@ -1546,3 +1466,5 @@ export const MARKETS: MarketDefinition[] = [
   }
 ];
 
+export const MARKETS: MarketDefinition[] = MARKET_CATALOG
+  .map((market, index) => ({ ...market, rank: index + 1 }));

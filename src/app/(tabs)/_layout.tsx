@@ -8,7 +8,7 @@ const ICONS: Record<string, IconName> = {
   indices: 'markets',
   trade: 'trade',
   portfolio: 'wallet',
-  profile: 'profile',
+  feed: 'feed',
 };
 
 export default function TabsLayout() {
@@ -30,7 +30,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="indices" options={{ title: 'Indices' }} />
       <Tabs.Screen name="trade" options={{ title: 'Trade' }} />
       <Tabs.Screen name="portfolio" options={{ title: 'Portfolio' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="feed" options={{ title: 'Feed' }} />
     </Tabs>
   );
 }

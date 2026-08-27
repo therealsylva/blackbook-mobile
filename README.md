@@ -4,13 +4,15 @@ Blackbook Mobile is the native phone experience for Blackbook index perpetuals. 
 
 ## Product surfaces
 
-- **Home** — balance, quick actions and live movers.
-- **All Indices** — the complete searchable market list with prices, 24-hour changes and favorites.
-- **Trade** — Basic and Advanced order interfaces over the same local account state.
-- **Portfolio** — equity, positions, open orders and trade history.
-- **Profile** — account, security, notification and trading preferences.
+- **Home** — balance, deposit and withdrawal, favorites and live movers.
+- **All Indices** — searchable clubs, leagues, athletes, artists and products, plus major rivalry pairs.
+- **Overview** — market identity, alert and favorite controls, frontend-matched line charts and index context.
+- **Trade** — distinct Basic and compact Advanced order interfaces selected only in Preferences.
+- **Portfolio** — equity, collapsed positions, contextual open orders and a proper trade journal.
+- **Feed** — highlights, news, strategies, gainers, losers, volume and volatility coverage.
+- **User center** — editable identity, security, notification and trading preferences, reached from the Home avatar.
 
-The current build runs end-to-end on-device: prices move, funds can be added, market positions can be opened and closed, limit/stop orders can be submitted and cancelled, favorites and alerts can be changed, and trading preferences update the order surface. Service integration can replace the context boundary later without redesigning the UI.
+The current build runs end-to-end on-device: prices move, funds can be deposited or withdrawn, positions can be opened and closed, limit/stop orders can be submitted and cancelled, favorites and alerts can be changed, and trading preferences update the order surface. Service integration can replace the context boundary later without redesigning the UI.
 
 ## Run locally
 

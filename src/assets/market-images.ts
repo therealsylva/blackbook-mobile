@@ -9,15 +9,14 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   apple: require('./indices/apple.png'),
   'kylian-mbappe': require('./indices/mbappe-avatar-v2.jpg'),
   'fcb-icon': require('./indices/fcb-icon.png'),
-  'elon-musk': require('./indices/elon-musk.jpg'),
-  'premier-league': require('./indices/premier-league.png'),
+  'premier-league': require('./indices/premier-league-lion.png'),
   psg: require('./indices/psg.png'),
   'eminem-profile': require('./indices/eminem-profile.jpg'),
   'los-angeles-lakers': require('./indices/los-angeles-lakers.png'),
   'boston-celtics': require('./indices/boston-celtics.png'),
   'kansas-city-chiefs': require('./indices/kansas-city-chiefs.png'),
   'dallas-cowboys': require('./indices/dallas-cowboys.png'),
-  'spotify-icon': require('./indices/spotify-icon.png'),
+  'nba-icon': require('./indices/nba-icon.png'),
   'claude-icon': require('./indices/claude-icon.jpg'),
   arsenal: require('./indices/arsenal.png'),
   'liverpool-crest': require('./indices/liverpool-crest.png'),
@@ -36,6 +35,8 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'doja-cat': require('./indices/doja-cat.jpg'),
   future: require('./indices/future.jpg'),
   'central-cee': require('./indices/central-cee.jpg'),
+  'justin-bieber': require('./indices/justin-bieber.jpg'),
+  'tyla-profile': require('./indices/tyla-profile.png'),
 };
 
 export function marketImage(assetKey: string) {

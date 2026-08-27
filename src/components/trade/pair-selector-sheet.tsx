@@ -32,7 +32,7 @@ export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSh
           return (
             <Pressable key={market.symbol} onPress={() => { onSelect(market.symbol); onClose(); }} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
               <MarketAvatar assetKey={market.assetKey} size={34} symbol={market.symbol} />
-              <View style={styles.copy}><Text style={styles.symbol}>{market.symbol}/POINT</Text><Text numberOfLines={1} style={styles.name}>{market.name}</Text></View>
+              <View style={styles.copy}><Text style={styles.symbol}>{market.symbol}</Text><Text numberOfLines={1} style={styles.name}>{market.name}</Text></View>
               <View style={styles.quote}><Text style={styles.price}>{formatPrice(priceFor(market.symbol))}</Text><Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text></View>
             </Pressable>
           );
@@ -48,10 +48,10 @@ const styles = StyleSheet.create({
   list: { marginTop: 10 },
   row: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 62 },
   copy: { flex: 1, marginLeft: 10 },
-  symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13 },
-  name: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: 3 },
+  symbol: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 13 },
+  name: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10, marginTop: 3 },
   quote: { alignItems: 'flex-end' },
-  price: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12, fontVariant: ['tabular-nums'] },
-  change: { fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 10, fontVariant: ['tabular-nums'], marginTop: 4 },
+  price: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 12, fontVariant: ['tabular-nums'] },
+  change: { fontFamily: typography.mono, fontSize: 10, fontVariant: ['tabular-nums'], marginTop: 4 },
   pressed: { opacity: 0.62 },
 });

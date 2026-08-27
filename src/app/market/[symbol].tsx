@@ -8,147 +8,133 @@ import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
 import { formatPercent, formatPrice } from '@/lib/format';
 import { colors, radii, spacing, typography } from '@/theme/tokens';
-import type { Side } from '@/types/exchange';
+import type { ChartRange } from '@/types/exchange';
 
-type Timeframe = '1H' | '1D' | '1W' | '1M' | '6M';
+const RANGES: ChartRange[] = ['1H', '1D', '1W', '1M', '6M'];
 
-const TIMEFRAMES: Timeframe[] = ['1H', '1D', '1W', '1M', '6M'];
-const SCALE: Record<Timeframe, number> = { '1H': 0.26, '1D': 1, '1W': 1.35, '1M': 2.1, '6M': 3.2 };
-
-export default function MarketDetailScreen() {
+export default function MarketOverviewScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ symbol?: string }>();
-  const symbol = typeof params.symbol === 'string' ? params.symbol : 'RMD';
-  const { marketFor, priceFor, changeFor, seriesFor, favorites, alerts, toggleFavorite, toggleAlert, setActiveSymbol, updateSetting } = useExchange();
-  const [timeframe, setTimeframe] = useState<Timeframe>('1D');
-  const market = marketFor(symbol) ?? marketFor('RMD');
+  const { marketFor, priceFor, changeFor, seriesFor, favorites, alerts, toggleFavorite, toggleAlert, setActiveSymbol } = useExchange();
+  const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
+  const market = marketFor(symbol ?? 'RMD');
+  const [range, setRange] = useState<ChartRange>('1D');
 
-  const series = useMemo(() => {
-    const values = seriesFor(market?.symbol ?? 'RMD');
-    const end = values.at(-1) ?? 0;
-    return values.map((value) => end + (value - end) * SCALE[timeframe]);
-  }, [market?.symbol, seriesFor, timeframe]);
+  const series = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
+  if (!market) return <Screen><View style={styles.missing}><Text style={styles.missingText}>Index unavailable</Text></View></Screen>;
 
-  if (!market) return null;
   const price = priceFor(market.symbol);
   const change = changeFor(market.symbol);
-  const positive = change >= 0;
+  const direction = change >= 0 ? colors.positive : colors.negative;
 
-  const openTrade = (side: Side, advanced = false) => {
+  const openTrade = () => {
     setActiveSymbol(market.symbol);
-    if (advanced) {
-      updateSetting('interfaceMode', 'advanced');
-      router.push({ pathname: '/(tabs)/trade', params: { symbol: market.symbol, side, mode: 'advanced' } });
-      return;
-    }
-    router.push({ pathname: '/(tabs)/trade', params: { symbol: market.symbol, side } });
+    router.push('/(tabs)/trade');
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <Pressable accessibilityLabel="Go back" hitSlop={10} onPress={() => router.back()}><Icon name="back" size={23} /></Pressable>
-        <View style={styles.identity}>
-          <MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} />
-          <View>
-            <Text style={styles.symbol}>{market.symbol}/POINT</Text>
-            <Text style={styles.name}>{market.name}</Text>
-          </View>
-        </View>
-        <Pressable accessibilityLabel="Price alert" hitSlop={10} onPress={() => toggleAlert(market.symbol)}>
-          <Icon color={alerts.has(market.symbol) ? colors.text : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} />
-        </Pressable>
-        <Pressable accessibilityLabel="Favorite" hitSlop={10} onPress={() => toggleFavorite(market.symbol)}>
-          <Icon color={favorites.has(market.symbol) ? colors.text : colors.textMuted} filled={favorites.has(market.symbol)} name="star" size={21} />
-        </Pressable>
-      </View>
-
+    <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.lastLabel}>Last price</Text>
-        <Text style={styles.price}>{formatPrice(price)}</Text>
-        <Text style={[styles.change, { color: positive ? colors.positive : colors.negative }]}>{formatPercent(change)} · 24h</Text>
+        <View style={styles.header}>
+          <Pressable accessibilityLabel="Go back" hitSlop={12} onPress={() => router.back()} style={styles.headerButton}><Icon name="back" /></Pressable>
+          <MarketAvatar assetKey={market.assetKey} size={46} symbol={market.symbol} />
+          <View style={styles.identity}>
+            <Text numberOfLines={1} style={styles.name}>{market.name}</Text>
+            <Text style={styles.symbol}>{market.symbol}</Text>
+          </View>
+          <Pressable accessibilityLabel="Toggle price alert" onPress={() => toggleAlert(market.symbol)} style={styles.headerButton}><Icon color={alerts.has(market.symbol) ? colors.text : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} /></Pressable>
+          <Pressable accessibilityLabel="Toggle favorite" onPress={() => toggleFavorite(market.symbol)} style={styles.headerButton}><Icon color={favorites.has(market.symbol) ? colors.text : colors.textMuted} filled={favorites.has(market.symbol)} name="star" size={21} /></Pressable>
+        </View>
+
+        <View style={styles.quote}>
+          <Text style={styles.eyebrow}>Index value</Text>
+          <View style={styles.priceLine}>
+            <Text style={styles.price}>{formatPrice(price)}</Text>
+            <Text style={styles.unit}>POINT</Text>
+          </View>
+          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)} · 24h</Text>
+        </View>
 
         <View style={styles.chart}>
-          <MarketChart height={224} positive={positive} series={series} />
+          <MarketChart area height={234} positive={change >= 0} series={series} strokeWidth={2} />
         </View>
-        <View style={styles.timeframes}>
-          {TIMEFRAMES.map((item) => (
-            <Pressable key={item} onPress={() => setTimeframe(item)} style={styles.timeframe}>
-              <Text style={[styles.timeframeText, timeframe === item && styles.timeframeActive]}>{item}</Text>
-              {timeframe === item ? <View style={styles.timeframeLine} /> : null}
+
+        <View style={styles.ranges}>
+          {RANGES.map((item) => (
+            <Pressable accessibilityRole="tab" accessibilityState={{ selected: range === item }} key={item} onPress={() => setRange(item)} style={[styles.range, range === item && styles.rangeActive]}>
+              <Text style={[styles.rangeText, range === item && styles.rangeTextActive]}>{item}</Text>
             </Pressable>
           ))}
         </View>
 
-        <View style={styles.stats}>
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>24h high</Text>
-            <Text style={styles.statValue}>{formatPrice(market.high24h)}</Text>
+        <View style={styles.metrics}>
+          <Metric label="24h high" value={formatPrice(market.high24h)} />
+          <Metric label="24h low" value={formatPrice(market.low24h)} />
+          <Metric label="24h volume" value={`$${market.volume}`} />
+          <Metric label="Density" value={`${market.density}/100`} />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Overview</Text>
+          <Text style={styles.body}>{market.name} tracks the live attention and performance signals behind this {market.category.toLowerCase()} index.</Text>
+          <View style={styles.signalLine}>
+            <Text style={styles.signalLabel}>Current signal</Text>
+            <Text style={[styles.signalValue, { color: direction }]}>{change >= 0 ? 'Positive momentum' : 'Negative momentum'}</Text>
           </View>
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>24h low</Text>
-            <Text style={styles.statValue}>{formatPrice(market.low24h)}</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>24h volume</Text>
-            <Text style={styles.statValue}>{market.volume}</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>Market density</Text>
-            <Text style={styles.statValue}>{market.density}/100</Text>
+          <View style={styles.signalLine}>
+            <Text style={styles.signalLabel}>Market density</Text>
+            <Text style={styles.signalValue}>{market.density}/100</Text>
           </View>
         </View>
 
-        <View style={styles.marketInfo}>
-          <Text style={styles.infoTitle}>Market</Text>
-          <View style={styles.infoRow}><Text style={styles.infoLabel}>Category</Text><Text style={styles.infoValue}>{market.category}</Text></View>
-          <View style={styles.infoRow}><Text style={styles.infoLabel}>Contract</Text><Text style={styles.infoValue}>Perpetual</Text></View>
-          <View style={styles.infoRow}><Text style={styles.infoLabel}>Settlement</Text><Text style={styles.infoValue}>POINT</Text></View>
-          <Pressable onPress={() => openTrade('long', true)} style={styles.advancedLink}>
-            <Text style={styles.advancedText}>Open advanced trade</Text>
-            <Icon color={colors.textMuted} name="chevron" size={16} />
-          </Pressable>
+        <View style={styles.actions}>
+          <Pressable onPress={() => router.push('/(tabs)/feed')} style={({ pressed }) => [styles.secondaryAction, pressed && styles.pressed]}><Text style={styles.secondaryText}>News & analysis</Text></Pressable>
+          <Pressable onPress={openTrade} style={({ pressed }) => [styles.tradeAction, pressed && styles.pressed]}><Text style={styles.tradeText}>Trade {market.symbol}</Text></Pressable>
         </View>
       </ScrollView>
-
-      <View style={styles.actions}>
-        <Pressable onPress={() => openTrade('short')} style={({ pressed }) => [styles.action, styles.short, pressed && styles.pressed]}><Text style={styles.actionText}>Short</Text></Pressable>
-        <Pressable onPress={() => openTrade('long')} style={({ pressed }) => [styles.action, styles.long, pressed && styles.pressed]}><Text style={styles.actionText}>Long</Text></Pressable>
-      </View>
     </Screen>
   );
 }
 
+function Metric({ label, value }: { label: string; value: string }) {
+  return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricValue}>{value}</Text></View>;
+}
+
 const styles = StyleSheet.create({
-  header: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.sm, minHeight: 56, paddingHorizontal: spacing.page },
-  identity: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: 10 },
-  symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14 },
-  name: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: 2 },
-  content: { paddingBottom: spacing.lg },
-  lastLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 10, marginTop: spacing.md, paddingHorizontal: spacing.page },
-  price: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 27, fontVariant: ['tabular-nums'], letterSpacing: -0.6, marginTop: spacing.xxs, paddingHorizontal: spacing.page },
-  change: { fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12, fontVariant: ['tabular-nums'], marginTop: 6, paddingHorizontal: spacing.page },
-  chart: { marginTop: spacing.xs },
-  timeframes: { backgroundColor: colors.section, borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-around', marginTop: spacing.xs, paddingHorizontal: spacing.page },
-  timeframe: { alignItems: 'center', minWidth: 44, paddingBottom: spacing.xs, paddingTop: spacing.xs },
-  timeframeText: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 11 },
-  timeframeActive: { color: colors.text },
-  timeframeLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 7, position: 'absolute', right: 7 },
-  stats: { backgroundColor: colors.section, borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderTopColor: colors.dividerSoft, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.lg },
-  stat: { borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, borderRightColor: colors.dividerSoft, borderRightWidth: StyleSheet.hairlineWidth, justifyContent: 'center', minHeight: 66, paddingHorizontal: spacing.page, width: '50%' },
-  statLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11 },
-  statValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14, fontVariant: ['tabular-nums'], marginTop: 5 },
-  marketInfo: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.lg, paddingHorizontal: spacing.page, paddingTop: spacing.md },
-  infoTitle: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.bold, fontSize: 17, marginBottom: spacing.xs },
-  infoRow: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', minHeight: 42 },
-  infoLabel: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
-  infoValue: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.medium, fontSize: 12 },
-  advancedLink: { alignItems: 'center', backgroundColor: colors.section, borderColor: colors.dividerSoft, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md, minHeight: 48, paddingHorizontal: spacing.sm },
-  advancedText: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 13 },
-  actions: { backgroundColor: colors.navigation, borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.xs, padding: spacing.xs },
-  action: { alignItems: 'center', borderRadius: radii.md, flex: 1, justifyContent: 'center', minHeight: 48 },
-  long: { backgroundColor: colors.positive },
-  short: { backgroundColor: colors.negative },
-  actionText: { color: colors.white, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 15 },
-  pressed: { opacity: 0.72 },
+  content: { paddingBottom: spacing.xl },
+  header: { alignItems: 'center', flexDirection: 'row', minHeight: 64, paddingHorizontal: spacing.xs },
+  headerButton: { alignItems: 'center', height: 44, justifyContent: 'center', width: 42 },
+  identity: { flex: 1, marginLeft: spacing.sm, minWidth: 0 },
+  name: { color: colors.text, fontFamily: typography.bold, fontSize: 16, letterSpacing: -0.35 },
+  symbol: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 11, marginTop: 3 },
+  quote: { paddingHorizontal: spacing.page, paddingTop: spacing.lg },
+  eyebrow: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
+  priceLine: { alignItems: 'baseline', flexDirection: 'row', marginTop: 2 },
+  price: { color: colors.text, fontFamily: typography.monoBold, fontSize: 36, fontVariant: ['tabular-nums'], letterSpacing: -1.8 },
+  unit: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 11, marginLeft: 7 },
+  change: { fontFamily: typography.monoSemibold, fontSize: 13, marginTop: 4 },
+  chart: { marginTop: spacing.md },
+  ranges: { alignSelf: 'center', backgroundColor: colors.surface, borderRadius: radii.pill, flexDirection: 'row', gap: 2, marginTop: spacing.sm, padding: 3 },
+  range: { alignItems: 'center', borderRadius: radii.pill, height: 30, justifyContent: 'center', minWidth: 48, paddingHorizontal: 10 },
+  rangeActive: { backgroundColor: colors.text },
+  rangeText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11 },
+  rangeTextActive: { color: colors.bg },
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.lg, paddingHorizontal: spacing.page },
+  metric: { backgroundColor: colors.surface, borderRadius: radii.pill, flexDirection: 'row', gap: spacing.xs, paddingHorizontal: 12, paddingVertical: 8 },
+  metricLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
+  metricValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 10 },
+  section: { marginTop: spacing.xl, paddingHorizontal: spacing.page },
+  sectionTitle: { color: colors.text, fontFamily: typography.bold, fontSize: 21, letterSpacing: -0.5 },
+  body: { color: colors.textMuted, fontFamily: typography.family, fontSize: 13, lineHeight: 20, marginTop: spacing.sm },
+  signalLine: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md },
+  signalLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 12 },
+  signalValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 11 },
+  actions: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xl, paddingHorizontal: spacing.page },
+  secondaryAction: { alignItems: 'center', borderColor: colors.divider, borderRadius: radii.pill, borderWidth: 1, flex: 1, height: 44, justifyContent: 'center' },
+  secondaryText: { color: colors.text, fontFamily: typography.semibold, fontSize: 12 },
+  tradeAction: { alignItems: 'center', backgroundColor: colors.text, borderRadius: radii.pill, flex: 1, height: 44, justifyContent: 'center' },
+  tradeText: { color: colors.bg, fontFamily: typography.bold, fontSize: 12 },
+  pressed: { opacity: 0.65 },
+  missing: { alignItems: 'center', flex: 1, justifyContent: 'center' },
+  missingText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 14 },
 });

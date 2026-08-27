@@ -1,6 +1,6 @@
 import { Children, cloneElement, isValidElement, type ComponentProps, type ReactElement, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { colors, spacing, typography } from '@/theme/tokens';
 import { SettingRow } from './setting-row';
 
 interface SettingsSectionProps {
@@ -13,7 +13,7 @@ export function SettingsSection({ title, children }: SettingsSectionProps) {
   return (
     <View style={styles.root}>
       <Text style={styles.title}>{title}</Text>
-      <View style={styles.group}>
+      <View>
         {rows.map((child, index) => isValidElement(child)
           ? cloneElement(child as ReactElement<ComponentProps<typeof SettingRow>>, { divider: index < rows.length - 1 })
           : child)}
@@ -23,7 +23,6 @@ export function SettingsSection({ title, children }: SettingsSectionProps) {
 }
 
 const styles = StyleSheet.create({
-  root: { marginTop: spacing.lg, paddingHorizontal: spacing.page },
-  title: { color: colors.textFaint, fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.semibold, letterSpacing: 0.7, marginBottom: spacing.xs, textTransform: 'uppercase' },
-  group: { backgroundColor: colors.section, borderColor: colors.dividerSoft, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  root: { marginTop: spacing.xl, paddingHorizontal: spacing.page },
+  title: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 12, marginBottom: spacing.xs },
 });

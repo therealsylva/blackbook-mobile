@@ -23,7 +23,7 @@ export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, ty
   return (
     <BottomSheet onClose={onClose} title="Confirm order" visible={visible}>
       <View style={styles.heading}>
-        <Text style={styles.symbol}>{symbol}/POINT</Text>
+        <Text style={styles.symbol}>{symbol}</Text>
         <Text style={[styles.side, { color: side === 'long' ? colors.positive : colors.negative }]}>{side === 'long' ? 'Long' : 'Short'} · {type.charAt(0).toUpperCase() + type.slice(1)}</Text>
       </View>
       <View style={styles.rows}>
@@ -48,7 +48,7 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   heading: { paddingBottom: 16 },
   symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 18 },
-  side: { fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 12, marginTop: 5, textTransform: 'uppercase' },
+  side: { fontFamily: typography.semibold, fontSize: 12, marginTop: 5 },
   rows: { paddingTop: 11 },
   row: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 36 },
   label: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12 },
