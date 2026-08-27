@@ -17,3 +17,6 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.tsbuildinfo
+/web/
+/src/assets/source/
+/src/assets/rendered/
