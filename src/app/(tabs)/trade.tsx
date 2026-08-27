@@ -53,7 +53,13 @@ export default function TradeScreen() {
 
   useEffect(() => {
     setTargetPrice(formatPrice(priceFor(activeSymbol)));
-  }, [activeSymbol, priceFor]);
+  }, [activeSymbol]);
+
+  useEffect(() => {
+    setOrderType(settings.defaultOrderType);
+    setLeverage(settings.defaultLeverage);
+    setRiskControls(settings.attachRiskControls);
+  }, [settings.attachRiskControls, settings.defaultLeverage, settings.defaultOrderType]);
 
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
   const price = priceFor(activeSymbol);
@@ -197,10 +203,6 @@ export default function TradeScreen() {
             ) : null}
 
             <View style={styles.exposureRow}><Text style={styles.exposureLabel}>Position exposure</Text><Text style={styles.exposureValue}>{formatMoney(exposure, settings.currency)}</Text></View>
-            <View style={styles.tradeButtons}>
-              <Pressable disabled={!canSubmit} onPress={() => requestOrder('short')} style={({ pressed }) => [styles.tradeButton, styles.short, !canSubmit && styles.disabled, pressed && styles.pressed]}><Text style={styles.tradeButtonText}>Short</Text></Pressable>
-              <Pressable disabled={!canSubmit} onPress={() => requestOrder('long')} style={({ pressed }) => [styles.tradeButton, styles.long, !canSubmit && styles.disabled, pressed && styles.pressed]}><Text style={styles.tradeButtonText}>Long</Text></Pressable>
-            </View>
           </View>
 
           <Pressable onPress={() => router.push('/(tabs)/portfolio')} style={styles.activity}>
@@ -209,6 +211,10 @@ export default function TradeScreen() {
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
+      <View style={styles.stickyActions}>
+        <Pressable disabled={!canSubmit} onPress={() => requestOrder('short')} style={({ pressed }) => [styles.tradeButton, styles.short, !canSubmit && styles.disabled, pressed && styles.pressed]}><Text style={styles.tradeButtonText}>Short</Text></Pressable>
+        <Pressable disabled={!canSubmit} onPress={() => requestOrder('long')} style={({ pressed }) => [styles.tradeButton, styles.long, !canSubmit && styles.disabled, pressed && styles.pressed]}><Text style={styles.tradeButtonText}>Long</Text></Pressable>
+      </View>
 
       <PairSelectorSheet onClose={() => setPairOpen(false)} onSelect={setActiveSymbol} visible={pairOpen} />
       <OrderReviewSheet
@@ -296,7 +302,7 @@ const styles = StyleSheet.create({
   exposureRow: { borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, paddingTop: 15 },
   exposureLabel: { color: colors.textMuted, fontSize: 11 },
   exposureValue: { color: colors.text, fontFamily: typography.mono, fontSize: 12, fontWeight: '700' },
-  tradeButtons: { flexDirection: 'row', gap: 10, marginTop: 17 },
+  stickyActions: { backgroundColor: colors.bg, borderTopColor: colors.divider, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
   tradeButton: { alignItems: 'center', borderRadius: 6, flex: 1, justifyContent: 'center', minHeight: 50 },
   long: { backgroundColor: colors.positive },
   short: { backgroundColor: colors.negative },
