@@ -6,7 +6,7 @@
     "icon": "./assets/icon.png",
     "orientation": "portrait",
     "scheme": "blackbook",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.modnight.blackbook",
@@ -35,6 +35,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a photo for your BlackBook profile.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-splash-screen",
         {

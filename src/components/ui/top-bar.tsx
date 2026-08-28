@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, spacing, typography } from '@/theme/tokens';
+import { spacing, typography } from '@/theme/tokens';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { Icon, type IconName } from './icon';
 
 interface TopBarProps {
@@ -13,6 +14,7 @@ interface TopBarProps {
 
 export function TopBar({ title, subtitle, rightIcon, onRightPress, back = false }: TopBarProps) {
   const router = useRouter();
+  const styles = useStyles();
   return (
     <View style={styles.bar}>
       {back ? <Pressable accessibilityLabel="Go back" hitSlop={12} onPress={() => router.back()} style={styles.leading}><Icon name="back" /></Pressable> : null}
@@ -25,11 +27,11 @@ export function TopBar({ title, subtitle, rightIcon, onRightPress, back = false 
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   bar: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 52, paddingHorizontal: spacing.page },
   leading: { alignItems: 'flex-start', justifyContent: 'center', marginRight: 12, width: 28 },
   trailing: { alignItems: 'flex-end', justifyContent: 'center', marginLeft: 12, width: 28 },
   copy: { flex: 1 },
   title: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 18 },
   subtitle: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 11, marginTop: 2 },
-});
+}));

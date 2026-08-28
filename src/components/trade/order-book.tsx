@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { formatPrice } from '@/lib/format';
-import { colors, typography } from '@/theme/tokens';
+import { typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 interface OrderBookProps {
   price: number;
@@ -9,6 +11,7 @@ interface OrderBookProps {
 }
 
 export function OrderBook({ price, compact = false }: OrderBookProps) {
+  const styles = useStyles();
   const rows = useMemo(() => {
     const asks = Array.from({ length: compact ? 4 : 6 }, (_, index) => ({ price: price * (1 + (compact ? 4 - index : 6 - index) * 0.0007), size: 2.18 + ((index * 1.37) % 4.7) }));
     const bids = Array.from({ length: compact ? 4 : 6 }, (_, index) => ({ price: price * (1 - (index + 1) * 0.0007), size: 1.76 + ((index * 1.91) % 5.2) }));
@@ -25,6 +28,8 @@ export function OrderBook({ price, compact = false }: OrderBookProps) {
 }
 
 function BookRow({ price, size, side, strength }: { price: number; size: number; side: 'ask' | 'bid'; strength: number }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const color = side === 'bid' ? colors.positive : colors.negative;
   return (
     <View style={styles.row}>
@@ -34,7 +39,7 @@ function BookRow({ price, size, side, strength }: { price: number; size: number;
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   root: { minWidth: 142 },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   label: { color: colors.textFaint, fontSize: 9 },
@@ -43,4 +48,4 @@ const styles = StyleSheet.create({
   number: { fontFamily: typography.mono, fontSize: 9.5 },
   size: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9.5 },
   mid: { color: colors.text, fontFamily: typography.mono, fontSize: 12, fontWeight: '700', paddingVertical: 5 },
-});
+}));

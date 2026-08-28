@@ -7,9 +7,13 @@ import { SettingRow } from '@/components/ui/setting-row';
 import { SettingsSection } from '@/components/ui/settings-section';
 import { TopBar } from '@/components/ui/top-bar';
 import { useExchange } from '@/context/exchange-context';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 export default function SecuritySettingsScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { settings, updateSetting } = useExchange();
   const [autoLockOpen, setAutoLockOpen] = useState(false);
   return (
@@ -36,11 +40,11 @@ export default function SecuritySettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
   status: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 76, paddingHorizontal: spacing.page },
   statusIcon: { alignItems: 'center', backgroundColor: colors.section, borderColor: colors.dividerSoft, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, height: 44, justifyContent: 'center', width: 44 },
   statusCopy: { flex: 1, marginLeft: spacing.sm },
   statusTitle: { color: colors.text, fontFamily: typography.family, fontSize: 14, fontWeight: typography.weights.semibold },
   statusMeta: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.regular, marginTop: spacing.xxs },
-});
+}));

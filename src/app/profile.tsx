@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 type ProfileTab = 'My info' | 'Security' | 'Preferences' | 'General';
 type Choice = 'interface' | 'language' | 'currency' | null;
 
 export default function ProfileScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   const { profile, updateProfile, settings, updateSetting } = useExchange();
   const [tab, setTab] = useState<ProfileTab>('My info');
@@ -19,12 +24,23 @@ export default function ProfileScreen() {
   const [choice, setChoice] = useState<Choice>(null);
   const [name, setName] = useState(profile.displayName);
   const [avatar, setAvatar] = useState(profile.avatarUri ?? 'void');
-  const [imageUri, setImageUri] = useState(profile.avatarUri?.startsWith('http') ? profile.avatarUri : '');
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      mediaTypes: ['images'],
+      quality: 0.9,
+    });
+    if (!result.canceled && result.assets[0]?.uri) setAvatar(result.assets[0].uri);
+  };
 
   const save = () => {
     const displayName = name.trim();
     if (!displayName) return;
-    updateProfile({ displayName, avatarUri: imageUri.trim() || avatar });
+    updateProfile({ displayName, avatarUri: avatar });
     setEditOpen(false);
   };
 
@@ -79,6 +95,7 @@ export default function ProfileScreen() {
           ) : null}
           {tab === 'Preferences' ? (
             <>
+              <ProfileToggle icon="appearance" label="Dark theme" onValueChange={(value) => updateSetting('appearance', value ? 'Dark' : 'Light')} value={settings.appearance === 'Dark'} />
               <ProfileRow icon="mode" label="Trading interface" onPress={() => setChoice('interface')} value={settings.interfaceMode === 'basic' ? 'Basic' : 'Advanced'} />
               <ProfileRow icon="orders" label="Order defaults" onPress={() => router.push('/settings/trading')} />
               <ProfileRow icon="bell" label="Notifications" onPress={() => router.push('/settings/notifications')} />
@@ -106,8 +123,14 @@ export default function ProfileScreen() {
             </Pressable>
           ))}
         </View>
-        <Text style={styles.sheetLabel}>Image URL</Text>
-        <View style={[styles.nameInput, styles.urlInput]}><TextInput autoCapitalize="none" autoCorrect={false} onChangeText={setImageUri} placeholder="https://" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={imageUri} /></View>
+        <Pressable onPress={pickImage} style={({ pressed }) => [styles.photoPicker, pressed && styles.pressed]}>
+          <Icon name="camera" size={18} />
+          <View style={styles.photoPickerCopy}>
+            <Text style={styles.photoPickerTitle}>Choose from device</Text>
+            <Text style={styles.photoPickerMeta}>Select and crop a photo</Text>
+          </View>
+          <Icon color={colors.textMuted} name="chevron" size={17} />
+        </Pressable>
         <Text style={styles.sheetLabel}>Display name</Text>
         <View style={styles.nameInput}><TextInput autoCapitalize="words" onChangeText={setName} selectionColor={colors.text} style={styles.input} value={name} /></View>
         <Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>Save changes</Text></Pressable>
@@ -121,12 +144,16 @@ export default function ProfileScreen() {
 }
 
 function ProfileAvatar({ displayName, variant, size = 74 }: { displayName: string; variant: string; size?: number }) {
-  if (variant.startsWith('http')) return <Image source={{ uri: variant }} style={{ borderRadius: size / 2, height: size, width: size }} />;
+  const { colors } = useTheme();
+  const styles = useStyles();
+  if (!['void', 'light', 'signal'].includes(variant)) return <Image source={{ uri: variant }} style={{ borderRadius: size / 2, height: size, width: size }} />;
   const palette = variant === 'light' ? { background: colors.text, foreground: colors.bg } : variant === 'signal' ? { background: colors.positive, foreground: colors.bg } : { background: colors.surfaceRaised, foreground: colors.text };
   return <View style={[styles.profileAvatar, { backgroundColor: palette.background, borderRadius: size / 2, height: size, width: size }]}><Text style={[styles.initial, { color: palette.foreground, fontSize: size * 0.34 }]}>{displayName.slice(0, 2).toUpperCase()}</Text></View>;
 }
 
 function ProfileRow({ icon, label, value, onPress }: { icon: IconName; label: string; value?: string; onPress?: () => void }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable disabled={!onPress} onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <Icon name={icon} size={21} />
@@ -138,16 +165,18 @@ function ProfileRow({ icon, label, value, onPress }: { icon: IconName; label: st
 }
 
 function ProfileToggle({ icon, label, value, onValueChange }: { icon: IconName; label: string; value: boolean; onValueChange: (value: boolean) => void }) {
+  const { colors, isDark } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       <Icon name={icon} size={21} />
       <Text style={styles.rowLabel}>{label}</Text>
-      <Switch ios_backgroundColor="#313131" onValueChange={onValueChange} thumbColor={colors.white} trackColor={{ false: '#313131', true: colors.positive }} value={value} />
+      <Switch ios_backgroundColor={colors.divider} onValueChange={onValueChange} thumbColor={isDark ? colors.white : '#FFFFFF'} trackColor={{ false: colors.divider, true: colors.positive }} value={value} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
   header: { alignItems: 'center', flexDirection: 'row', minHeight: 58, paddingHorizontal: spacing.page },
   back: { alignItems: 'flex-start', justifyContent: 'center', width: 42 },
@@ -177,8 +206,11 @@ const styles = StyleSheet.create({
   avatarChoice: { borderColor: 'transparent', borderRadius: radii.pill, borderWidth: 2, padding: 3 },
   avatarChoiceActive: { borderColor: colors.text },
   nameInput: { backgroundColor: colors.control, borderRadius: radii.md, height: 48, justifyContent: 'center', paddingHorizontal: spacing.sm },
-  urlInput: { marginBottom: spacing.lg },
+  photoPicker: { alignItems: 'center', backgroundColor: colors.control, borderRadius: radii.md, flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg, minHeight: 58, paddingHorizontal: spacing.md },
+  photoPickerCopy: { flex: 1 },
+  photoPickerTitle: { color: colors.text, fontFamily: typography.semibold, fontSize: 13 },
+  photoPickerMeta: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10.5, marginTop: 3 },
   input: { color: colors.text, fontFamily: typography.semibold, fontSize: 15, padding: 0 },
   save: { alignItems: 'center', backgroundColor: colors.text, borderRadius: radii.pill, height: 44, justifyContent: 'center', marginTop: spacing.lg },
   saveText: { color: colors.bg, fontFamily: typography.bold, fontSize: 13 },
-});
+}));

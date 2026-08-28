@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { Icon, type IconName } from '@/components/ui/icon';
-import { colors, layout, typography } from '@/theme/tokens';
+import { layout, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 const ICONS: Record<string, IconName> = {
   index: 'home',
@@ -12,6 +14,8 @@ const ICONS: Record<string, IconName> = {
 };
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -35,9 +39,9 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   scene: { backgroundColor: colors.bg },
   bar: { backgroundColor: colors.navigation, borderTopColor: colors.divider, height: layout.nav, paddingBottom: 4, paddingTop: 5 },
   item: { paddingVertical: 0 },
   label: { fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.medium, marginTop: 1 },
-});
+}));

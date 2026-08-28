@@ -1,4 +1,4 @@
-export const colors = {
+export const darkColors = {
   bg: '#000000',
   navigation: '#000000',
   chart: '#080808',
@@ -18,6 +18,33 @@ export const colors = {
   overlay: 'rgba(0,0,0,0.82)',
   white: '#FFFFFF',
 } as const;
+
+export const lightColors: ThemeColors = {
+  bg: '#F7F7F8',
+  navigation: '#FFFFFF',
+  chart: '#FFFFFF',
+  section: '#F0F0F2',
+  surface: '#ECECEF',
+  surfaceRaised: '#FFFFFF',
+  control: '#E9E9EC',
+  divider: '#D8D8DC',
+  dividerSoft: '#E5E5E8',
+  text: '#0A0A0B',
+  textMuted: '#66666E',
+  textFaint: '#8A8A92',
+  positive: '#008A72',
+  negative: '#D83E4D',
+  overviewPositive: '#087F6C',
+  overviewNegative: '#D93C4C',
+  overlay: 'rgba(0,0,0,0.38)',
+  white: '#FFFFFF',
+};
+
+export type ThemeColors = { [Key in keyof typeof darkColors]: string };
+
+// Static fallback for non-rendering utilities. UI components consume the active
+// palette through ThemeProvider.
+export const colors: ThemeColors = darkColors;
 
 export const spacing = {
   page: 16,

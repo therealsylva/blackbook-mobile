@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { CandlestickChart, MarketChart } from '@/components/market/market-chart';
@@ -10,7 +10,9 @@ import { OrderReviewSheet } from '@/components/trade/order-review-sheet';
 import { PairSelectorSheet } from '@/components/trade/pair-selector-sheet';
 import { useExchange } from '@/context/exchange-context';
 import { formatMoney, formatPercent, formatPrice } from '@/lib/format';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import type { ChartRange, OrderType, Side } from '@/types/exchange';
 
 type AdvancedPanel = 'Chart' | 'Book';
@@ -20,6 +22,8 @@ const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop'];
 const LEVERAGES = [1, 3, 5, 10];
 
 export default function TradeScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor,
@@ -181,6 +185,7 @@ export default function TradeScreen() {
 }
 
 function RangeRail({ ranges, range, onChange }: { ranges: ChartRange[]; range: ChartRange; onChange: (range: ChartRange) => void }) {
+  const styles = useStyles();
   return (
     <View style={styles.rangeRail}>{ranges.map((item) => (
       <Pressable key={item} onPress={() => onChange(item)} style={[styles.rangeChoice, range === item && styles.rangeActive]}><Text style={[styles.rangeText, range === item && styles.rangeTextActive]}>{item}</Text></Pressable>
@@ -189,6 +194,8 @@ function RangeRail({ ranges, range, onChange }: { ranges: ChartRange[]; range: C
 }
 
 function Field({ label, value, onChangeText, unit, compact = false }: { label: string; value: string; onChangeText: (value: string) => void; unit: string; compact?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={[styles.field, compact && styles.compactField]}>
       <Text style={styles.label}>{label}</Text>
@@ -201,10 +208,11 @@ function Field({ label, value, onChangeText, unit, compact = false }: { label: s
 }
 
 function Summary({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return <View style={styles.summary}><Text style={styles.summaryLabel}>{label}</Text><Text style={styles.summaryValue}>{value}</Text></View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   flex: { flex: 1 },
   content: { paddingBottom: spacing.xl },
   header: { alignItems: 'center', flexDirection: 'row', height: 62, justifyContent: 'space-between', paddingHorizontal: spacing.page },
@@ -276,4 +284,4 @@ const styles = StyleSheet.create({
   activityText: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 10 },
   activityDot: { color: colors.textFaint, fontFamily: typography.family },
   pressed: { opacity: 0.65 },
-});
+}));

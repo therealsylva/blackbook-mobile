@@ -52,7 +52,7 @@ export interface UserProfile {
 
 export interface ExchangeSettings {
   interfaceMode: InterfaceMode;
-  appearance: 'Dark' | 'Light' | 'System';
+  appearance: 'Dark' | 'Light';
   language: 'English' | 'French' | 'Spanish';
   currency: 'USD' | 'EUR' | 'GBP';
   colorPreference: 'Green up / Red down' | 'Red up / Green down';

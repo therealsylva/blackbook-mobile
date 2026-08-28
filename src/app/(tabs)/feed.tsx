@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
 import { formatPercent, formatPrice } from '@/lib/format';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 type FeedTab = 'Highlights' | 'News' | 'Strategies' | 'Movers';
 const TABS: FeedTab[] = ['Highlights', 'News', 'Strategies', 'Movers'];
@@ -26,6 +28,7 @@ const STRATEGIES: Array<{ icon: IconName; title: string; copy: string }> = [
 ];
 
 export default function FeedScreen() {
+  const styles = useStyles();
   const router = useRouter();
   const { markets, priceFor, changeFor } = useExchange();
   const [tab, setTab] = useState<FeedTab>('Highlights');
@@ -98,10 +101,13 @@ export default function FeedScreen() {
 type Market = ReturnType<typeof useExchange>['markets'][number];
 
 function SectionTitle({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+  const styles = useStyles();
   return <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>{title}</Text>{action ? <Pressable onPress={onAction}><Text style={styles.sectionAction}>{action}</Text></Pressable> : null}</View>;
 }
 
 function TrendRow({ market, price, change, onPress }: { market: Market; price: number; change: number; onPress: (symbol: string) => void }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable onPress={() => onPress(market.symbol)} style={({ pressed }) => [styles.trendRow, pressed && styles.pressed]}>
       <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
@@ -112,6 +118,8 @@ function TrendRow({ market, price, change, onPress }: { market: Market; price: n
 }
 
 function StoryRow({ story, market, onPress }: { story: typeof STORIES[number]; market?: Market; onPress: (symbol: string) => void }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable disabled={!market} onPress={() => market && onPress(market.symbol)} style={({ pressed }) => [styles.storyRow, pressed && styles.pressed]}>
       {market ? <MarketAvatar assetKey={market.assetKey} size={48} symbol={market.symbol} /> : null}
@@ -122,6 +130,8 @@ function StoryRow({ story, market, onPress }: { story: typeof STORIES[number]; m
 }
 
 function StrategyRow({ strategy }: { strategy: typeof STRATEGIES[number] }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable style={({ pressed }) => [styles.strategyRow, pressed && styles.pressed]}>
       <Icon name={strategy.icon} size={23} />
@@ -132,6 +142,7 @@ function StrategyRow({ strategy }: { strategy: typeof STRATEGIES[number] }) {
 }
 
 function ListingRow({ market, onPress }: { market: Market; onPress: (symbol: string) => void }) {
+  const styles = useStyles();
   return <Pressable onPress={() => onPress(market.symbol)} style={styles.listingRow}><MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} /><Text style={styles.listingName}>{market.name}</Text><Text style={styles.listingTicker}>{market.symbol}</Text><Text style={styles.newPill}>New</Text></Pressable>;
 }
 
@@ -139,7 +150,7 @@ function MoverSection({ title, markets, priceFor, changeFor, onPress }: { title:
   return <View><SectionTitle title={title} />{markets.map((market) => <TrendRow change={changeFor(market.symbol)} key={market.symbol} market={market} onPress={onPress} price={priceFor(market.symbol)} />)}</View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
   header: { alignItems: 'center', flexDirection: 'row', height: 62, justifyContent: 'space-between', paddingHorizontal: spacing.page },
   title: { color: colors.text, fontFamily: typography.bold, fontSize: 27, letterSpacing: -0.8 },
@@ -172,4 +183,4 @@ const styles = StyleSheet.create({
   listingTicker: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 9 },
   newPill: { backgroundColor: colors.surface, borderRadius: radii.pill, color: colors.text, fontFamily: typography.semibold, fontSize: 9, marginLeft: spacing.sm, overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5 },
   pressed: { backgroundColor: colors.section },
-});
+}));

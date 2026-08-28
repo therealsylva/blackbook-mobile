@@ -1,8 +1,10 @@
 import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import type { MarketDefinition } from '@/data/markets';
 import { formatPercent, formatPrice } from '@/lib/format';
-import { colors, layout, typography } from '@/theme/tokens';
+import { layout, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { MarketAvatar } from './market-avatar';
 import { MarketChart } from './market-chart';
 
@@ -14,9 +16,12 @@ interface MarketRowProps {
   compact?: boolean;
   showSparkline?: boolean;
   showVolume?: boolean;
+  directory?: boolean;
 }
 
-function MarketRowComponent({ market, price, change, onPress, compact = false, showSparkline = false, showVolume = false }: MarketRowProps) {
+function MarketRowComponent({ market, price, change, onPress, compact = false, showSparkline = false, showVolume = false, directory = false }: MarketRowProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const direction = change >= 0 ? colors.positive : colors.negative;
   return (
     <Pressable
@@ -29,41 +34,43 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
         <MarketAvatar assetKey={market.assetKey} size={compact ? 42 : layout.entity} symbol={market.symbol} />
         <View style={styles.identityCopy}>
           <Text numberOfLines={1} style={styles.name}>{market.name}</Text>
-          <Text style={styles.symbol}>{market.symbol}</Text>
+          <View style={styles.metadata}>
+            <Text style={styles.symbol}>{market.symbol}</Text>
+            {showSparkline ? (
+              <View style={styles.sparkline}>
+                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={market.series.slice(-16)} strokeWidth={1.7} />
+              </View>
+            ) : null}
+            {showVolume ? <Text numberOfLines={1} style={styles.volume}>Vol ${market.volume}</Text> : null}
+          </View>
         </View>
       </View>
-
-      {showSparkline ? (
-        <View style={styles.sparkline}>
-          <MarketChart area={false} grid={false} height={29} positive={change >= 0} series={market.series.slice(-16)} strokeWidth={1.8} />
-        </View>
-      ) : null}
 
       <View style={[styles.priceColumn, compact && styles.compactPrice]}>
         <Text style={styles.price}>{formatPrice(price)}</Text>
-        {compact ? <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text> : null}
+        {(compact || directory) ? <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text> : null}
       </View>
-      {!compact ? <Text style={[styles.change, styles.changeColumn, { color: direction }]}>{formatPercent(change)}</Text> : null}
-      {showVolume ? <Text style={styles.volume}>${market.volume}</Text> : null}
+      {!compact && !directory ? <Text style={[styles.change, styles.changeColumn, { color: direction }]}>{formatPercent(change)}</Text> : null}
     </Pressable>
   );
 }
 
 export const MarketRow = memo(MarketRowComponent);
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   row: { alignItems: 'center', flexDirection: 'row', minHeight: 70, paddingHorizontal: 16 },
-  compactRow: { minHeight: 72, paddingHorizontal: 0 },
+  compactRow: { minHeight: 76, paddingHorizontal: 0 },
   pressed: { backgroundColor: colors.section },
   identity: { alignItems: 'center', flex: 1, flexDirection: 'row', minWidth: 0 },
   identityCopy: { flex: 1, marginLeft: 11, minWidth: 0 },
-  name: { color: colors.text, fontFamily: typography.bold, fontSize: 15, letterSpacing: -0.35 },
-  symbol: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 11, marginTop: 3 },
-  sparkline: { height: 29, marginHorizontal: 9, width: 57 },
-  priceColumn: { alignItems: 'flex-end', width: 76 },
-  compactPrice: { width: 82 },
-  price: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 13, fontVariant: ['tabular-nums'], letterSpacing: -0.35 },
-  change: { fontFamily: typography.monoSemibold, fontSize: 11, fontVariant: ['tabular-nums'], marginTop: 4 },
+  name: { color: colors.text, fontFamily: typography.bold, fontSize: 15.5, letterSpacing: -0.35 },
+  metadata: { alignItems: 'center', flexDirection: 'row', minHeight: 22, marginTop: 2 },
+  symbol: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 10.5 },
+  sparkline: { flex: 1, height: 20, marginLeft: spacing.sm, maxWidth: 76, minWidth: 46 },
+  priceColumn: { alignItems: 'flex-end', marginLeft: spacing.sm, width: 96 },
+  compactPrice: { width: 92 },
+  price: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 13.5, fontVariant: ['tabular-nums'], letterSpacing: -0.4 },
+  change: { fontFamily: typography.monoSemibold, fontSize: 11.5, fontVariant: ['tabular-nums'], marginTop: 4 },
   changeColumn: { marginLeft: 8, marginTop: 0, textAlign: 'right', width: 54 },
-  volume: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 10, marginLeft: 8, textAlign: 'right', width: 48 },
-});
+  volume: { color: colors.textMuted, flexShrink: 1, fontFamily: typography.mono, fontSize: 9.5, marginLeft: spacing.sm },
+}));

@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ExchangeProvider } from '@/context/exchange-context';
-import { colors } from '@/theme/tokens';
+import { ThemeProvider, useTheme } from '@/theme/theme-context';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -31,9 +32,19 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
+    <ThemeProvider>
+      <RootNavigator />
+    </ThemeProvider>
+  );
+}
+
+function RootNavigator() {
+  const { colors, isDark } = useTheme();
+  return (
     <SafeAreaProvider>
       <ExchangeProvider>
-        <StatusBar style="light" />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <NavigationBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ animation: 'slide_from_right', contentStyle: { backgroundColor: colors.bg }, headerShown: false }} />
       </ExchangeProvider>
     </SafeAreaProvider>

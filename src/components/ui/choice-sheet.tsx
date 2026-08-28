@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, typography } from '@/theme/tokens';
+import { typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { BottomSheet } from './bottom-sheet';
 import { Icon } from './icon';
 
@@ -14,6 +16,8 @@ interface ChoiceSheetProps<T extends string | number> {
 }
 
 export function ChoiceSheet<T extends string | number>({ visible, title, value, options, onSelect, onClose, format }: ChoiceSheetProps<T>) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <BottomSheet onClose={onClose} title={title} visible={visible}>
       <View style={styles.list}>
@@ -31,10 +35,10 @@ export function ChoiceSheet<T extends string | number>({ visible, title, value, 
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   list: { paddingBottom: 8 },
   row: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', minHeight: 52 },
   pressed: { backgroundColor: colors.surfaceRaised },
   label: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 14 },
   selected: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold },
-});
+}));

@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import type { CandlePoint } from '@/lib/market-series';
-import { colors } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 interface MarketChartProps {
   series: number[];
@@ -34,6 +35,8 @@ function geometry(series: number[], height: number, bottom = 8) {
 }
 
 export function MarketChart({ series, positive, height = 190, grid = false, strokeWidth = 2, area = false }: MarketChartProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const chart = useMemo(() => geometry(series, height), [height, series]);
   const lineColor = positive ? colors.overviewPositive : colors.overviewNegative;
   const areaPath = `${chart.path} L ${chart.x(chart.clean.length - 1)} ${height} L ${chart.x(0)} ${height} Z`;
@@ -48,7 +51,7 @@ export function MarketChart({ series, positive, height = 190, grid = false, stro
             <Stop offset="1" stopColor={lineColor} stopOpacity="0" />
           </LinearGradient>
         </Defs>
-        {grid ? [0.25, 0.5, 0.75].map((ratio) => <Line key={ratio} stroke="rgba(255,255,255,0.045)" strokeDasharray="2 7" strokeWidth="0.6" x1="0" x2={WIDTH} y1={height * ratio} y2={height * ratio} />) : null}
+        {grid ? [0.25, 0.5, 0.75].map((ratio) => <Line key={ratio} opacity={0.55} stroke={colors.dividerSoft} strokeDasharray="2 7" strokeWidth="0.6" x1="0" x2={WIDTH} y1={height * ratio} y2={height * ratio} />) : null}
         {area ? <Path d={areaPath} fill="url(#area)" /> : null}
         <Path d={chart.path} fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
       </Svg>
@@ -57,6 +60,8 @@ export function MarketChart({ series, positive, height = 190, grid = false, stro
 }
 
 export function CandlestickChart({ candles, height = 212, showVolume = true }: CandlestickChartProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const chart = useMemo(() => {
     const clean = candles.length > 1 ? candles : [{ time: 0, open: 0, high: 1, low: 0, close: 1, volume: 1 }, { time: 1, open: 1, high: 1, low: 0, close: 0, volume: 1 }];
     const priceHeight = showVolume ? height * 0.78 : height - 8;
@@ -72,7 +77,7 @@ export function CandlestickChart({ candles, height = 212, showVolume = true }: C
   return (
     <View style={[styles.candleFrame, { height }]}>
       <Svg height="100%" preserveAspectRatio="none" viewBox={`0 0 ${WIDTH} ${height}`} width="100%">
-        {[0.22, 0.5, 0.78].map((ratio) => <Line key={ratio} stroke="rgba(255,255,255,0.045)" strokeDasharray="2 7" strokeWidth="0.6" x1="0" x2={WIDTH} y1={chart.priceHeight * ratio} y2={chart.priceHeight * ratio} />)}
+        {[0.22, 0.5, 0.78].map((ratio) => <Line key={ratio} opacity={0.55} stroke={colors.dividerSoft} strokeDasharray="2 7" strokeWidth="0.6" x1="0" x2={WIDTH} y1={chart.priceHeight * ratio} y2={chart.priceHeight * ratio} />)}
         {chart.clean.map((item, index) => {
           const up = item.close >= item.open;
           const color = up ? colors.positive : colors.negative;
@@ -100,7 +105,7 @@ export function CandlestickChart({ candles, height = 212, showVolume = true }: C
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   frame: { overflow: 'hidden', width: '100%' },
   candleFrame: { backgroundColor: colors.chart, overflow: 'hidden', width: '100%' },
-});
+}));

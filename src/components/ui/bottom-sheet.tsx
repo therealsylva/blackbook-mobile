@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { Icon } from './icon';
 
 interface BottomSheetProps extends PropsWithChildren {
@@ -13,6 +14,7 @@ interface BottomSheetProps extends PropsWithChildren {
 
 export function BottomSheet({ visible, title, onClose, children, scroll = true }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
+  const styles = useStyles();
   const content = scroll ? <ScrollView showsVerticalScrollIndicator={false}>{children}</ScrollView> : children;
   return (
     <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
@@ -31,11 +33,11 @@ export function BottomSheet({ visible, title, onClose, children, scroll = true }
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   root: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { backgroundColor: colors.overlay, bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   sheet: { backgroundColor: colors.section, borderColor: colors.divider, borderTopLeftRadius: radii.sheet, borderTopRightRadius: radii.sheet, borderWidth: StyleSheet.hairlineWidth, maxHeight: '88%', paddingHorizontal: spacing.page },
   handle: { alignSelf: 'center', backgroundColor: colors.textFaint, borderRadius: 2, height: 4, marginBottom: spacing.sm, marginTop: spacing.xs, width: 32 },
   header: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md, paddingBottom: spacing.sm },
   title: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 17 },
-});
+}));

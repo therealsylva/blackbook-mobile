@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
 import { formatMoney, formatPercent, formatPrice } from '@/lib/format';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import type { OpenOrder, Position, TradeRecord } from '@/types/exchange';
 
 type PortfolioTab = 'Positions' | 'Orders' | 'Journal';
 
 export default function PortfolioScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { cashBalance, usedMargin, totalEquity, unrealizedPnl, positions, orders, history, settings } = useExchange();
   const [tab, setTab] = useState<PortfolioTab>('Positions');
   const counts = { Positions: positions.length, Orders: orders.length, Journal: history.length };
@@ -32,9 +36,9 @@ export default function PortfolioScreen() {
 
         <View style={styles.tabs}>
           {(['Positions', 'Orders', 'Journal'] as const).map((item) => (
-            <Pressable key={item} onPress={() => setTab(item)} style={styles.tab}>
-              <Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item} <Text style={styles.tabCount}>{counts[item]}</Text></Text>
-              {tab === item ? <View style={styles.tabLine} /> : null}
+            <Pressable key={item} onPress={() => setTab(item)} style={[styles.tab, tab === item && styles.tabActive]}>
+              <Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item}</Text>
+              <View style={[styles.tabBadge, tab === item && styles.tabBadgeActive]}><Text style={[styles.tabCount, tab === item && styles.tabCountActive]}>{counts[item]}</Text></View>
             </Pressable>
           ))}
         </View>
@@ -50,10 +54,13 @@ export default function PortfolioScreen() {
 }
 
 function BalanceMetric({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return <View style={styles.balanceMetric}><Text style={styles.balanceLabel}>{label}</Text><Text style={styles.balanceValue}>{value}</Text></View>;
 }
 
 function PositionsList() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { positions, marketFor, priceFor, positionPnl, closePosition, settings } = useExchange();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const toggle = (id: string) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
@@ -68,12 +75,12 @@ function PositionsList() {
         <Pressable onPress={() => toggle(position.id)} style={({ pressed }) => [styles.itemMain, pressed && styles.pressed]}>
           <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
           <View style={styles.itemCopy}>
-            <View style={styles.itemTitleLine}><Text style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
+            <View style={styles.itemTitleLine}><Text numberOfLines={1} style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
             <Text style={[styles.sideMeta, { color: position.side === 'long' ? colors.positive : colors.negative }]}>{position.side === 'long' ? 'Long' : 'Short'} · {position.leverage}x</Text>
           </View>
           <View style={styles.itemQuote}>
             <Text style={[styles.pnl, { color: pnl >= 0 ? colors.positive : colors.negative }]}>{pnl >= 0 ? '+' : ''}{formatMoney(pnl, settings.currency)}</Text>
-            <Text style={styles.context}>{formatPercent(pnlPercent)}</Text>
+            <Text style={[styles.contextMove, { color: pnl >= 0 ? colors.positive : colors.negative }]}>{formatPercent(pnlPercent)}</Text>
           </View>
           <Icon color={colors.textMuted} name="chevron" size={17} />
         </Pressable>
@@ -96,6 +103,8 @@ function PositionsList() {
 }
 
 function OrdersList() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { orders, marketFor, priceFor, cancelOrder, settings } = useExchange();
   if (!orders.length) return <Empty title="No open orders" />;
   return <>{orders.map((order: OpenOrder) => {
@@ -107,24 +116,27 @@ function OrdersList() {
         <View style={styles.itemMain}>
           <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
           <View style={styles.itemCopy}>
-            <View style={styles.itemTitleLine}><Text style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
+            <View style={styles.itemTitleLine}><Text numberOfLines={1} style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
             <Text style={[styles.sideMeta, { color: order.side === 'long' ? colors.positive : colors.negative }]}>{order.side === 'long' ? 'Long' : 'Short'} · {order.type} · {order.leverage}x</Text>
+            <View style={styles.orderNumbers}>
+              <Text style={styles.context}>Target <Text style={styles.contextValue}>{formatPrice(order.targetPrice)}</Text></Text>
+              <Text style={styles.context}>Current <Text style={styles.contextValue}>{formatPrice(current)}</Text></Text>
+            </View>
+            <Text style={styles.orderMeta}>{formatMoney(order.size, settings.currency)} · placed {formatAge(order.createdAt)}</Text>
           </View>
-          <Pressable onPress={() => cancelOrder(order.id)} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+          <View style={styles.orderQuote}>
+            <Text style={[styles.distance, { color: distance >= 0 ? colors.positive : colors.negative }]}>{distance >= 0 ? '+' : ''}{distance.toFixed(2)}%</Text>
+            <Pressable onPress={() => cancelOrder(order.id)} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+          </View>
         </View>
-        <View style={styles.priceContext}>
-          <Text style={styles.context}>Target <Text style={styles.contextValue}>{formatPrice(order.targetPrice)}</Text></Text>
-          <Icon color={colors.textFaint} name="chevron" size={13} />
-          <Text style={styles.context}>Current <Text style={styles.contextValue}>{formatPrice(current)}</Text></Text>
-          <Text style={styles.distance}>{distance >= 0 ? '+' : ''}{distance.toFixed(2)}%</Text>
-        </View>
-        <Text style={styles.orderMeta}>{formatMoney(order.size, settings.currency)} · placed {formatAge(order.createdAt)}</Text>
       </View>
     );
   })}</>;
 }
 
 function JournalList() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { history, marketFor, settings } = useExchange();
   if (!history.length) return <Empty title="No journal entries" />;
   return <>{history.map((record: TradeRecord, index) => {
@@ -149,10 +161,12 @@ function JournalList() {
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return <View style={styles.detail}><Text style={styles.detailLabel}>{label}</Text><Text style={styles.detailValue}>{value}</Text></View>;
 }
 
 function Empty({ title }: { title: string }) {
+  const styles = useStyles();
   return <View style={styles.empty}><Text style={styles.emptyText}>{title}</Text></View>;
 }
 
@@ -176,36 +190,40 @@ function formatDate(timestamp: number) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
-  header: { justifyContent: 'center', minHeight: 62, paddingHorizontal: spacing.page },
+  header: { justifyContent: 'center', minHeight: 64, paddingHorizontal: spacing.page },
   title: { color: colors.text, fontFamily: typography.bold, fontSize: 27, letterSpacing: -0.8 },
-  equity: { paddingHorizontal: spacing.page, paddingTop: spacing.md },
-  eyebrow: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
-  equityValue: { color: colors.text, fontFamily: typography.monoBold, fontSize: 34, letterSpacing: -1.6, marginTop: 3 },
-  today: { fontFamily: typography.monoSemibold, fontSize: 11, marginTop: spacing.xs },
+  equity: { backgroundColor: colors.section, borderBottomColor: colors.dividerSoft, borderBottomWidth: 1, borderTopColor: colors.dividerSoft, borderTopWidth: 1, paddingHorizontal: spacing.page, paddingVertical: spacing.lg },
+  eyebrow: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11.5 },
+  equityValue: { color: colors.text, fontFamily: typography.monoBold, fontSize: 36, fontVariant: ['tabular-nums', 'lining-nums'], letterSpacing: -1.7, marginTop: 4 },
+  today: { fontFamily: typography.monoSemibold, fontSize: 11.5, fontVariant: ['tabular-nums'], marginTop: spacing.xs },
   balanceMetrics: { flexDirection: 'row', gap: spacing.xl, marginTop: spacing.lg },
   balanceMetric: { minWidth: 100 },
-  balanceLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
-  balanceValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 12, marginTop: 4 },
-  tabs: { flexDirection: 'row', marginTop: spacing.xl, paddingHorizontal: spacing.page },
-  tab: { alignItems: 'center', flex: 1, minHeight: 42, paddingBottom: 4 },
-  tabText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 13 },
+  balanceLabel: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 10.5 },
+  balanceValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 12.5, fontVariant: ['tabular-nums'], marginTop: 4 },
+  tabs: { backgroundColor: colors.control, borderRadius: radii.pill, flexDirection: 'row', gap: 3, marginHorizontal: spacing.page, marginTop: spacing.lg, padding: 3 },
+  tab: { alignItems: 'center', borderRadius: radii.pill, flex: 1, flexDirection: 'row', gap: 6, justifyContent: 'center', minHeight: 38 },
+  tabActive: { backgroundColor: colors.surfaceRaised },
+  tabText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 12.5 },
   tabTextActive: { color: colors.text },
-  tabCount: { fontFamily: typography.mono, fontSize: 9 },
-  tabLine: { backgroundColor: colors.text, bottom: 0, height: 2, left: 18, position: 'absolute', right: 18 },
-  list: { paddingHorizontal: spacing.page, paddingTop: spacing.xs },
-  item: { paddingVertical: spacing.md },
+  tabBadge: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderRadius: radii.pill, height: 18, justifyContent: 'center', minWidth: 18, paddingHorizontal: 5 },
+  tabBadgeActive: { backgroundColor: colors.text },
+  tabCount: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 9 },
+  tabCountActive: { color: colors.bg },
+  list: { paddingHorizontal: spacing.page, paddingTop: spacing.sm },
+  item: { borderBottomColor: colors.dividerSoft, borderBottomWidth: 1, paddingVertical: spacing.md },
   itemMain: { alignItems: 'center', flexDirection: 'row', minHeight: 48 },
   itemCopy: { flex: 1, marginLeft: spacing.sm, minWidth: 0 },
   itemTitleLine: { alignItems: 'baseline', flexDirection: 'row', gap: spacing.xs },
-  itemTitle: { color: colors.text, flexShrink: 1, fontFamily: typography.bold, fontSize: 15, letterSpacing: -0.3 },
+  itemTitle: { color: colors.text, flexShrink: 1, fontFamily: typography.bold, fontSize: 15.5, letterSpacing: -0.35 },
   ticker: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 9 },
-  sideMeta: { fontFamily: typography.monoSemibold, fontSize: 10, marginTop: 4, textTransform: 'capitalize' },
+  sideMeta: { fontFamily: typography.monoSemibold, fontSize: 10.5, marginTop: 4, textTransform: 'capitalize' },
   itemQuote: { alignItems: 'flex-end', marginRight: spacing.xs },
-  pnl: { fontFamily: typography.monoSemibold, fontSize: 12 },
-  context: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
-  contextValue: { color: colors.text, fontFamily: typography.monoSemibold },
+  pnl: { fontFamily: typography.monoBold, fontSize: 12.5, fontVariant: ['tabular-nums'], letterSpacing: -0.3 },
+  contextMove: { fontFamily: typography.monoSemibold, fontSize: 10.5, fontVariant: ['tabular-nums'], marginTop: 3 },
+  context: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 10 },
+  contextValue: { color: colors.text, fontFamily: typography.monoSemibold, fontVariant: ['tabular-nums'] },
   priceContext: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs, marginLeft: 54, marginTop: spacing.sm },
   details: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginLeft: 54, marginTop: spacing.md },
   detail: { minWidth: 84 },
@@ -215,8 +233,10 @@ const styles = StyleSheet.create({
   outlineButtonText: { color: colors.text, fontFamily: typography.semibold, fontSize: 10 },
   cancel: { alignItems: 'center', borderColor: colors.divider, borderRadius: radii.pill, borderWidth: 1, height: 32, justifyContent: 'center', paddingHorizontal: spacing.md },
   cancelText: { color: colors.text, fontFamily: typography.semibold, fontSize: 10 },
-  distance: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginLeft: 'auto' },
-  orderMeta: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginLeft: 54, marginTop: spacing.sm },
+  orderNumbers: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.sm },
+  orderQuote: { alignItems: 'flex-end', alignSelf: 'stretch', justifyContent: 'space-between', marginLeft: spacing.sm },
+  distance: { fontFamily: typography.monoSemibold, fontSize: 10.5, fontVariant: ['tabular-nums'] },
+  orderMeta: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginTop: spacing.xs },
   dateHeading: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11, marginBottom: spacing.sm, marginTop: spacing.md },
   journalRow: { flexDirection: 'row', minHeight: 84 },
   timelineDot: { borderRadius: 4, height: 8, marginRight: spacing.sm, marginTop: 7, width: 8 },
@@ -227,4 +247,4 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 64 },
   emptyText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
   pressed: { opacity: 0.65 },
-});
+}));

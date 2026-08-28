@@ -75,3 +75,28 @@ This checklist is the implementation authority for the approved rebuild. Do not 
 - [x] 35 Remove the duplicate gear/settings destination.
 - [x] 54 Add editable picture and identity information.
 - [x] 55 Move identity into editable account state; remove hard-coded duplicates.
+
+## Phone polish pass — implemented
+
+- [x] 57 Replace the generic Deposit and Withdraw arrow icons with distinctive, frontend-aligned action icons matching the quality of the rest of the app.
+- [x] 58 Fix the balance-width/number-rendering leak that leaves trailing dots or an ellipsis after the displayed balance.
+- [x] 59 Remove the invented `Market pulse` heading and restore the plain `Indices` product label.
+- [x] 60 Increase the Home Hot/New/Gainers/Losers/Favorites label size, weight, and inactive contrast so the switcher does not look small, greyed-out, or timid.
+- [x] 61 Replace the Home switcher's flat active underline with the same clear pill treatment used by the All Indices category switcher.
+- [x] 62 Rebalance Home market-row widths so long index names remain readable without colliding with or being sacrificed to the mini chart.
+- [x] 63 Give the Home `All indices` action a clear button/tap affordance instead of rendering it like passive grey text.
+- [x] 64 Recompose All Indices rows using the Home-list hierarchy: preserve enough width for full names, keep price prominent with 24h movement grouped beneath it, and move volume into secondary metadata instead of its own cramped column.
+- [x] 65 Increase the All Indices table/category header font size and contrast; labels such as Index, Price, 24h, and Vol must not look faint or undersized if any remain after the row recomposition.
+- [x] 66 Replace the flattened Real Madrid crest source/crop and preserve its natural aspect ratio; verify it visually beside the correctly contained CGPT mark instead of trying another optical scale tweak.
+- [x] 67 Replace the incorrect purple Premier League artwork with the proper standalone EPL lion-head mark; source or generate the correct asset rather than using a purple circular substitute.
+- [x] 68 Give Portfolio an intentional visual composition and hierarchy so its content does not hang in an empty black void; use spacing, typography, and restrained structure without returning to card/panel abuse.
+- [x] 69 Strengthen Portfolio typography throughout; headings, tabs, labels, position details, and supporting text must not look flat, faint, or timid.
+- [x] 70 Render Positions, Orders, and Journal counts as compact notification-style count badges, not small inline numbers that read like exponents (`Positions²`).
+- [x] 71 Recompose Portfolio order rows so primary information is anchored from the left and the right edge is reserved only for quote/action context; remove the large empty-left/right-heavy arrangement.
+- [x] 72 Apply directional color to Portfolio percentage movement as well as monetary P&L; positive percentages use the positive colour and negative percentages use the negative colour.
+- [x] 73 Use the exact numeric font and numeric treatment from the index-frontend Overview page for Portfolio balances, prices, P&L, percentages, and entry/current values; verify against the frontend source instead of approximating it.
+- [x] 74 Add `Pairs` as a dedicated All Indices category alongside Clubs, Leagues, Athletes, Artists, and Products so Major Pairs is not buried below the entire directory.
+- [x] 75 Add `Pairs` to the Home market switcher immediately after Hot: Hot, Pairs, New, Gainers, Losers, Favorites.
+- [x] 76 Make the expanded Home switcher horizontally scrollable instead of shrinking or cramming all six options into the visible width at once.
+- [x] 77 Replace the Profile picture URL field with a native device file/photo picker flow; users must upload or select an image from their device rather than paste a URL.
+- [x] 78 Add a clear Light/Dark theme toggle in User Center preferences and apply the selected theme consistently throughout the app.

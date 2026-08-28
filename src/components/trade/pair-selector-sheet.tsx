@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useExchange } from '@/context/exchange-context';
 import { formatPercent, formatPrice } from '@/lib/format';
-import { colors, typography } from '@/theme/tokens';
+import { typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Icon } from '@/components/ui/icon';
 import { MarketAvatar } from '@/components/market/market-avatar';
@@ -14,6 +16,8 @@ interface PairSelectorSheetProps {
 }
 
 export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSheetProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { markets, priceFor, changeFor } = useExchange();
   const [query, setQuery] = useState('');
   const matches = useMemo(() => {
@@ -42,7 +46,7 @@ export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSh
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   search: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 8, height: 42, paddingHorizontal: 12 },
   input: { color: colors.text, flex: 1, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 13, paddingVertical: 0 },
   list: { marginTop: 10 },
@@ -54,4 +58,4 @@ const styles = StyleSheet.create({
   price: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 12, fontVariant: ['tabular-nums'] },
   change: { fontFamily: typography.mono, fontSize: 10, fontVariant: ['tabular-nums'], marginTop: 4 },
   pressed: { opacity: 0.62 },
-});
+}));

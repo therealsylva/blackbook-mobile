@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Screen } from '@/components/ui/screen';
 import { SettingRow } from '@/components/ui/setting-row';
 import { SettingsSection } from '@/components/ui/settings-section';
 import { TopBar } from '@/components/ui/top-bar';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 type Topic = 'Risk disclosure' | 'Privacy policy' | 'Terms of service' | 'Help centre';
 const COPY: Record<Topic, string> = {
@@ -16,12 +17,13 @@ const COPY: Record<Topic, string> = {
 };
 
 export default function AboutScreen() {
+  const styles = useStyles();
   const [topic, setTopic] = useState<Topic | null>(null);
   return (
     <Screen edges={['top', 'bottom']}>
       <TopBar back title="About BlackBook" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.brand}><Image accessibilityLabel="BlackBook" resizeMode="contain" source={require('../../../assets/splash-icon.png')} style={styles.wordmark} /><Text style={styles.version}>Version 0.1.0</Text></View>
+        <View style={styles.brand}><Text accessibilityLabel="BlackBook" style={styles.wordmark}>BlackBook</Text><Text style={styles.version}>Version 0.1.0</Text></View>
         <SettingsSection title="Information">
           <SettingRow icon="alert" label="Risk disclosure" onPress={() => setTopic('Risk disclosure')} />
           <SettingRow icon="lock" label="Privacy policy" onPress={() => setTopic('Privacy policy')} />
@@ -39,10 +41,10 @@ export default function AboutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
   brand: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: spacing.lg, paddingTop: spacing.lg },
-  wordmark: { height: 44, width: 210 },
+  wordmark: { color: colors.text, fontFamily: typography.bold, fontSize: 28, letterSpacing: -1 },
   version: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.regular, marginTop: spacing.xs },
   disclosure: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10, fontWeight: typography.weights.regular, lineHeight: 16, paddingHorizontal: spacing.page, paddingTop: spacing.md },
   copyright: { color: colors.textFaint, fontFamily: typography.family, fontSize: 9, fontWeight: typography.weights.regular, paddingTop: spacing.lg, textAlign: 'center' },
@@ -50,4 +52,4 @@ const styles = StyleSheet.create({
   done: { alignItems: 'center', backgroundColor: colors.text, borderRadius: radii.md, justifyContent: 'center', marginTop: spacing.lg, minHeight: 48 },
   doneText: { color: colors.bg, fontFamily: typography.family, fontSize: 14, fontWeight: typography.weights.semibold },
   pressed: { opacity: 0.72 },
-});
+}));

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { MarketChart } from '@/components/market/market-chart';
@@ -7,12 +7,16 @@ import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
 import { formatPercent, formatPrice } from '@/lib/format';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import type { ChartRange } from '@/types/exchange';
 
 const RANGES: ChartRange[] = ['1H', '1D', '1W', '1M', '6M'];
 
 export default function MarketOverviewScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   const params = useLocalSearchParams<{ symbol?: string }>();
   const { marketFor, priceFor, changeFor, seriesFor, favorites, alerts, toggleFavorite, toggleAlert, setActiveSymbol } = useExchange();
@@ -97,10 +101,11 @@ export default function MarketOverviewScreen() {
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricValue}>{value}</Text></View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
   header: { alignItems: 'center', flexDirection: 'row', minHeight: 64, paddingHorizontal: spacing.xs },
   headerButton: { alignItems: 'center', height: 44, justifyContent: 'center', width: 42 },
@@ -137,4 +142,4 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.65 },
   missing: { alignItems: 'center', flex: 1, justifyContent: 'center' },
   missingText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 14 },
-});
+}));

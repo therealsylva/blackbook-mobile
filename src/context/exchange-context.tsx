@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 import { MARKETS, type MarketDefinition } from '@/data/markets';
 import { makeCandles, makeSeries, type CandlePoint } from '@/lib/market-series';
+import { useTheme, type ThemeMode } from '@/theme/theme-context';
 import type { ChartRange, ExchangeSettings, OpenOrder, OrderType, Position, Side, TradeRecord, UserProfile } from '@/types/exchange';
 
 interface PlaceOrderInput {
@@ -73,6 +74,7 @@ const ExchangeContext = createContext<ExchangeContextValue | null>(null);
 const MARKET_LOOKUP = new Map(MARKETS.map((market) => [market.symbol, market]));
 
 export function ExchangeProvider({ children }: PropsWithChildren) {
+  const { setMode } = useTheme();
   const [quotes, setQuotes] = useState<Record<string, number>>(() => Object.fromEntries(MARKETS.map((market) => [market.symbol, market.price])));
   const [activeSymbol, setActiveSymbolState] = useState('RMD');
   const [favorites, setFavorites] = useState(() => new Set<string>());
@@ -166,7 +168,10 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
   }), []);
 
   const updateProfile = useCallback((changes: Partial<UserProfile>) => setProfile((current) => ({ ...current, ...changes })), []);
-  const updateSetting = useCallback(<K extends keyof ExchangeSettings,>(key: K, value: ExchangeSettings[K]) => setSettings((current) => ({ ...current, [key]: value })), []);
+  const updateSetting = useCallback(<K extends keyof ExchangeSettings,>(key: K, value: ExchangeSettings[K]) => {
+    if (key === 'appearance') setMode(value as ThemeMode);
+    setSettings((current) => ({ ...current, [key]: value }));
+  }, [setMode]);
 
   const value = useMemo<ExchangeContextValue>(() => ({
     markets: MARKETS, activeSymbol, setActiveSymbol, favorites, alerts, toggleFavorite, toggleAlert,

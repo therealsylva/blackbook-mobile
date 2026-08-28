@@ -1,7 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import type { OrderType, Side } from '@/types/exchange';
 import { formatMoney, formatPrice } from '@/lib/format';
-import { colors, typography } from '@/theme/tokens';
+import { typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 
 interface OrderReviewSheetProps {
@@ -19,6 +21,8 @@ interface OrderReviewSheetProps {
 }
 
 export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, type, amount, leverage, price, targetPrice, currency }: OrderReviewSheetProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const execution = type === 'market' ? 'Best available' : formatPrice(targetPrice || price);
   return (
     <BottomSheet onClose={onClose} title="Confirm order" visible={visible}>
@@ -42,10 +46,11 @@ export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, ty
 }
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return <View style={styles.row}><Text style={styles.label}>{label}</Text><Text style={styles.value}>{value}</Text></View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   heading: { paddingBottom: 16 },
   symbol: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 18 },
   side: { fontFamily: typography.semibold, fontSize: 12, marginTop: 5 },
@@ -57,4 +62,4 @@ const styles = StyleSheet.create({
   button: { alignItems: 'center', borderRadius: 10, justifyContent: 'center', marginTop: 20, minHeight: 52 },
   buttonText: { color: colors.white, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 15 },
   pressed: { opacity: 0.72 },
-});
+}));

@@ -1,28 +1,26 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import type { MarketDefinition } from '@/data/markets';
-import { MarketAvatar } from '@/components/market/market-avatar';
 import { MarketRow } from '@/components/market/market-row';
+import { PairRow } from '@/components/market/pair-row';
 import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { formatPercent } from '@/lib/format';
-import { colors, layout, radii, spacing, typography } from '@/theme/tokens';
+import { MAJOR_PAIRS } from '@/data/pairs';
+import { layout, radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
-type Category = 'All' | 'Clubs' | 'Leagues' | 'Athletes' | 'Artists' | 'Products';
+type Category = 'All' | 'Pairs' | 'Clubs' | 'Leagues' | 'Athletes' | 'Artists' | 'Products';
 type SortMode = 'Rank' | '24h change' | 'Volume';
 
-const CATEGORIES: Category[] = ['All', 'Clubs', 'Leagues', 'Athletes', 'Artists', 'Products'];
+const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Leagues', 'Athletes', 'Artists', 'Products'];
 const SORTS: SortMode[] = ['Rank', '24h change', 'Volume'];
-const PAIRS = [
-  { title: 'El Clásico', left: 'RMD', right: 'BAR' },
-  { title: 'Manchester derby', left: 'MCI', right: 'MUN' },
-  { title: 'NBA rivalry', left: 'LAL', right: 'BOS' },
-];
 
 export default function AllIndicesScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   const { markets, priceFor, changeFor } = useExchange();
   const [query, setQuery] = useState('');
@@ -32,6 +30,7 @@ export default function AllIndicesScreen() {
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
+    if (category === 'Pairs') return [];
     const list = markets.filter((market) => (category === 'All' || market.category === category) && (!normalized || market.name.toLowerCase().includes(normalized) || market.symbol.toLowerCase().includes(normalized)));
     if (sortMode === '24h change') list.sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol));
     if (sortMode === 'Volume') list.sort((a, b) => Number.parseFloat(b.volume) - Number.parseFloat(a.volume));
@@ -48,7 +47,7 @@ export default function AllIndicesScreen() {
         <View style={styles.titleRow}>
           <View>
             <Text style={styles.title}>All indices</Text>
-            <Text style={styles.count}>{filtered.length} live markets</Text>
+            <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} major rivalries` : `${filtered.length} live markets`}</Text>
           </View>
           <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}>
             <Icon name="filter" size={20} />
@@ -69,56 +68,32 @@ export default function AllIndicesScreen() {
           ))}
         </ScrollView>
 
-        <View style={styles.tableHeader}>
-          <Text style={[styles.column, styles.indexColumn]}>Index</Text>
-          <Text style={[styles.column, styles.priceColumn]}>Price</Text>
-          <Text style={[styles.column, styles.changeColumn]}>24h</Text>
-          <Text style={[styles.column, styles.volumeColumn]}>Vol</Text>
-        </View>
-
-        <View style={styles.list}>
-          {filtered.map((market) => <MarketRow change={changeFor(market.symbol)} key={market.symbol} market={market} onPress={openMarket} price={priceFor(market.symbol)} showVolume />)}
-          {!filtered.length ? <Text style={styles.empty}>No matching indices.</Text> : null}
-        </View>
-
-        {!query && category === 'All' ? (
-          <View style={styles.pairsSection}>
-            <View style={styles.pairsHeading}>
-              <Text style={styles.pairsTitle}>Major pairs</Text>
-              <Text style={styles.pairsMeta}>Rivalry spread</Text>
-            </View>
-            {PAIRS.map((pair) => {
+        {category === 'Pairs' ? (
+          <View style={styles.list}>
+            {MAJOR_PAIRS.map((pair) => {
               const left = marketBySymbol(pair.left);
               const right = marketBySymbol(pair.right);
               if (!left || !right) return null;
-              return <PairRow change={changeFor(left.symbol) - changeFor(right.symbol)} key={pair.title} left={left} onPress={openMarket} right={right} title={pair.title} />;
+              return <PairRow change={changeFor(left.symbol) - changeFor(right.symbol)} key={pair.id} left={left} onPress={() => openMarket(left.symbol)} right={right} title={pair.title} />;
             })}
           </View>
-        ) : null}
+        ) : <>
+          <View style={styles.tableHeader}>
+            <Text style={styles.column}>Index · volume</Text>
+            <Text style={styles.column}>Price · 24h</Text>
+          </View>
+          <View style={styles.list}>
+            {filtered.map((market) => <MarketRow change={changeFor(market.symbol)} directory key={market.symbol} market={market} onPress={openMarket} price={priceFor(market.symbol)} showVolume />)}
+            {!filtered.length ? <Text style={styles.empty}>No matching indices.</Text> : null}
+          </View>
+        </>}
       </ScrollView>
       <ChoiceSheet onClose={() => setSortOpen(false)} onSelect={setSortMode} options={SORTS} title="Sort indices" value={sortMode} visible={sortOpen} />
     </Screen>
   );
 }
 
-function PairRow({ title, left, right, change, onPress }: { title: string; left: MarketDefinition; right: MarketDefinition; change: number; onPress: (symbol: string) => void }) {
-  return (
-    <Pressable onPress={() => onPress(left.symbol)} style={({ pressed }) => [styles.pairRow, pressed && styles.pressed]}>
-      <View style={styles.pairMarks}>
-        <MarketAvatar assetKey={left.assetKey} size={38} symbol={left.symbol} />
-        <View style={styles.overlap}><MarketAvatar assetKey={right.assetKey} size={38} symbol={right.symbol} /></View>
-      </View>
-      <View style={styles.pairCopy}>
-        <Text style={styles.pairTitle}>{title}</Text>
-        <Text style={styles.pairTickers}>{left.symbol} · {right.symbol}</Text>
-      </View>
-      <Text style={[styles.pairChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text>
-      <Icon color={colors.textMuted} name="chevron" size={17} />
-    </Pressable>
-  );
-}
-
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
   titleRow: { alignItems: 'center', flexDirection: 'row', height: 72, justifyContent: 'space-between', paddingHorizontal: spacing.page },
   title: { color: colors.text, fontFamily: typography.bold, fontSize: 27, letterSpacing: -0.8 },
@@ -131,24 +106,9 @@ const styles = StyleSheet.create({
   categoryActive: { backgroundColor: colors.text },
   categoryText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 12 },
   categoryTextActive: { color: colors.bg },
-  tableHeader: { alignItems: 'center', flexDirection: 'row', height: 28, paddingHorizontal: spacing.page },
-  column: { color: colors.textFaint, fontFamily: typography.semibold, fontSize: 9, letterSpacing: 0.15 },
-  indexColumn: { flex: 1 },
-  priceColumn: { textAlign: 'right', width: 76 },
-  changeColumn: { marginLeft: 8, textAlign: 'right', width: 54 },
-  volumeColumn: { marginLeft: 8, textAlign: 'right', width: 48 },
+  tableHeader: { alignItems: 'center', flexDirection: 'row', height: 34, justifyContent: 'space-between', paddingHorizontal: spacing.page },
+  column: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 10.5, letterSpacing: 0.1 },
   list: { paddingBottom: spacing.lg },
   empty: { color: colors.textMuted, fontFamily: typography.family, fontSize: 13, padding: spacing.xl, textAlign: 'center' },
-  pairsSection: { paddingHorizontal: spacing.page, paddingTop: spacing.md },
-  pairsHeading: { alignItems: 'baseline', flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
-  pairsTitle: { color: colors.text, fontFamily: typography.bold, fontSize: 21, letterSpacing: -0.5 },
-  pairsMeta: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11 },
-  pairRow: { alignItems: 'center', flexDirection: 'row', minHeight: 68 },
-  pairMarks: { flexDirection: 'row', width: 66 },
-  overlap: { marginLeft: -10 },
-  pairCopy: { flex: 1 },
-  pairTitle: { color: colors.text, fontFamily: typography.semibold, fontSize: 14 },
-  pairTickers: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 10, marginTop: 3 },
-  pairChange: { fontFamily: typography.monoSemibold, fontSize: 11, marginRight: spacing.xs },
   pressed: { opacity: 0.65 },
-});
+}));

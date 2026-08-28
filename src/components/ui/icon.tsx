@@ -1,10 +1,13 @@
 import type { ColorValue } from 'react-native';
+import { useTheme } from '@/theme/theme-context';
 import {
   ArrowDownToLine,
   ArrowLeft,
   ArrowLeftRight,
   ArrowUpDown,
   ArrowUpFromLine,
+  BanknoteArrowDown,
+  BanknoteArrowUp,
   Bell,
   BookOpenText,
   Camera,
@@ -82,6 +85,8 @@ export type IconName =
   | 'swap'
   | 'download'
   | 'upload'
+  | 'deposit'
+  | 'withdraw'
   | 'chart'
   | 'clock'
   | 'orders'
@@ -138,6 +143,8 @@ const ICONS: Record<IconName, LucideIcon> = {
   swap: ArrowUpDown,
   download: ArrowDownToLine,
   upload: ArrowUpFromLine,
+  deposit: BanknoteArrowDown,
+  withdraw: BanknoteArrowUp,
   chart: ChartSpline,
   clock: Clock3,
   orders: ListOrdered,
@@ -156,7 +163,9 @@ const ICONS: Record<IconName, LucideIcon> = {
   camera: Camera,
 };
 
-export function Icon({ name, size = 22, color = '#FFFFFF', filled = false }: IconProps) {
+export function Icon({ name, size = 22, color, filled = false }: IconProps) {
+  const { colors } = useTheme();
   const Glyph = ICONS[name];
-  return <Glyph color={String(color)} fill={filled ? String(color) : 'none'} size={size} strokeWidth={filled ? 2.25 : 2} />;
+  const resolvedColor = String(color ?? colors.text);
+  return <Glyph color={resolvedColor} fill={filled ? resolvedColor : 'none'} size={size} strokeWidth={filled ? 2.25 : 2} />;
 }

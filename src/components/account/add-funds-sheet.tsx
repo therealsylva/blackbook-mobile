@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useExchange } from '@/context/exchange-context';
 import { formatMoney } from '@/lib/format';
-import { colors, radii, spacing, typography } from '@/theme/tokens';
+import { radii, spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 
 interface AddFundsSheetProps {
@@ -14,6 +16,8 @@ interface AddFundsSheetProps {
 const PRESETS = [250, 500, 1000, 2500];
 
 export function AddFundsSheet({ visible, onClose, mode = 'deposit' }: AddFundsSheetProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { addFunds, withdrawFunds, cashBalance, settings } = useExchange();
   const [amount, setAmount] = useState('500');
 
@@ -59,7 +63,7 @@ export function AddFundsSheet({ visible, onClose, mode = 'deposit' }: AddFundsSh
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   label: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.regular, fontSize: 12, marginBottom: 8 },
   inputRow: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderColor: colors.divider, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 54, paddingHorizontal: spacing.sm },
   currency: { color: colors.textMuted, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 14, marginRight: 12 },
@@ -73,4 +77,4 @@ const styles = StyleSheet.create({
   button: { alignItems: 'center', backgroundColor: colors.text, borderRadius: radii.md, justifyContent: 'center', marginTop: spacing.lg, minHeight: 48 },
   buttonText: { color: colors.bg, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 15 },
   pressed: { opacity: 0.7 },
-});
+}));

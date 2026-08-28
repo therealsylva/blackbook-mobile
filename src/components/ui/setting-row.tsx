@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
-import { colors, layout, typography } from '@/theme/tokens';
+import { layout, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 import { Icon, type IconName } from './icon';
 
 interface SettingRowProps {
@@ -15,6 +17,8 @@ interface SettingRowProps {
 }
 
 export function SettingRow({ icon, label, value, hint, onPress, toggle, onToggle, destructive, divider = true }: SettingRowProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : onToggle ? 'switch' : undefined}
@@ -32,11 +36,11 @@ export function SettingRow({ icon, label, value, hint, onPress, toggle, onToggle
         {onToggle ? (
           <Switch
             accessibilityLabel={label}
-            ios_backgroundColor="#313131"
+            ios_backgroundColor={colors.divider}
             onValueChange={onToggle}
             style={styles.switch}
             value={Boolean(toggle)}
-            trackColor={{ false: '#313131', true: colors.positive }}
+            trackColor={{ false: colors.divider, true: colors.positive }}
             thumbColor={colors.white}
           />
         ) : null}
@@ -47,7 +51,7 @@ export function SettingRow({ icon, label, value, hint, onPress, toggle, onToggle
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   row: { alignItems: 'stretch', flexDirection: 'row', minHeight: 62 },
   pressed: { backgroundColor: colors.surfaceRaised },
   icon: { alignItems: 'center', justifyContent: 'center', marginRight: 12, width: 22 },
@@ -59,4 +63,4 @@ const styles = StyleSheet.create({
   hint: { color: colors.textMuted, fontFamily: typography.family, fontSize: 10, lineHeight: 14, marginTop: 3 },
   value: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 12, marginRight: 4, maxWidth: '42%', textAlign: 'right' },
   switch: { marginLeft: 8, transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }], width: layout.touch },
-});
+}));

@@ -1,7 +1,8 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { marketImage } from '@/assets/market-images';
-import { colors, typography } from '@/theme/tokens';
+import { typography } from '@/theme/tokens';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 interface MarketAvatarProps {
   assetKey: string;
@@ -19,8 +20,6 @@ const PORTRAITS = new Set([
 
 const CIRCULAR_PRODUCTS = new Set(['openai-icon', 'claude-icon']);
 const OPTICAL_SCALE: Record<string, number> = {
-  'real-madrid': 0.92,
-  'premier-league': 0.84,
   'openai-icon': 0.74,
   'nba-icon': 0.92,
   'fcb-icon': 0.9,
@@ -45,17 +44,17 @@ function SpotifyMark({ size }: { size: number }) {
 }
 
 export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps) {
+  const styles = useStyles();
   if (assetKey === 'spotify-icon') return <View style={{ height: size, width: size }}><SpotifyMark size={size} /></View>;
 
   const source = marketImage(assetKey);
   const portrait = PORTRAITS.has(assetKey);
   const circularProduct = CIRCULAR_PRODUCTS.has(assetKey);
-  const productBackground = assetKey === 'openai-icon' ? colors.white : 'transparent';
-  const leagueBackground = assetKey === 'premier-league' ? '#3D195B' : 'transparent';
+  const productBackground = assetKey === 'openai-icon' ? '#FFFFFF' : 'transparent';
   const scale = OPTICAL_SCALE[assetKey] ?? 1;
 
   return (
-    <View style={[styles.frame, (portrait || circularProduct || assetKey === 'premier-league') && styles.circle, { backgroundColor: circularProduct ? productBackground : leagueBackground, borderRadius: size / 2, height: size, width: size }]}>
+    <View style={[styles.frame, (portrait || circularProduct) && styles.circle, { backgroundColor: productBackground, borderRadius: size / 2, height: size, width: size }]}>
       {source ? (
         <Image
           accessible={false}
@@ -72,9 +71,9 @@ export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps)
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   frame: { alignItems: 'center', backgroundColor: 'transparent', justifyContent: 'center' },
   circle: { overflow: 'hidden' },
   fallbackFrame: { alignItems: 'center', borderColor: colors.divider, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center' },
   fallback: { color: colors.text, fontFamily: typography.bold, letterSpacing: -0.4 },
-});
+}));

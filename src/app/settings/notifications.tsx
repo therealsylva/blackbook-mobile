@@ -1,10 +1,12 @@
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { TopBar } from '@/components/ui/top-bar';
 import { useExchange } from '@/context/exchange-context';
-import { colors, spacing, typography } from '@/theme/tokens';
+import { spacing, typography } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme-context';
+import { createThemedStyles } from '@/theme/use-themed-styles';
 
 const FEEDS: Array<{ icon: IconName; label: string; count?: (alerts: number) => string }> = [
   { icon: 'bell', label: 'Price alerts', count: (alerts) => `${alerts} active` },
@@ -15,6 +17,8 @@ const FEEDS: Array<{ icon: IconName; label: string; count?: (alerts: number) => 
 ];
 
 export default function NotificationsScreen() {
+  const { colors, isDark } = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   const { settings, updateSetting, alerts } = useExchange();
   return (
@@ -24,10 +28,10 @@ export default function NotificationsScreen() {
         <View style={styles.pushRow}>
           <Text style={styles.pushLabel}>Push notifications</Text>
           <Switch
-            ios_backgroundColor="#313131"
+            ios_backgroundColor={colors.divider}
             onValueChange={(value) => updateSetting('pushNotifications', value)}
-            thumbColor={colors.white}
-            trackColor={{ false: '#313131', true: colors.positive }}
+            thumbColor={isDark ? colors.white : '#FFFFFF'}
+            trackColor={{ false: colors.divider, true: colors.positive }}
             value={settings.pushNotifications}
           />
         </View>
@@ -46,7 +50,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   content: { paddingBottom: spacing.xl },
   pushRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 76, paddingHorizontal: spacing.page },
   pushLabel: { color: colors.text, fontFamily: typography.semibold, fontSize: 16 },
@@ -55,4 +59,4 @@ const styles = StyleSheet.create({
   feedLabel: { color: colors.text, flex: 1, fontFamily: typography.semibold, fontSize: 15 },
   count: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 10 },
   pressed: { backgroundColor: colors.section },
-});
+}));
