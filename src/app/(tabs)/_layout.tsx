@@ -21,7 +21,9 @@ export default function TabsLayout() {
       backBehavior="history"
       initialRouteName="index"
       screenOptions={({ route }) => ({
+        freezeOnBlur: true,
         headerShown: false,
+        lazy: true,
         sceneStyle: styles.scene,
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.textFaint,

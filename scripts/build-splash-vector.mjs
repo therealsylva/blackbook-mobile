@@ -11,22 +11,26 @@ if (!viewBox || !primaryPath) {
   throw new Error('The canonical BlackBook wordmark is missing its viewBox or primary path.');
 }
 
-const viewportWidth = Number(viewBox[1]);
-const viewportHeight = Number(viewBox[2]);
 const widthDp = 210;
-const heightDp = Number(((widthDp * viewportHeight) / viewportWidth).toFixed(4));
+const canvasSize = 640;
+const translateX = 120;
+const translateY = 225.5;
 const pathData = primaryPath[1].replaceAll('&', '&amp;').replaceAll('"', '&quot;');
 const vector = `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
   android:width="${widthDp}dp"
-  android:height="${heightDp}dp"
-  android:viewportWidth="${viewportWidth}"
-  android:viewportHeight="${viewportHeight}">
-  <path
-    android:fillColor="#FFFFFF"
-    android:pathData="${pathData}" />
+  android:height="${widthDp}dp"
+  android:viewportWidth="${canvasSize}"
+  android:viewportHeight="${canvasSize}">
+  <group
+    android:translateX="${translateX}"
+    android:translateY="${translateY}">
+    <path
+      android:fillColor="#FFFFFF"
+      android:pathData="${pathData}" />
+  </group>
 </vector>
 `;
 
 await writeFile(join(root, 'assets/splashscreen-logo.xml'), vector);
-console.log('Generated crisp Android splash vector from assets/blackbook-wordmark.svg.');
+console.log('Generated a padded Android splash vector from assets/blackbook-wordmark.svg.');

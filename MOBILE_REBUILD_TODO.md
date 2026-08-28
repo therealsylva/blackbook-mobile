@@ -109,3 +109,11 @@ This checklist is the implementation authority for the approved rebuild. Do not 
 - [x] 82 Replace the blurry/washed launch wordmark treatment. The current splash uses the raster `assets/splash-icon.png`; rebuild the native splash from the canonical `assets/blackbook-wordmark.svg` as crisp density-aware Android resources so the BlackBook banner renders sharp, solid white, and vector-clean on void black at every phone density.
 - [x] 83 Make the Apple index icon self-contained and theme-independent. The current `assets/indices/apple.png` is only a white transparent glyph, so it disappears on the Light theme; ship the white Apple mark inside its own permanent black tile/background with correct padding and optical centering, and verify the exact same readable identity on both Light and Dark themes.
 - [x] 84 Replace the NBA index artwork completely. The current `assets/indices/nba-icon.png` is a noisy generic monochrome dribbler rather than a clean, recognizable NBA identity and it breaks down further on the Light theme; source or create a crisp NBA-specific mark with its own theme-independent framing/background, then verify it at Home-row, directory-row, Overview, Portfolio, and Journal sizes in both themes.
+
+## Screenshot regression pass — implemented
+
+- [x] 85 Keep the Android system splash wordmark fully inside its safe area; preserve the canonical size and proportions without cropping the first or last letter.
+- [x] 86 Remove the multi-second bottom-tab switch delay by virtualizing the All Indices directory and freezing inactive tab scenes; do not redesign the approved bottom-navigation icons.
+- [x] 87 Render the EPL lion with a permanent high-contrast, theme-independent treatment at row size.
+- [x] 88 Center a recognizable vertical NBA mark inside its circular tile instead of squeezing the full horizontal lockup into the corner.
+- [x] 89 Increase the Apple glyph's optical size inside its permanent black tile while preserving its padding and light-theme visibility.

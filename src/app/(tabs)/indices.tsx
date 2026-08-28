@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, Text, TextInput, View, type ListRenderItem } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketRow } from '@/components/market/market-row';
 import { PairRow } from '@/components/market/pair-row';
@@ -7,16 +7,24 @@ import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { MAJOR_PAIRS } from '@/data/pairs';
+import type { MarketDefinition } from '@/data/markets';
+import { MAJOR_PAIRS, type MajorPair } from '@/data/pairs';
 import { layout, radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
 type Category = 'All' | 'Pairs' | 'Clubs' | 'Leagues' | 'Athletes' | 'Artists' | 'Products';
 type SortMode = 'Rank' | '24h change' | 'Volume';
+type DirectoryItem =
+  | { kind: 'market'; market: MarketDefinition }
+  | { kind: 'pair'; pair: MajorPair; left: MarketDefinition; right: MarketDefinition };
 
 const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Leagues', 'Athletes', 'Artists', 'Products'];
 const SORTS: SortMode[] = ['Rank', '24h change', 'Volume'];
+
+function itemKey(item: DirectoryItem) {
+  return item.kind === 'market' ? item.market.symbol : item.pair.id;
+}
 
 export default function AllIndicesScreen() {
   const { colors } = useTheme();
@@ -28,66 +36,88 @@ export default function AllIndicesScreen() {
   const [sortMode, setSortMode] = useState<SortMode>('Rank');
   const [sortOpen, setSortOpen] = useState(false);
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (category === 'Pairs') return [];
     const list = markets.filter((market) => (category === 'All' || market.category === category) && (!normalized || market.name.toLowerCase().includes(normalized) || market.symbol.toLowerCase().includes(normalized)));
-    if (sortMode === '24h change') list.sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol));
     if (sortMode === 'Volume') list.sort((a, b) => Number.parseFloat(b.volume) - Number.parseFloat(a.volume));
     if (sortMode === 'Rank') list.sort((a, b) => a.rank - b.rank);
     return list;
-  }, [category, changeFor, markets, query, sortMode]);
+  }, [category, markets, query, sortMode]);
+  const filtered = useMemo(() => sortMode === '24h change'
+    ? [...baseFiltered].sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol))
+    : baseFiltered, [baseFiltered, changeFor, sortMode]);
+
+  const directoryItems = useMemo<DirectoryItem[]>(() => {
+    if (category !== 'Pairs') return filtered.map((market) => ({ kind: 'market', market }));
+    const lookup = new Map(markets.map((market) => [market.symbol, market]));
+    return MAJOR_PAIRS.flatMap((pair) => {
+      const left = lookup.get(pair.left);
+      const right = lookup.get(pair.right);
+      return left && right ? [{ kind: 'pair' as const, pair, left, right }] : [];
+    });
+  }, [category, filtered, markets]);
 
   const openMarket = useCallback((symbol: string) => router.push({ pathname: '/market/[symbol]', params: { symbol } }), [router]);
-  const marketBySymbol = useCallback((symbol: string) => markets.find((market) => market.symbol === symbol), [markets]);
+  const renderItem = useCallback<ListRenderItem<DirectoryItem>>(({ item }) => {
+    if (item.kind === 'pair') {
+      return <PairRow change={changeFor(item.left.symbol) - changeFor(item.right.symbol)} left={item.left} onPress={() => openMarket(item.left.symbol)} right={item.right} title={item.pair.title} />;
+    }
+    return <MarketRow change={changeFor(item.market.symbol)} directory market={item.market} onPress={openMarket} price={priceFor(item.market.symbol)} showVolume />;
+  }, [changeFor, openMarket, priceFor]);
+
+  const listHeader = (
+    <View>
+      <View style={styles.titleRow}>
+        <View>
+          <Text style={styles.title}>All indices</Text>
+          <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} major rivalries` : `${filtered.length} live markets`}</Text>
+        </View>
+        <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}>
+          <Icon name="filter" size={20} />
+        </Pressable>
+      </View>
+
+      <View style={styles.search}>
+        <Icon color={colors.textMuted} name="search" size={19} />
+        <TextInput autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} placeholder="Search by name or ticker" placeholderTextColor={colors.textMuted} returnKeyType="search" selectionColor={colors.text} style={styles.searchInput} value={query} />
+        {query ? <Pressable accessibilityLabel="Clear search" hitSlop={10} onPress={() => setQuery('')}><Icon color={colors.textMuted} name="close" size={17} /></Pressable> : null}
+      </View>
+
+      <ScrollView contentContainerStyle={styles.categories} horizontal showsHorizontalScrollIndicator={false}>
+        {CATEGORIES.map((item) => (
+          <Pressable accessibilityRole="tab" accessibilityState={{ selected: category === item }} key={item} onPress={() => setCategory(item)} style={[styles.category, category === item && styles.categoryActive]}>
+            <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>{item}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      {category !== 'Pairs' ? (
+        <View style={styles.tableHeader}>
+          <Text style={styles.column}>Index · volume</Text>
+          <Text style={styles.column}>Price · 24h</Text>
+        </View>
+      ) : null}
+    </View>
+  );
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View style={styles.titleRow}>
-          <View>
-            <Text style={styles.title}>All indices</Text>
-            <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} major rivalries` : `${filtered.length} live markets`}</Text>
-          </View>
-          <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}>
-            <Icon name="filter" size={20} />
-          </Pressable>
-        </View>
-
-        <View style={styles.search}>
-          <Icon color={colors.textMuted} name="search" size={19} />
-          <TextInput autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} placeholder="Search by name or ticker" placeholderTextColor={colors.textMuted} returnKeyType="search" selectionColor={colors.text} style={styles.searchInput} value={query} />
-          {query ? <Pressable accessibilityLabel="Clear search" hitSlop={10} onPress={() => setQuery('')}><Icon color={colors.textMuted} name="close" size={17} /></Pressable> : null}
-        </View>
-
-        <ScrollView contentContainerStyle={styles.categories} horizontal showsHorizontalScrollIndicator={false}>
-          {CATEGORIES.map((item) => (
-            <Pressable accessibilityRole="tab" accessibilityState={{ selected: category === item }} key={item} onPress={() => setCategory(item)} style={[styles.category, category === item && styles.categoryActive]}>
-              <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>{item}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        {category === 'Pairs' ? (
-          <View style={styles.list}>
-            {MAJOR_PAIRS.map((pair) => {
-              const left = marketBySymbol(pair.left);
-              const right = marketBySymbol(pair.right);
-              if (!left || !right) return null;
-              return <PairRow change={changeFor(left.symbol) - changeFor(right.symbol)} key={pair.id} left={left} onPress={() => openMarket(left.symbol)} right={right} title={pair.title} />;
-            })}
-          </View>
-        ) : <>
-          <View style={styles.tableHeader}>
-            <Text style={styles.column}>Index · volume</Text>
-            <Text style={styles.column}>Price · 24h</Text>
-          </View>
-          <View style={styles.list}>
-            {filtered.map((market) => <MarketRow change={changeFor(market.symbol)} directory key={market.symbol} market={market} onPress={openMarket} price={priceFor(market.symbol)} showVolume />)}
-            {!filtered.length ? <Text style={styles.empty}>No matching indices.</Text> : null}
-          </View>
-        </>}
-      </ScrollView>
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={directoryItems}
+        initialNumToRender={8}
+        keyboardShouldPersistTaps="handled"
+        keyExtractor={itemKey}
+        ListEmptyComponent={<Text style={styles.empty}>No matching indices.</Text>}
+        ListHeaderComponent={listHeader}
+        maxToRenderPerBatch={8}
+        removeClippedSubviews
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        updateCellsBatchingPeriod={16}
+        windowSize={5}
+      />
       <ChoiceSheet onClose={() => setSortOpen(false)} onSelect={setSortMode} options={SORTS} title="Sort indices" value={sortMode} visible={sortOpen} />
     </Screen>
   );
@@ -108,7 +138,6 @@ const useStyles = createThemedStyles((colors) => ({
   categoryTextActive: { color: colors.bg },
   tableHeader: { alignItems: 'center', flexDirection: 'row', height: 34, justifyContent: 'space-between', paddingHorizontal: spacing.page },
   column: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 10.5, letterSpacing: 0.1 },
-  list: { paddingBottom: spacing.lg },
   empty: { color: colors.textMuted, fontFamily: typography.family, fontSize: 13, padding: spacing.xl, textAlign: 'center' },
   pressed: { opacity: 0.65 },
 }));

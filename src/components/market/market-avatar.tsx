@@ -19,10 +19,11 @@ const PORTRAITS = new Set([
   'justin-bieber', 'tyla-profile',
 ]);
 
-const CIRCULAR_PRODUCTS = new Set(['openai-icon', 'claude-icon', 'apple']);
+const CIRCULAR_PRODUCTS = new Set(['openai-icon', 'claude-icon', 'apple', 'premier-league']);
 const OPTICAL_SCALE: Record<string, number> = {
   'openai-icon': 0.74,
-  apple: 0.62,
+  apple: 0.94,
+  'premier-league': 1.08,
   'fcb-icon': 0.9,
   psg: 0.95,
   'manchester-city': 0.96,
@@ -52,7 +53,7 @@ export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps)
   const source = marketImage(assetKey);
   const portrait = PORTRAITS.has(assetKey);
   const circularProduct = CIRCULAR_PRODUCTS.has(assetKey);
-  const productBackground = assetKey === 'openai-icon' ? '#FFFFFF' : assetKey === 'apple' ? '#000000' : 'transparent';
+  const productBackground = assetKey === 'openai-icon' || assetKey === 'premier-league' ? '#FFFFFF' : assetKey === 'apple' ? '#000000' : 'transparent';
   const scale = OPTICAL_SCALE[assetKey] ?? 1;
 
   return (
@@ -62,7 +63,7 @@ export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps)
           accessible={false}
           resizeMode={portrait || assetKey === 'claude-icon' ? 'cover' : 'contain'}
           source={source}
-          style={{ borderRadius: circularProduct ? size / 2 : 0, height: size * scale, width: size * scale }}
+          style={{ borderRadius: circularProduct ? size / 2 : 0, height: size * scale, tintColor: assetKey === 'premier-league' ? '#3D195B' : undefined, width: size * scale }}
         />
       ) : (
         <View style={[styles.fallbackFrame, { borderRadius: size / 2, height: size, width: size }]}>
