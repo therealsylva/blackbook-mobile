@@ -5,13 +5,15 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, feat/mobile-foundation]
+    branches: [feat/mobile-foundation]
     paths:
       - package.json
       - app.json
       - src/**
-      - web/**
+      - assets/**
       - scripts/**
+      - MOBILE_REBUILD_TODO.md
+      - .github/workflows/android-apk.yml
 
 concurrency:
   group: android-apk-${{ github.ref }}
@@ -22,45 +24,33 @@ permissions:
 
 jobs:
   build:
-    name: Validate and build standalone release APK
+    name: Build native ARM64 release APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       CI: "true"
-
     steps:
       - name: Check out source
         uses: actions/checkout@v5
-
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
           node-version: 22
-
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
-
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-
-      - name: Validate foundation
+      - name: Validate native exchange
         run: npm run validate
-
       - name: Check Expo dependency alignment
         run: npx expo install --check
-
       - name: Type-check
         run: npm run typecheck
-
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
-
-      - name: Bundle canonical index frontend
-        run: npm run bundle:web
-
       - name: Build stripped ARM64 release APK
         working-directory: android
         run: >-
@@ -68,19 +58,14 @@ jobs:
           -PreactNativeArchitectures=arm64-v8a
           -Pandroid.enableMinifyInReleaseBuilds=true
           -Pandroid.enableShrinkResourcesInReleaseBuilds=true
-
-      - name: Verify standalone release package
+      - name: Verify standalone package
         run: |
           unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/index.android.bundle'
-          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/blackbook/index.html'
-          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/blackbook/public/assets/brand/blackbook-logo.svg'
-          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/blackbook/public/assets/hero/market-entities-hero.webp'
           unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'lib/arm64-v8a/'
           if unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -Eq 'lib/(x86|x86_64|armeabi-v7a)/'; then
             echo 'Unexpected non-ARM64 native libraries found.'
             exit 1
           fi
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
