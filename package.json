@@ -19,9 +19,9 @@
     "build:apk": "npm run prebuild:android && cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true"
   },
   "dependencies": {
-    "expo": "~57.0.9",
-    "expo-constants": "~57.0.8",
-    "expo-font": "~57.0.1",
+    "expo": "~57.0.18",
+    "expo-constants": "~57.0.16",
+    "expo-font": "~57.0.2",
     "expo-image-picker": "~57.0.14",
     "expo-linking": "~57.0.4",
     "expo-navigation-bar": "~57.0.2",
