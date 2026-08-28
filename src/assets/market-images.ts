@@ -16,7 +16,6 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'boston-celtics': require('./indices/boston-celtics.png'),
   'kansas-city-chiefs': require('./indices/kansas-city-chiefs.png'),
   'dallas-cowboys': require('./indices/dallas-cowboys.png'),
-  'nba-icon': require('./indices/nba-icon.png'),
   'claude-icon': require('./indices/claude-icon.jpg'),
   arsenal: require('./indices/arsenal.png'),
   'liverpool-crest': require('./indices/liverpool-crest.png'),

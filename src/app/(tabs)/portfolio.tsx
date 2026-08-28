@@ -147,9 +147,15 @@ function JournalList() {
       <View key={record.id}>
         {showDate ? <Text style={styles.dateHeading}>{formatDate(record.createdAt)}</Text> : null}
         <View style={styles.journalRow}>
-          <View style={[styles.timelineDot, { backgroundColor: record.pnl === undefined ? colors.textMuted : record.pnl >= 0 ? colors.positive : colors.negative }]} />
+          <View style={styles.journalIdentity}>
+            <MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} />
+            <View style={[styles.journalEventDot, { backgroundColor: record.pnl === undefined ? colors.textMuted : record.pnl >= 0 ? colors.positive : colors.negative }]} />
+          </View>
           <View style={styles.journalCopy}>
-            <Text style={styles.journalTitle}>{journalTitle(record, market.name)}</Text>
+            <View style={styles.journalHeadline}>
+              <Text numberOfLines={1} style={styles.journalTitle}>{journalTitle(record, market.name)}</Text>
+              <Text style={styles.journalTicker}>{market.symbol}</Text>
+            </View>
             <Text style={styles.journalDetail}>{record.side === 'long' ? 'Long' : 'Short'} · {record.leverage}x · {formatMoney(record.size, settings.currency)}</Text>
             <Text style={styles.journalDetail}>{formatPrice(record.entryPrice)}{record.exitPrice ? ` → ${formatPrice(record.exitPrice)}` : ''} · fee {formatMoney(record.fee, settings.currency)}</Text>
           </View>
@@ -238,12 +244,15 @@ const useStyles = createThemedStyles((colors) => ({
   distance: { fontFamily: typography.monoSemibold, fontSize: 10.5, fontVariant: ['tabular-nums'] },
   orderMeta: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginTop: spacing.xs },
   dateHeading: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11, marginBottom: spacing.sm, marginTop: spacing.md },
-  journalRow: { flexDirection: 'row', minHeight: 84 },
-  timelineDot: { borderRadius: 4, height: 8, marginRight: spacing.sm, marginTop: 7, width: 8 },
-  journalCopy: { flex: 1 },
-  journalTitle: { color: colors.text, fontFamily: typography.bold, fontSize: 14 },
+  journalRow: { alignItems: 'flex-start', flexDirection: 'row', minHeight: 84 },
+  journalIdentity: { height: 38, position: 'relative', width: 38 },
+  journalEventDot: { borderColor: colors.bg, borderRadius: 5, borderWidth: 2, bottom: -1, height: 10, position: 'absolute', right: -1, width: 10 },
+  journalCopy: { flex: 1, marginLeft: spacing.sm, minWidth: 0 },
+  journalHeadline: { alignItems: 'baseline', flexDirection: 'row', gap: spacing.xs },
+  journalTitle: { color: colors.text, flexShrink: 1, fontFamily: typography.bold, fontSize: 14 },
+  journalTicker: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 9 },
   journalDetail: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginTop: 5 },
-  journalPnl: { fontFamily: typography.monoSemibold, fontSize: 11 },
+  journalPnl: { fontFamily: typography.monoSemibold, fontSize: 11, marginLeft: spacing.xs },
   empty: { alignItems: 'center', paddingVertical: 64 },
   emptyText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
   pressed: { opacity: 0.65 },

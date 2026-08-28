@@ -3,6 +3,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { marketImage } from '@/assets/market-images';
 import { typography } from '@/theme/tokens';
 import { createThemedStyles } from '@/theme/use-themed-styles';
+import { NbaMark } from './nba-mark';
 
 interface MarketAvatarProps {
   assetKey: string;
@@ -18,10 +19,10 @@ const PORTRAITS = new Set([
   'justin-bieber', 'tyla-profile',
 ]);
 
-const CIRCULAR_PRODUCTS = new Set(['openai-icon', 'claude-icon']);
+const CIRCULAR_PRODUCTS = new Set(['openai-icon', 'claude-icon', 'apple']);
 const OPTICAL_SCALE: Record<string, number> = {
   'openai-icon': 0.74,
-  'nba-icon': 0.92,
+  apple: 0.62,
   'fcb-icon': 0.9,
   psg: 0.95,
   'manchester-city': 0.96,
@@ -46,11 +47,12 @@ function SpotifyMark({ size }: { size: number }) {
 export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps) {
   const styles = useStyles();
   if (assetKey === 'spotify-icon') return <View style={{ height: size, width: size }}><SpotifyMark size={size} /></View>;
+  if (assetKey === 'nba-icon') return <View style={{ height: size, width: size }}><NbaMark size={size} /></View>;
 
   const source = marketImage(assetKey);
   const portrait = PORTRAITS.has(assetKey);
   const circularProduct = CIRCULAR_PRODUCTS.has(assetKey);
-  const productBackground = assetKey === 'openai-icon' ? '#FFFFFF' : 'transparent';
+  const productBackground = assetKey === 'openai-icon' ? '#FFFFFF' : assetKey === 'apple' ? '#000000' : 'transparent';
   const scale = OPTICAL_SCALE[assetKey] ?? 1;
 
   return (
@@ -58,7 +60,7 @@ export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps)
       {source ? (
         <Image
           accessible={false}
-          resizeMode={portrait || (circularProduct && assetKey !== 'openai-icon') ? 'cover' : 'contain'}
+          resizeMode={portrait || assetKey === 'claude-icon' ? 'cover' : 'contain'}
           source={source}
           style={{ borderRadius: circularProduct ? size / 2 : 0, height: size * scale, width: size * scale }}
         />

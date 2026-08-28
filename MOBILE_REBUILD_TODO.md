@@ -100,3 +100,12 @@ This checklist is the implementation authority for the approved rebuild. Do not 
 - [x] 76 Make the expanded Home switcher horizontally scrollable instead of shrinking or cramming all six options into the visible width at once.
 - [x] 77 Replace the Profile picture URL field with a native device file/photo picker flow; users must upload or select an image from their device rather than paste a URL.
 - [x] 78 Add a clear Light/Dark theme toggle in User Center preferences and apply the selected theme consistently throughout the app.
+
+## Post-APK phone QA — implemented
+
+- [x] 79 Fix native Android back navigation: while inside Trade, Index Overview, Profile, Settings, or another nested flow, the phone back gesture/button must close the active sheet first or return to the previous in-app screen/tab. It must only exit BlackBook when the user is already at the true Home root.
+- [x] 80 Add full index identity to every Portfolio Journal entry: show the index icon and ticker alongside its name/event so journal records are not rendered as anonymous text-only history.
+- [x] 81 Fix bottom-navigation active icon rendering: selecting a tab must only brighten the icon's 2D strokes and label. Never apply a solid fill that turns object-shaped Lucide icons such as Home, Portfolio, or Feed into white blobs or boxes; keep every icon's internal negative space and outline geometry intact.
+- [x] 82 Replace the blurry/washed launch wordmark treatment. The current splash uses the raster `assets/splash-icon.png`; rebuild the native splash from the canonical `assets/blackbook-wordmark.svg` as crisp density-aware Android resources so the BlackBook banner renders sharp, solid white, and vector-clean on void black at every phone density.
+- [x] 83 Make the Apple index icon self-contained and theme-independent. The current `assets/indices/apple.png` is only a white transparent glyph, so it disappears on the Light theme; ship the white Apple mark inside its own permanent black tile/background with correct padding and optical centering, and verify the exact same readable identity on both Light and Dark themes.
+- [x] 84 Replace the NBA index artwork completely. The current `assets/indices/nba-icon.png` is a noisy generic monochrome dribbler rather than a clean, recognizable NBA identity and it breaks down further on the Light theme; source or create a crisp NBA-specific mark with its own theme-independent framing/background, then verify it at Home-row, directory-row, Overview, Portfolio, and Journal sizes in both themes.

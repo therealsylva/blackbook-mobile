@@ -50,6 +50,12 @@
           "imageWidth": 210,
           "resizeMode": "contain",
           "backgroundColor": "#000000",
+          "android": {
+            "drawable": {
+              "icon": "./assets/splashscreen-logo.xml",
+              "darkIcon": "./assets/splashscreen-logo.xml"
+            }
+          },
           "dark": {
             "image": "./assets/splash-icon.png",
             "backgroundColor": "#000000"

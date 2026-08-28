@@ -18,6 +18,8 @@ export default function TabsLayout() {
   const styles = useStyles();
   return (
     <Tabs
+      backBehavior="history"
+      initialRouteName="index"
       screenOptions={({ route }) => ({
         headerShown: false,
         sceneStyle: styles.scene,
@@ -27,7 +29,7 @@ export default function TabsLayout() {
         tabBarItemStyle: styles.item,
         tabBarLabelStyle: styles.label,
         tabBarStyle: styles.bar,
-        tabBarIcon: ({ color, focused }) => <Icon color={color} filled={focused} name={ICONS[route.name] ?? 'home'} size={21} />,
+        tabBarIcon: ({ color }) => <Icon color={color} name={ICONS[route.name] ?? 'home'} size={21} />,
       })}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />

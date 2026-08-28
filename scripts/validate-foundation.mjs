@@ -11,6 +11,7 @@ const requiredFiles = [
   'assets/icon.png',
   'assets/adaptive-icon.png',
   'assets/splash-icon.png',
+  'assets/splashscreen-logo.xml',
   'src/app/_layout.tsx',
   'src/app/(tabs)/index.tsx',
   'src/app/(tabs)/indices.tsx',
@@ -50,6 +51,7 @@ if (appJson.expo?.android?.adaptiveIcon?.foregroundImage !== './assets/adaptive-
 
 const splashPlugin = appJson.expo?.plugins?.find((plugin) => Array.isArray(plugin) && plugin[0] === 'expo-splash-screen');
 if (!splashPlugin || splashPlugin[1]?.image !== './assets/splash-icon.png') failures.push('The Blackbook splash mark is not configured.');
+if (splashPlugin?.[1]?.android?.drawable?.icon !== './assets/splashscreen-logo.xml') failures.push('Android must render the canonical wordmark as a native vector drawable.');
 
 const marketSource = await readFile(join(root, 'src/data/markets.ts'), 'utf8');
 const marketCount = (marketSource.match(/"symbol":/g) ?? []).length;
@@ -97,6 +99,15 @@ for (const path of await sourceFiles(join(root, 'src'))) {
 const tabsSource = await readFile(join(root, 'src/app/(tabs)/_layout.tsx'), 'utf8');
 if (/name=["']profile["']/.test(tabsSource)) failures.push('Profile must not appear in the bottom navigation.');
 if (!/name=["']feed["']/.test(tabsSource)) failures.push('Feed must appear in the bottom navigation.');
+if (!/backBehavior=["']history["']/.test(tabsSource) || !/initialRouteName=["']index["']/.test(tabsSource)) failures.push('Android back navigation must preserve tab history and the Home root.');
+if (/tabBarIcon:[^\n]+filled=/.test(tabsSource)) failures.push('Active bottom navigation icons must remain outline-only.');
+
+const portfolioSource = await readFile(join(root, 'src/app/(tabs)/portfolio.tsx'), 'utf8');
+if (!/function JournalList[\s\S]+MarketAvatar[\s\S]+journalTicker/.test(portfolioSource)) failures.push('Portfolio Journal entries must include the market icon and ticker.');
+
+const avatarSource = await readFile(join(root, 'src/components/market/market-avatar.tsx'), 'utf8');
+if (!/assetKey === 'nba-icon'[\s\S]+NbaMark/.test(avatarSource)) failures.push('NBA must use the dedicated full-color vector mark.');
+if (!/assetKey === 'apple' \? '#000000'/.test(avatarSource)) failures.push('Apple must retain its permanent black tile in both themes.');
 
 const appSource = (await Promise.all((await sourceFiles(join(root, 'src'))).map((path) => readFile(path, 'utf8')))).join('\n');
 if (/fundingBalance|transferFunds|Trading account|Funding account/.test(appSource)) failures.push('Crypto account splits or transfer flows remain in the app.');
