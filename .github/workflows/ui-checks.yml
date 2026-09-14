@@ -1,0 +1,94 @@
+name: Native UI checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/mobile-foundation]
+    paths:
+      - package.json
+      - app.json
+      - src/**
+      - assets/**
+      - scripts/**
+      - .github/workflows/ui-checks.yml
+
+concurrency:
+  group: native-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate product boundary
+        run: npm run validate
+      - name: Check Expo dependency alignment
+        run: npx expo install --check
+      - name: Type-check
+        run: npm run typecheck
+      - name: Export web render
+        run: npx expo export --platform web
+      - name: Capture phone screens
+        run: |
+          mkdir -p ui-renders
+          python3 - <<'PY' >/tmp/blackbook-ui-server.log 2>&1 &
+          import os
+          from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+          from urllib.parse import urlsplit
+
+          os.chdir('dist')
+          class CleanRouteHandler(SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  route = urlsplit(self.path).path
+                  if route != '/' and '.' not in route.rsplit('/', 1)[-1] and os.path.isfile('.' + route + '.html'):
+                      self.path = route + '.html'
+                  super().do_GET()
+
+          ThreadingHTTPServer(('127.0.0.1', 4173), CleanRouteHandler).serve_forever()
+          PY
+          for attempt in {1..20}; do
+            curl -fsS http://127.0.0.1:4173 >/dev/null && break
+            sleep 1
+          done
+          BROWSER_BIN="$(command -v google-chrome || command -v chromium-browser || command -v chromium)"
+          test -n "$BROWSER_BIN"
+          screens=(
+            "home|"
+            "indices|indices"
+            "trade|trade"
+            "trade-advanced|trade?mode=advanced"
+            "trade-order-book|trade?mode=advanced&panel=book"
+            "portfolio|portfolio"
+            "profile|profile"
+            "settings|settings"
+          )
+          dimensions=("360|800" "390|844" "430|932")
+          for dimension in "${dimensions[@]}"; do
+            width="${dimension%%|*}"
+            height="${dimension#*|}"
+            for screen in "${screens[@]}"; do
+              file_name="${screen%%|*}"
+              url_path="${screen#*|}"
+              "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3000 --window-size="$width,$height" --screenshot="ui-renders/$file_name-$width.png" "http://127.0.0.1:4173/$url_path"
+            done
+          done
+      - name: Upload phone renders
+        uses: actions/upload-artifact@v4
+        with:
+          name: blackbook-native-ui-${{ github.run_number }}
+          path: ui-renders/*.png
+          if-no-files-found: error
+          retention-days: 7
