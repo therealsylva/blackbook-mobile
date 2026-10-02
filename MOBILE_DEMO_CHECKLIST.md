@@ -10,10 +10,10 @@ This work is separate from the paused production implementation. Trading/account
 - [x] Products removed; artists and other sports appear only as Coming Soon.
 - [x] Football sample positions/orders/history/alerts and index-guide feed.
 - [x] Published reference history in overviews; ROD, OSI and MUS show snapshot-only history. Trade charts and quotes remain bounded demo activity.
-- [x] About BlackBook: check public GitHub releases, compare versions, download newer Android APK through the browser. Android handles installation; no custom signer/wallet/security system.
-- [x] Version 0.2.0 / Android versionCode 2; CI creates a downloadable prerelease APK on this branch and future main pushes.
+- [x] About BlackBook: check the public APK version manifest, compare versions, download newer Android APK through the browser. Android handles installation; no custom signer/wallet/security system.
+- [x] Version 0.2.0 / Android versionCode 2; CI creates a downloadable APK feed on this branch and future main pushes.
 - [ ] CI APK and phone-render checks pass.
 
 Refresh data: clone therealsylva/index-price and run `node scripts/import-index-snapshot.mjs /path/to/index-price`. Snapshot bands persist until superseded; bandHorizonEnd is not an expiry. The import never invents values or history.
 
-Updates: bump Expo/package versions and Android versionCode for each release. CI uploads `BlackBook-VERSION.apk` to tag `mobile-vVERSION`. Settings > About BlackBook detects newer matching tags, including demo prereleases. Keep the existing Android application ID and build signing configuration so Android can update installed builds.
+Updates: bump Expo/package versions and Android versionCode for each release. CI uploads `BlackBook-VERSION.apk` and `update.json` to the dedicated `mobile-apk-downloads` branch. Settings > About BlackBook detects newer versions and downloads the APK. This uses normal public files because the Releases API rejected publishing with HTTP 403. Keep the existing Android application ID and build signing configuration so Android can update installed builds.

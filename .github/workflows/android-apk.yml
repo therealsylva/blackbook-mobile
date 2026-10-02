@@ -77,13 +77,4 @@ jobs:
 
       - name: Publish downloadable demo APK
         if: github.event_name != 'pull_request' && github.repository == 'therealsylva/blackbook-mobile'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION=$(node -p "require('./app.json').expo.version")
-          TAG="mobile-v$VERSION"
-          cp android/app/build/outputs/apk/release/app-release.apk "BlackBook-$VERSION.apk"
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "BlackBook $VERSION" --notes "Football mobile demo APK. Install on Android; future APK updates are downloadable in Settings > About BlackBook."
-          fi
-          gh release upload "$TAG" "BlackBook-$VERSION.apk" --clobber
+        run: bash .github/scripts/publish-apk.sh
