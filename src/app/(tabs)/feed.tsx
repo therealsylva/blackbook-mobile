@@ -14,17 +14,16 @@ type FeedTab = 'Highlights' | 'News' | 'Strategies' | 'Movers';
 const TABS: FeedTab[] = ['Highlights', 'News', 'Strategies', 'Movers'];
 
 const STORIES = [
-  { kicker: 'Club & athlete news', title: 'Madrid attention holds as the European club cycle resets', symbol: 'RMD', meta: '8 min' },
-  { kicker: 'Artist indices', title: 'US artist activity broadens beyond the highest-volume names', symbol: 'KDOT', meta: '21 min' },
-  { kicker: 'Index & product news', title: 'AI product indices lead the latest participation expansion', symbol: 'CGPT', meta: '34 min' },
-  { kicker: 'Culture news', title: 'New listings reshape the artist momentum table', symbol: 'DRK', meta: '1h' },
+  { kicker: 'Football indices', title: 'Real Madrid: inspect the published reference and active band', symbol: 'RMD', meta: 'Index overview' },
+  { kicker: 'Player indices', title: 'Yamal: sporting performance drives the fundamental reference', symbol: 'LMY', meta: 'Index overview' },
+  { kicker: 'Club indices', title: 'Bayern Munich: compare market price with reference R', symbol: 'BAY', meta: 'Index overview' },
+  { kicker: 'Player indices', title: 'Haaland: explore the published index history', symbol: 'HLD', meta: 'Index overview' },
 ];
-
 const STRATEGIES: Array<{ icon: IconName; title: string; copy: string }> = [
-  { icon: 'chart', title: 'Index range & recalibration', copy: 'Read range compression against the next recalibration window.' },
-  { icon: 'positions', title: 'Density strength profile', copy: 'Compare market density with price momentum before sizing a position.' },
-  { icon: 'trade', title: 'Signal chain explorer', copy: 'Trace category, entity, and volume signals through one setup.' },
-  { icon: 'swap', title: 'Relative-value divergence', copy: 'Track rivalry spreads without turning them into a duplicate directory market.' },
+  { icon: 'chart', title: 'Reference & active band', copy: 'Verified sporting performance determines R. Bands persist until superseded.' },
+  { icon: 'positions', title: 'Market price vs reference', copy: 'Demand can move P above or below R within the permitted band.' },
+  { icon: 'trade', title: 'After-match recalibration', copy: 'Complete verified match data drives a new reference and asymmetric band.' },
+  { icon: 'swap', title: 'Pair comparison', copy: 'Compare both football indices using ticker pairs.' },
 ];
 
 export default function FeedScreen() {
@@ -34,7 +33,7 @@ export default function FeedScreen() {
   const [tab, setTab] = useState<FeedTab>('Highlights');
   const movers = useMemo(() => {
     const gains = [...markets].sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol));
-    const volume = [...markets].sort((a, b) => Number.parseFloat(b.volume) - Number.parseFloat(a.volume));
+    const volume = [...markets].sort((a, b) => b.density - a.density);
     const volatility = [...markets].sort((a, b) => ((b.high24h - b.low24h) / b.price) - ((a.high24h - a.low24h) / a.price));
     return { gainers: gains.slice(0, 4), losers: gains.slice(-4).reverse(), volume: volume.slice(0, 4), volatility: volatility.slice(0, 4) };
   }, [changeFor, markets]);
@@ -60,7 +59,7 @@ export default function FeedScreen() {
           <>
             <SectionTitle title="Market trends" />
             {movers.gainers.slice(0, 3).map((market) => <TrendRow change={changeFor(market.symbol)} key={market.symbol} market={market} onPress={openMarket} price={priceFor(market.symbol)} />)}
-            <SectionTitle action="See news" onAction={() => setTab('News')} title="Top stories" />
+            <SectionTitle action="See news" onAction={() => setTab('News')} title="Index guides" />
             {STORIES.slice(0, 3).map((story) => <StoryRow key={story.title} onPress={openMarket} story={story} market={markets.find((market) => market.symbol === story.symbol)} />)}
             <SectionTitle action="Explore" onAction={() => setTab('Strategies')} title="Index tools & strategies" />
             {STRATEGIES.slice(0, 2).map((strategy) => <StrategyRow key={strategy.title} strategy={strategy} />)}
@@ -69,7 +68,7 @@ export default function FeedScreen() {
 
         {tab === 'News' ? (
           <>
-            <SectionTitle title="Top sports news" />
+            <SectionTitle title="Football index guides" />
             {STORIES.map((story) => <StoryRow key={story.title} onPress={openMarket} story={story} market={markets.find((market) => market.symbol === story.symbol)} />)}
             <SectionTitle title="New index listings" />
             {markets.slice().sort((a, b) => b.rank - a.rank).slice(0, 4).map((market) => <ListingRow key={market.symbol} market={market} onPress={openMarket} />)}
@@ -89,8 +88,8 @@ export default function FeedScreen() {
           <>
             <MoverSection changeFor={changeFor} markets={movers.gainers} onPress={openMarket} priceFor={priceFor} title="Index gainers" />
             <MoverSection changeFor={changeFor} markets={movers.losers} onPress={openMarket} priceFor={priceFor} title="Index losers" />
-            <MoverSection changeFor={changeFor} markets={movers.volume} onPress={openMarket} priceFor={priceFor} title="Highest volume indices" />
-            <MoverSection changeFor={changeFor} markets={movers.volatility} onPress={openMarket} priceFor={priceFor} title="Most volatile indices" />
+            <MoverSection changeFor={changeFor} markets={movers.volume} onPress={openMarket} priceFor={priceFor} title="Highest density indices" />
+            <MoverSection changeFor={changeFor} markets={movers.volatility} onPress={openMarket} priceFor={priceFor} title="Widest active bands" />
           </>
         ) : null}
       </ScrollView>

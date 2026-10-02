@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { CandlestickChart, MarketChart } from '@/components/market/market-chart';
@@ -57,7 +57,8 @@ export default function TradeScreen() {
   if (!market) return null;
 
   const execute = () => {
-    placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage, targetPrice: selectedType === 'market' ? undefined : numericTarget });
+    try { placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage, targetPrice: selectedType === 'market' ? undefined : numericTarget }); }
+    catch (error) { Alert.alert('Order unavailable', error instanceof Error ? error.message : 'Please try again.'); return; }
     setReviewOpen(false);
     setAmount('');
   };
@@ -93,7 +94,7 @@ export default function TradeScreen() {
                 <RangeRail onChange={setRange} range={range} ranges={ADVANCED_RANGES} />
               </View>
               <View style={styles.advancedMarket}>
-                {panel === 'Chart' ? <CandlestickChart candles={candles} height={204} /> : <View style={styles.book}><OrderBook price={price} /></View>}
+                {panel === 'Chart' ? <CandlestickChart candles={candles} height={204} /> : <View style={styles.book}><OrderBook lowerBand={market.lowerBand} upperBand={market.upperBand} price={price} /></View>}
               </View>
             </>
           ) : (

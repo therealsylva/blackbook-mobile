@@ -24,10 +24,10 @@ export function PairRow({ change, left, right, title, onPress }: PairRowProps) {
       </View>
       <View style={styles.copy}>
         <Text numberOfLines={1} style={styles.title}>{title}</Text>
-        <Text style={styles.symbols}>{left.symbol} · {right.symbol}</Text>
+        <Text style={styles.symbols}>{left.name} · {right.name}</Text>
       </View>
       <View style={styles.quote}>
-        <Text style={styles.label}>Spread</Text>
+        <Text style={styles.label}>Relative change</Text>
         <Text style={[styles.change, change >= 0 ? styles.positive : styles.negative]}>{formatPercent(change)}</Text>
       </View>
       <Icon name="chevron" size={17} />

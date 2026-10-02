@@ -67,7 +67,7 @@ export function makeSeries(market: MarketDefinition, range: ChartRange, livePric
   });
 
   const anchor = livePrice / (values[values.length - 1] ?? livePrice);
-  return values.map((value) => value * anchor);
+  return values.map((value) => Math.min(market.upperBand, Math.max(market.lowerBand, value * anchor)));
 }
 
 export function makeCandles(market: MarketDefinition, range: ChartRange, livePrice = market.price): CandlePoint[] {
@@ -85,9 +85,9 @@ export function makeCandles(market: MarketDefinition, range: ChartRange, livePri
     const low = Math.min(open, close) - spread * (0.55 + rng() * 0.65);
     return {
       time: now - (series.length - index) * 60_000,
-      open,
-      high,
-      low,
+      open: Math.min(market.upperBand, Math.max(market.lowerBand, open)),
+      high: Math.min(market.upperBand, high),
+      low: Math.max(market.lowerBand, low),
       close,
       volume: volume * 1_000_000 * (0.55 + rng() * 0.9),
     };

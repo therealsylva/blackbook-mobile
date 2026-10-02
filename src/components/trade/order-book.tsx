@@ -8,15 +8,17 @@ import { createThemedStyles } from '@/theme/use-themed-styles';
 interface OrderBookProps {
   price: number;
   compact?: boolean;
+  lowerBand?: number;
+  upperBand?: number;
 }
 
-export function OrderBook({ price, compact = false }: OrderBookProps) {
+export function OrderBook({ price, compact = false, lowerBand = 0, upperBand = Infinity }: OrderBookProps) {
   const styles = useStyles();
   const rows = useMemo(() => {
     const asks = Array.from({ length: compact ? 4 : 6 }, (_, index) => ({ price: price * (1 + (compact ? 4 - index : 6 - index) * 0.0007), size: 2.18 + ((index * 1.37) % 4.7) }));
     const bids = Array.from({ length: compact ? 4 : 6 }, (_, index) => ({ price: price * (1 - (index + 1) * 0.0007), size: 1.76 + ((index * 1.91) % 5.2) }));
-    return { asks, bids };
-  }, [compact, price]);
+    return { asks: asks.filter((row) => row.price <= upperBand), bids: bids.filter((row) => row.price >= lowerBand) };
+  }, [compact, price, lowerBand, upperBand]);
   return (
     <View style={styles.root}>
       <View style={styles.header}><Text style={styles.label}>Price</Text><Text style={styles.label}>Size</Text></View>

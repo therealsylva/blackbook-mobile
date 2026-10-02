@@ -74,6 +74,8 @@ jobs:
             "portfolio|portfolio"
             "profile|profile"
             "settings|settings"
+            "pair|pair/fcb-rmd"
+            "updates|settings/about"
           )
           dimensions=("360|800" "390|844" "430|932")
           for dimension in "${dimensions[@]}"; do

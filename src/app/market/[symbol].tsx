@@ -10,9 +10,9 @@ import { formatPercent, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
-import type { ChartRange } from '@/types/exchange';
+import { SNAPSHOT_LABEL } from '@/data/football-markets';
 
-const RANGES: ChartRange[] = ['1H', '1D', '1W', '1M', '6M'];
+const RANGES = ['Published history'] as const;
 
 export default function MarketOverviewScreen() {
   const { colors } = useTheme();
@@ -22,9 +22,9 @@ export default function MarketOverviewScreen() {
   const { marketFor, priceFor, changeFor, seriesFor, favorites, alerts, toggleFavorite, toggleAlert, setActiveSymbol } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
   const market = marketFor(symbol ?? 'RMD');
-  const [range, setRange] = useState<ChartRange>('1D');
+  const [range, setRange] = useState<string>('Published history');
 
-  const series = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
+  const series = useMemo(() => market ? market.series : [], [market]);
   if (!market) return <Screen><View style={styles.missing}><Text style={styles.missingText}>Index unavailable</Text></View></Screen>;
 
   const price = priceFor(market.symbol);
@@ -51,18 +51,19 @@ export default function MarketOverviewScreen() {
         </View>
 
         <View style={styles.quote}>
-          <Text style={styles.eyebrow}>Index value</Text>
+          <Text style={styles.eyebrow}>Market price · P</Text>
           <View style={styles.priceLine}>
             <Text style={styles.price}>{formatPrice(price)}</Text>
             <Text style={styles.unit}>POINT</Text>
           </View>
-          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)} · 24h</Text>
+          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)} · vs reference R</Text>
         </View>
 
         <View style={styles.chart}>
           <MarketChart area height={234} positive={change >= 0} series={series} strokeWidth={2} />
         </View>
 
+        <Text style={[styles.body, { paddingHorizontal: spacing.page }]}>{market.history.length ? `Published reference history · ${market.history.length} updates` : 'Snapshot only · no published movement history'}</Text>
         <View style={styles.ranges}>
           {RANGES.map((item) => (
             <Pressable accessibilityRole="tab" accessibilityState={{ selected: range === item }} key={item} onPress={() => setRange(item)} style={[styles.range, range === item && styles.rangeActive]}>
@@ -72,22 +73,22 @@ export default function MarketOverviewScreen() {
         </View>
 
         <View style={styles.metrics}>
-          <Metric label="24h high" value={formatPrice(market.high24h)} />
-          <Metric label="24h low" value={formatPrice(market.low24h)} />
-          <Metric label="24h volume" value={`$${market.volume}`} />
-          <Metric label="Density" value={`${market.density}/100`} />
+          <Metric label="Upper band" value={formatPrice(market.upperBand)} />
+          <Metric label="Lower band" value={formatPrice(market.lowerBand)} />
+          <Metric label="Reference R" value={formatPrice(market.reference)} />
+          <Metric label="Density" value={`${market.density.toFixed(1)}%`} />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview</Text>
-          <Text style={styles.body}>{market.name} tracks the live attention and performance signals behind this {market.category.toLowerCase()} index.</Text>
+          <Text style={styles.body}>{market.name} is a football performance index. Reference R and its active asymmetric band come from the published snapshot dated {SNAPSHOT_LABEL}. Market price P trades separately within that band.</Text>
           <View style={styles.signalLine}>
-            <Text style={styles.signalLabel}>Current signal</Text>
-            <Text style={[styles.signalValue, { color: direction }]}>{change >= 0 ? 'Positive momentum' : 'Negative momentum'}</Text>
+            <Text style={styles.signalLabel}>Market vs R</Text>
+            <Text style={[styles.signalValue, { color: direction }]}>{formatPercent(change)}</Text>
           </View>
           <View style={styles.signalLine}>
             <Text style={styles.signalLabel}>Market density</Text>
-            <Text style={styles.signalValue}>{market.density}/100</Text>
+            <Text style={styles.signalValue}>{market.density.toFixed(1)}%</Text>
           </View>
         </View>
 

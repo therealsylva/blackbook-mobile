@@ -1,0 +1,1244 @@
+{
+  "sourceRepository": "therealsylva/index-price",
+  "pointer": {
+    "asOf": "2026-09-01T00:00:00.000000Z",
+    "manifest": "football/2026-09-01/manifest.json",
+    "manifestSha256": "b4b8d9ea3d86c6d082ef6985ce4e88179508ad8a43bc9ec7c0fc764b0d214b2c",
+    "publication": "2026-09-01",
+    "schema": "blackbook.index.price-pointer.v1"
+  },
+  "methodologyVersion": "RC3.1",
+  "bandPolicyVersion": "blackbook-football-band-v3",
+  "indices": [
+    {
+      "symbol": "RMD",
+      "name": "Real Madrid C.F.",
+      "entityId": "club:3kq9cckrnlogidldtdie2fkbl",
+      "assetKey": "real-madrid",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Real Madrid CF",
+        "entityId": "club:3kq9cckrnlogidldtdie2fkbl",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-30T15:00:00Z",
+        "lowerMicros": 6079920044,
+        "priceHash": "9425eb0b4c90c9db3c294840bcf41a3e5cdc0c69ab1ef5d641ba46408b6f5162",
+        "referenceMicros": 6234625700,
+        "status": "AVAILABLE",
+        "upperMicros": 6520763989,
+        "version": 382354
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T19:30:00Z",
+          "entityId": "club:3kq9cckrnlogidldtdie2fkbl",
+          "logReturnPpm": 23678,
+          "newReferenceMicros": 6018158868,
+          "previousReferenceMicros": 5877332485,
+          "priceHash": "2b98dcc43b9daed3be0b85ad5ba890c37bfc21e6f7174d8d865b6f8185f71259",
+          "version": 382352
+        },
+        {
+          "asOf": "2026-08-26T19:00:00Z",
+          "entityId": "club:3kq9cckrnlogidldtdie2fkbl",
+          "logReturnPpm": 19517,
+          "newReferenceMicros": 6136766844,
+          "previousReferenceMicros": 6018158868,
+          "priceHash": "dd774143fbbb40df1f97e8f80628da6912ce3b9043733587f51f91850f265f90",
+          "version": 382353
+        },
+        {
+          "asOf": "2026-08-30T15:00:00Z",
+          "entityId": "club:3kq9cckrnlogidldtdie2fkbl",
+          "logReturnPpm": 15821,
+          "newReferenceMicros": 6234625700,
+          "previousReferenceMicros": 6136766844,
+          "priceHash": "5ad2cab4a2843b14abde39c0d0791de50f60eb4a4470534db5551274a2258446",
+          "version": 382354
+        }
+      ]
+    },
+    {
+      "symbol": "FCB",
+      "name": "FC Barcelona",
+      "entityId": "club:agh9ifb2mw3ivjusgedj7c3fe",
+      "assetKey": "fcb-icon",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "FC Barcelona",
+        "entityId": "club:agh9ifb2mw3ivjusgedj7c3fe",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-31T19:30:00Z",
+        "lowerMicros": 5265119285,
+        "priceHash": "206d5b60eb1ffd8229c9765b48adde8328b3c6cc66f031d69d8f8b060fb07e07",
+        "referenceMicros": 5373098809,
+        "status": "AVAILABLE",
+        "upperMicros": 5646883508,
+        "version": 382363
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T19:30:00Z",
+          "entityId": "club:agh9ifb2mw3ivjusgedj7c3fe",
+          "logReturnPpm": 30403,
+          "newReferenceMicros": 5150309666,
+          "previousReferenceMicros": 4996081955,
+          "priceHash": "df7ea2fc73acfae97ba69e2eafcb263ddde65cf3ad5e24adb74cc7c2495e33c8",
+          "version": 382361
+        },
+        {
+          "asOf": "2026-08-27T19:00:00Z",
+          "entityId": "club:agh9ifb2mw3ivjusgedj7c3fe",
+          "logReturnPpm": 17037,
+          "newReferenceMicros": 5238805387,
+          "previousReferenceMicros": 5150309666,
+          "priceHash": "8adc87adff5b2a1f66fe652c2b91ac1152fac28ca5f29f8bf44297519a4fe1de",
+          "version": 382362
+        },
+        {
+          "asOf": "2026-08-31T19:30:00Z",
+          "entityId": "club:agh9ifb2mw3ivjusgedj7c3fe",
+          "logReturnPpm": 25311,
+          "newReferenceMicros": 5373098809,
+          "previousReferenceMicros": 5238805387,
+          "priceHash": "317267d1effdfe16b38c9305b3ba5eb1ebab1222ac671aafa56071940e7d0777",
+          "version": 382363
+        }
+      ]
+    },
+    {
+      "symbol": "MUN",
+      "name": "Manchester United F.C.",
+      "entityId": "club:6eqit8ye8aomdsrrq0hk3v7gh",
+      "assetKey": "manchester-united",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Manchester United FC",
+        "entityId": "club:6eqit8ye8aomdsrrq0hk3v7gh",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-30T15:30:00Z",
+        "lowerMicros": 2313309870,
+        "priceHash": "934e2bbaf12a27be23fedab5c2620e45e7fb9d7e9552bd1cdd08541b9cfac42d",
+        "referenceMicros": 2356758936,
+        "status": "AVAILABLE",
+        "upperMicros": 2481043761,
+        "version": 382952
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T11:30:00Z",
+          "entityId": "club:6eqit8ye8aomdsrrq0hk3v7gh",
+          "logReturnPpm": -35114,
+          "newReferenceMicros": 2288730896,
+          "previousReferenceMicros": 2370523939,
+          "priceHash": "1bfa55afa7ea903361f0d2884f5795ac2b686064da94caa11c004e54ea517108",
+          "version": 382951
+        },
+        {
+          "asOf": "2026-08-30T15:30:00Z",
+          "entityId": "club:6eqit8ye8aomdsrrq0hk3v7gh",
+          "logReturnPpm": 29290,
+          "newReferenceMicros": 2356758936,
+          "previousReferenceMicros": 2288730896,
+          "priceHash": "2c817c2f25c5f929549810b9a2a7a6e7f816cb1c9bd746563944a4abeb1cc37a",
+          "version": 382952
+        }
+      ]
+    },
+    {
+      "symbol": "PSG",
+      "name": "Paris Saint-Germain F.C.",
+      "entityId": "club:2b3mar72yy8d6uvat1ka6tn3r",
+      "assetKey": "psg",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Paris Saint-Germain FC",
+        "entityId": "club:2b3mar72yy8d6uvat1ka6tn3r",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-28T19:00:00Z",
+        "lowerMicros": 5573007716,
+        "priceHash": "1e8585b221436f98607fbfe95000f7438d0823f8ec2caf97eec54814d3c08771",
+        "referenceMicros": 5838377268,
+        "status": "AVAILABLE",
+        "upperMicros": 5977096370,
+        "version": 383038
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T18:45:00Z",
+          "entityId": "club:2b3mar72yy8d6uvat1ka6tn3r",
+          "logReturnPpm": -10988,
+          "newReferenceMicros": 5949346402,
+          "previousReferenceMicros": 6015076107,
+          "priceHash": "0344dab095ad495bb91406b42e5ca85a7b4560c01b7777dfe9030d2725cc4779",
+          "version": 383037
+        },
+        {
+          "asOf": "2026-08-28T19:00:00Z",
+          "entityId": "club:2b3mar72yy8d6uvat1ka6tn3r",
+          "logReturnPpm": -18828,
+          "newReferenceMicros": 5838377268,
+          "previousReferenceMicros": 5949346402,
+          "priceHash": "387ba45378b5efc73cdbd7899be8c4da005917edac462878ccb2219da0f433dc",
+          "version": 383038
+        }
+      ]
+    },
+    {
+      "symbol": "MCI",
+      "name": "Manchester City F.C.",
+      "entityId": "club:a3nyxabgsqlnqfkeg41m6tnpp",
+      "assetKey": "manchester-city",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Manchester City FC",
+        "entityId": "club:a3nyxabgsqlnqfkeg41m6tnpp",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-28T19:00:00Z",
+        "lowerMicros": 2489482745,
+        "priceHash": "b05654f7aac726b498d203d59158f2def7f4fd60f832617b1553128a23f0c139",
+        "referenceMicros": 2536253408,
+        "status": "AVAILABLE",
+        "upperMicros": 2669990611,
+        "version": 382961
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T13:00:00Z",
+          "entityId": "club:a3nyxabgsqlnqfkeg41m6tnpp",
+          "logReturnPpm": 28619,
+          "newReferenceMicros": 2463071415,
+          "previousReferenceMicros": 2393579635,
+          "priceHash": "1692d331b7e66f4a6d6ef92890ca908bd91f18d3207798e6f7b191cdff31c625",
+          "version": 382960
+        },
+        {
+          "asOf": "2026-08-28T19:00:00Z",
+          "entityId": "club:a3nyxabgsqlnqfkeg41m6tnpp",
+          "logReturnPpm": 29279,
+          "newReferenceMicros": 2536253408,
+          "previousReferenceMicros": 2463071415,
+          "priceHash": "ddeb31ee3065a0674cf25df840ec2b00326e59157b55b5cd8ab83ca0bab92fd7",
+          "version": 382961
+        }
+      ]
+    },
+    {
+      "symbol": "LIV",
+      "name": "Liverpool F.C.",
+      "entityId": "club:c8h9bw1l82s06h77xxrelzhur",
+      "assetKey": "liverpool-crest",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Liverpool FC",
+        "entityId": "club:c8h9bw1l82s06h77xxrelzhur",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-29T11:30:00Z",
+        "lowerMicros": 3178251553,
+        "priceHash": "531295a4df28e402f3850199c3e004ac9dff77e4050d04614ac24303b83a646b",
+        "referenceMicros": 3330269460,
+        "status": "AVAILABLE",
+        "upperMicros": 3408700793,
+        "version": 382968
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T15:30:00Z",
+          "entityId": "club:c8h9bw1l82s06h77xxrelzhur",
+          "logReturnPpm": -2700,
+          "newReferenceMicros": 3394878532,
+          "previousReferenceMicros": 3404057154,
+          "priceHash": "42e02b63a928564871c25367d567a9601c869b30fda091bef3d28e68d7e93a4a",
+          "version": 382967
+        },
+        {
+          "asOf": "2026-08-29T11:30:00Z",
+          "entityId": "club:c8h9bw1l82s06h77xxrelzhur",
+          "logReturnPpm": -19215,
+          "newReferenceMicros": 3330269460,
+          "previousReferenceMicros": 3394878532,
+          "priceHash": "dda5887375bd5ac4a6bef78914984390222ce1126ab7cc6b3e27231566d6a4be",
+          "version": 382968
+        }
+      ]
+    },
+    {
+      "symbol": "JUV",
+      "name": "Juventus F.C.",
+      "entityId": "club:bqbbqm98ud8obe45ds9ohgyrd",
+      "assetKey": "juventus",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Juventus FC",
+        "entityId": "club:bqbbqm98ud8obe45ds9ohgyrd",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-29T18:45:00Z",
+        "lowerMicros": 1468241208,
+        "priceHash": "2173fa7d0b5b3daa6eae7a26750cdb12fe42e6912e9c1fb23e6f405dd05d4e16",
+        "referenceMicros": 1500995009,
+        "status": "AVAILABLE",
+        "upperMicros": 1574700708,
+        "version": 382967
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T16:30:00Z",
+          "entityId": "club:bqbbqm98ud8obe45ds9ohgyrd",
+          "logReturnPpm": 32658,
+          "newReferenceMicros": 1468932677,
+          "previousReferenceMicros": 1421735064,
+          "priceHash": "74bcc7001fc81fe2a09043550a19a20e2ae96ce88dc47316ae06cd6bdf0e793a",
+          "version": 382966
+        },
+        {
+          "asOf": "2026-08-29T18:45:00Z",
+          "entityId": "club:bqbbqm98ud8obe45ds9ohgyrd",
+          "logReturnPpm": 21592,
+          "newReferenceMicros": 1500995009,
+          "previousReferenceMicros": 1468932677,
+          "priceHash": "8256c477c084175a53384cbb59bfa40efbb8d2fccec9c83523a48bee087fc884",
+          "version": 382967
+        }
+      ]
+    },
+    {
+      "symbol": "BAY",
+      "name": "FC Bayern Munich",
+      "entityId": "club:apoawtpvac4zqlancmvw4nk4o",
+      "assetKey": "bayern",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "FC Bayern München",
+        "entityId": "club:apoawtpvac4zqlancmvw4nk4o",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-28T18:30:00Z",
+        "lowerMicros": 8050887597,
+        "priceHash": "7004813c813e2ee1bed57502aa6eba8f6ec3f03fc4b881612ccad0d2ff7eabd8",
+        "referenceMicros": 8231451333,
+        "status": "AVAILABLE",
+        "upperMicros": 8634642814,
+        "version": 380696
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-28T18:30:00Z",
+          "entityId": "club:apoawtpvac4zqlancmvw4nk4o",
+          "logReturnPpm": 21357,
+          "newReferenceMicros": 8231451333,
+          "previousReferenceMicros": 8057513396,
+          "priceHash": "13da6286c4d4281d10735b383b6a0527ddce3b27fb07d0c6e03817e536bd04d3",
+          "version": 380696
+        }
+      ]
+    },
+    {
+      "symbol": "CHE",
+      "name": "Chelsea F.C.",
+      "entityId": "club:9q0arba2kbnywth8bkxlhgmdr",
+      "assetKey": "chelsea",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Chelsea FC",
+        "entityId": "club:9q0arba2kbnywth8bkxlhgmdr",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-30T13:00:00Z",
+        "lowerMicros": 1791228227,
+        "priceHash": "f59d878ed30305bec0a2119f6a5823b9bc4ba1054c15a31167c761e337ec256e",
+        "referenceMicros": 1830561124,
+        "status": "AVAILABLE",
+        "upperMicros": 1921106928,
+        "version": 382960
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-24T19:00:00Z",
+          "entityId": "club:9q0arba2kbnywth8bkxlhgmdr",
+          "logReturnPpm": 45830,
+          "newReferenceMicros": 1790215282,
+          "previousReferenceMicros": 1710021595,
+          "priceHash": "5b73b1295dd8c53e656b9e73f7a92aec08c88ef921e8e32592b2d9e0a9b4d389",
+          "version": 382959
+        },
+        {
+          "asOf": "2026-08-30T13:00:00Z",
+          "entityId": "club:9q0arba2kbnywth8bkxlhgmdr",
+          "logReturnPpm": 22287,
+          "newReferenceMicros": 1830561124,
+          "previousReferenceMicros": 1790215282,
+          "priceHash": "ae5fb725ed294e80f20df31e40f63572e7735b95763c7e0a30a76a786384ad39",
+          "version": 382960
+        }
+      ]
+    },
+    {
+      "symbol": "ARS",
+      "name": "Arsenal F.C.",
+      "entityId": "club:4dsgumo7d4zupm2ugsvm4zm4d",
+      "assetKey": "arsenal",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Arsenal FC",
+        "entityId": "club:4dsgumo7d4zupm2ugsvm4zm4d",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-31T19:00:00Z",
+        "lowerMicros": 2613638014,
+        "priceHash": "9b3e9662ae7cb0108537263cf8f23c871da7b5bd8c737184414c6aa678a07e42",
+        "referenceMicros": 2667650509,
+        "status": "AVAILABLE",
+        "upperMicros": 2803148153,
+        "version": 383039
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-21T19:00:00Z",
+          "entityId": "club:4dsgumo7d4zupm2ugsvm4zm4d",
+          "logReturnPpm": 20674,
+          "newReferenceMicros": 2601861584,
+          "previousReferenceMicros": 2548622454,
+          "priceHash": "6844f27dd59862964fb6a46e96df46e87c33fe2c4ddfca5d503740160da70437",
+          "version": 383038
+        },
+        {
+          "asOf": "2026-08-31T19:00:00Z",
+          "entityId": "club:4dsgumo7d4zupm2ugsvm4zm4d",
+          "logReturnPpm": 24971,
+          "newReferenceMicros": 2667650509,
+          "previousReferenceMicros": 2601861584,
+          "priceHash": "7e66b589a2d12d3f779ee0fab3817848f3023cafeefad7035d84e5dcf6be2e72",
+          "version": 383039
+        }
+      ]
+    },
+    {
+      "symbol": "TOT",
+      "name": "Tottenham Hotspur F.C.",
+      "entityId": "club:22doj4sgsocqpxw45h607udje",
+      "assetKey": "tottenham",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Tottenham Hotspur FC",
+        "entityId": "club:22doj4sgsocqpxw45h607udje",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-29T16:30:00Z",
+        "lowerMicros": 1885598294,
+        "priceHash": "0508fbdd39d1cc381500ad48ae454888a1b04451c7ee015b08304cdd3001213c",
+        "referenceMicros": 1985169236,
+        "status": "AVAILABLE",
+        "upperMicros": 2022319597,
+        "version": 382942
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T16:30:00Z",
+          "entityId": "club:22doj4sgsocqpxw45h607udje",
+          "logReturnPpm": -23714,
+          "newReferenceMicros": 2044521902,
+          "previousReferenceMicros": 2093585177,
+          "priceHash": "2070b1b10edb067a62eeef550ef6b297fefcb8ccb69993e340f87dc3652fc56f",
+          "version": 382941
+        },
+        {
+          "asOf": "2026-08-29T16:30:00Z",
+          "entityId": "club:22doj4sgsocqpxw45h607udje",
+          "logReturnPpm": -29460,
+          "newReferenceMicros": 1985169236,
+          "previousReferenceMicros": 2044521902,
+          "priceHash": "a824da680865dc3795fa7cb56adeb24b3da6e2390de78c9306f749415aaa662d",
+          "version": 382942
+        }
+      ]
+    },
+    {
+      "symbol": "ATM",
+      "name": "Atlético Madrid",
+      "entityId": "club:4ku8o6uf87yd8iecdalipo6wd",
+      "assetKey": "atletico",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "Club Atlético de Madrid",
+        "entityId": "club:4ku8o6uf87yd8iecdalipo6wd",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-29T19:30:00Z",
+        "lowerMicros": 2191820628,
+        "priceHash": "47742fa023a6bab6dff2b0608d17f936efd86707ded70becfff7189febb46b55",
+        "referenceMicros": 2230557458,
+        "status": "AVAILABLE",
+        "upperMicros": 2350745555,
+        "version": 382947
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-19T19:05:00Z",
+          "entityId": "club:4ku8o6uf87yd8iecdalipo6wd",
+          "logReturnPpm": 19990,
+          "newReferenceMicros": 2176664209,
+          "previousReferenceMicros": 2133585713,
+          "priceHash": "69f8199f0a4002f211dea010af975fcbf3bb464ede108537bb526131fb3f4fbe",
+          "version": 382945
+        },
+        {
+          "asOf": "2026-08-23T15:00:00Z",
+          "entityId": "club:4ku8o6uf87yd8iecdalipo6wd",
+          "logReturnPpm": -7679,
+          "newReferenceMicros": 2160014095,
+          "previousReferenceMicros": 2176664209,
+          "priceHash": "ecba9f6f909cc0775073820849c7d39cdf9515c79470b03da8ec12c68e4c5f64",
+          "version": 382946
+        },
+        {
+          "asOf": "2026-08-29T19:30:00Z",
+          "entityId": "club:4ku8o6uf87yd8iecdalipo6wd",
+          "logReturnPpm": 32137,
+          "newReferenceMicros": 2230557458,
+          "previousReferenceMicros": 2160014095,
+          "priceHash": "3f876fa84bda2507a7d19e33839bdfcfa65853e3186d6856e5b69e5c369e78f3",
+          "version": 382947
+        }
+      ]
+    },
+    {
+      "symbol": "INT",
+      "name": "Inter Milan",
+      "entityId": "club:3vo5mpj7catp66nrwwqiuhuup",
+      "assetKey": "inter-milan",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "FC Internazionale Milano",
+        "entityId": "club:3vo5mpj7catp66nrwwqiuhuup",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-30T18:45:00Z",
+        "lowerMicros": 2773269353,
+        "priceHash": "6b9628487a4e47f67d00087dc06be692ddd2d57975dee10442c441b1f9aaedd6",
+        "referenceMicros": 2825707840,
+        "status": "AVAILABLE",
+        "upperMicros": 2974354070,
+        "version": 382354
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T16:30:00Z",
+          "entityId": "club:3vo5mpj7catp66nrwwqiuhuup",
+          "logReturnPpm": 15616,
+          "newReferenceMicros": 2744981691,
+          "previousReferenceMicros": 2702447903,
+          "priceHash": "62b23dc9ae5c45c855dbde68a8b5ebdb896daf04ae2fea658b71bcef0b18b027",
+          "version": 382353
+        },
+        {
+          "asOf": "2026-08-30T18:45:00Z",
+          "entityId": "club:3vo5mpj7catp66nrwwqiuhuup",
+          "logReturnPpm": 28984,
+          "newReferenceMicros": 2825707840,
+          "previousReferenceMicros": 2744981691,
+          "priceHash": "5166ae38050002c81f5e3148cbd46751341499b7c9da8d92bc86418892d0eba6",
+          "version": 382354
+        }
+      ]
+    },
+    {
+      "symbol": "ACM",
+      "name": "AC Milan",
+      "entityId": "club:9dntj5dioj5ex52yrgwzxrq9l",
+      "assetKey": "ac-milan",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "AC Milan",
+        "entityId": "club:9dntj5dioj5ex52yrgwzxrq9l",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-28T18:45:00Z",
+        "lowerMicros": 1841681920,
+        "priceHash": "25723c5a5af781676a5f7d535cb085c8dd321c4af8b3007c4073d54b30e86d79",
+        "referenceMicros": 1886907491,
+        "status": "AVAILABLE",
+        "upperMicros": 1975218926,
+        "version": 382959
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T18:45:00Z",
+          "entityId": "club:9dntj5dioj5ex52yrgwzxrq9l",
+          "logReturnPpm": 28372,
+          "newReferenceMicros": 1854391623,
+          "previousReferenceMicros": 1802518772,
+          "priceHash": "3a568d98080d1ba84af3f1e59a1b1584d7add5d64f848606a994e45ded66aad6",
+          "version": 382958
+        },
+        {
+          "asOf": "2026-08-28T18:45:00Z",
+          "entityId": "club:9dntj5dioj5ex52yrgwzxrq9l",
+          "logReturnPpm": 17383,
+          "newReferenceMicros": 1886907491,
+          "previousReferenceMicros": 1854391623,
+          "priceHash": "3dd454fd09b009c99ed7df094ea15e16b4a790b5db917e8860d60c83e7ccf4b7",
+          "version": 382959
+        }
+      ]
+    },
+    {
+      "symbol": "BVB",
+      "name": "Borussia Dortmund",
+      "entityId": "club:dt4pinj0vw0t0cvz7za6mhmzy",
+      "assetKey": "dortmund",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 1000000,
+        "displayName": "BV Borussia 09 Dortmund",
+        "entityId": "club:dt4pinj0vw0t0cvz7za6mhmzy",
+        "kind": "CLUB",
+        "lastSportingEventAt": "2026-08-29T16:30:00Z",
+        "lowerMicros": 2782840254,
+        "priceHash": "bb71ff6444004619dc47c6c9bf2a696708de3785bfbb406d1ae43b05b7851e2e",
+        "referenceMicros": 2846257804,
+        "status": "AVAILABLE",
+        "upperMicros": 2984618940,
+        "version": 380699
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-29T16:30:00Z",
+          "entityId": "club:dt4pinj0vw0t0cvz7za6mhmzy",
+          "logReturnPpm": 20656,
+          "newReferenceMicros": 2846257804,
+          "previousReferenceMicros": 2788068331,
+          "priceHash": "0d4564aee53d2b7e64db99dac3606c81f4cb55a8053b80177db4f5fd58006d46",
+          "version": 380699
+        }
+      ]
+    },
+    {
+      "symbol": "LMY",
+      "name": "Lamine Yamal",
+      "entityId": "player:abr79wsl0folgkyvl821ggs2c",
+      "assetKey": "lamine-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 975891,
+        "displayName": "Lamine Yamal",
+        "entityId": "player:abr79wsl0folgkyvl821ggs2c",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-31T19:30:00Z",
+        "lowerMicros": 2595016452,
+        "priceHash": "508769d1d555bd61a1587a3039a3201ced7ec85f57d3e0f8110c4222dc781b5d",
+        "referenceMicros": 2631046975,
+        "status": "AVAILABLE",
+        "upperMicros": 2785192124,
+        "version": 374707
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T19:30:00Z",
+          "entityId": "player:abr79wsl0folgkyvl821ggs2c",
+          "logReturnPpm": 2976,
+          "newReferenceMicros": 2552114708,
+          "previousReferenceMicros": 2544530109,
+          "priceHash": "d8c29b7f76c1e5b2f0b32e109bb313791ffa34585d385c9c67807e2adee4974c",
+          "version": 374705
+        },
+        {
+          "asOf": "2026-08-27T19:00:00Z",
+          "entityId": "player:abr79wsl0folgkyvl821ggs2c",
+          "logReturnPpm": 13404,
+          "newReferenceMicros": 2586552390,
+          "previousReferenceMicros": 2552114708,
+          "priceHash": "9a35f61f9de9aa2e1097eb453d6f333d2f91bb590197d1b1fa8f029b1d8cf7a6",
+          "version": 374706
+        },
+        {
+          "asOf": "2026-08-31T19:30:00Z",
+          "entityId": "player:abr79wsl0folgkyvl821ggs2c",
+          "logReturnPpm": 17056,
+          "newReferenceMicros": 2631046975,
+          "previousReferenceMicros": 2586552390,
+          "priceHash": "4b9ca509597be620d5e1a7c029a88d2d623695c1fd9050eab1fb51c280f51307",
+          "version": 374707
+        }
+      ]
+    },
+    {
+      "symbol": "MBP",
+      "name": "Kylian Mbappé",
+      "entityId": "player:5e9ilgrz3tzg9kd1gk3yvrahh",
+      "assetKey": "kylian-mbappe",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999992,
+        "displayName": "Kylian Mbappé",
+        "entityId": "player:5e9ilgrz3tzg9kd1gk3yvrahh",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-30T15:00:00Z",
+        "lowerMicros": 5713535619,
+        "priceHash": "3e1165761fd6fd3e396a4d08967e6f3074cc144f6dbb5100ef86b98eaeb0c823",
+        "referenceMicros": 5809927137,
+        "status": "AVAILABLE",
+        "upperMicros": 6127813696,
+        "version": 382109
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T19:30:00Z",
+          "entityId": "player:5e9ilgrz3tzg9kd1gk3yvrahh",
+          "logReturnPpm": 8091,
+          "newReferenceMicros": 5625926899,
+          "previousReferenceMicros": 5580592755,
+          "priceHash": "f0737d12dd7ed9fc0d3ff067dc94a33e575b16c98b2148d8dee6e4d94c8cf079",
+          "version": 382107
+        },
+        {
+          "asOf": "2026-08-26T19:00:00Z",
+          "entityId": "player:5e9ilgrz3tzg9kd1gk3yvrahh",
+          "logReturnPpm": 19289,
+          "newReferenceMicros": 5735501610,
+          "previousReferenceMicros": 5625926899,
+          "priceHash": "e5d1b6a71bab6fc55ed9ff37d9af7cb7c6a1891d4e8dc646fcd4c13783459bbf",
+          "version": 382108
+        },
+        {
+          "asOf": "2026-08-30T15:00:00Z",
+          "entityId": "player:5e9ilgrz3tzg9kd1gk3yvrahh",
+          "logReturnPpm": 12893,
+          "newReferenceMicros": 5809927137,
+          "previousReferenceMicros": 5735501610,
+          "priceHash": "d6e33f0a6043edd14b99b02417d33cdd8e95037f0b7fdcb98d3fdc55d8836cd3",
+          "version": 382109
+        }
+      ]
+    },
+    {
+      "symbol": "DEM",
+      "name": "Ousmane Dembélé",
+      "entityId": "player:ckaqxlw257qzj8vjdumvwbaad",
+      "assetKey": "dembele-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999632,
+        "displayName": "Ousmane Dembélé",
+        "entityId": "player:ckaqxlw257qzj8vjdumvwbaad",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-23T18:45:00Z",
+        "lowerMicros": 2234800488,
+        "priceHash": "4069b8d9d0ac403dfc2e34aa8f2063150f35f4bb32d2422fcab048c548cfed82",
+        "referenceMicros": 2307452165,
+        "status": "AVAILABLE",
+        "upperMicros": 2396870569,
+        "version": 383029
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T18:45:00Z",
+          "entityId": "player:ckaqxlw257qzj8vjdumvwbaad",
+          "logReturnPpm": 1730,
+          "newReferenceMicros": 2307452165,
+          "previousReferenceMicros": 2303463819,
+          "priceHash": "33ebcebb4acb5ed6253d94c16e2f303f24fa3923faad85090d667aa65b953a01",
+          "version": 383029
+        }
+      ]
+    },
+    {
+      "symbol": "RAPH",
+      "name": "Raphinha",
+      "entityId": "player:2wl6h1rlrfnn2mr65vuo3t815",
+      "assetKey": "raphinha-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999056,
+        "displayName": "Raphinha",
+        "entityId": "player:2wl6h1rlrfnn2mr65vuo3t815",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-31T19:30:00Z",
+        "lowerMicros": 2854885511,
+        "priceHash": "eef5536959bfceb4d2c916121d35cedb7c3eb33e88d7ccc34129ad87e43fb026",
+        "referenceMicros": 2898875030,
+        "status": "AVAILABLE",
+        "upperMicros": 3061973801,
+        "version": 380846
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T19:30:00Z",
+          "entityId": "player:2wl6h1rlrfnn2mr65vuo3t815",
+          "logReturnPpm": 15635,
+          "newReferenceMicros": 2830879281,
+          "previousReferenceMicros": 2786961686,
+          "priceHash": "3371eb1add07cd00a4971836d9a50e99a6fcdcfbc937cf521a34848ea01d3840",
+          "version": 380844
+        },
+        {
+          "asOf": "2026-08-27T19:00:00Z",
+          "entityId": "player:2wl6h1rlrfnn2mr65vuo3t815",
+          "logReturnPpm": 9105,
+          "newReferenceMicros": 2856772029,
+          "previousReferenceMicros": 2830879281,
+          "priceHash": "d9145095973a6b4f22417dd4f424c18b3865d0f98092bcba27880032717953df",
+          "version": 380845
+        },
+        {
+          "asOf": "2026-08-31T19:30:00Z",
+          "entityId": "player:2wl6h1rlrfnn2mr65vuo3t815",
+          "logReturnPpm": 14630,
+          "newReferenceMicros": 2898875030,
+          "previousReferenceMicros": 2856772029,
+          "priceHash": "352117a98ce6b9de4d9d2298dfab154e315ba6270522a1d85b3012b23351ecfd",
+          "version": 380846
+        }
+      ]
+    },
+    {
+      "symbol": "HLD",
+      "name": "Erling Haaland",
+      "entityId": "player:atzboo800gv7gic2rgvgo0kq1",
+      "assetKey": "erling-haaland",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999613,
+        "displayName": "Erling Haaland",
+        "entityId": "player:atzboo800gv7gic2rgvgo0kq1",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-28T19:00:00Z",
+        "lowerMicros": 3165234387,
+        "priceHash": "59dfcd4cc6be0862a7c10ab314c9a3f633449a5454dcf75bd8046b05078c2888",
+        "referenceMicros": 3225139189,
+        "status": "AVAILABLE",
+        "upperMicros": 3394780512,
+        "version": 381904
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-23T13:00:00Z",
+          "entityId": "player:atzboo800gv7gic2rgvgo0kq1",
+          "logReturnPpm": 5312,
+          "newReferenceMicros": 3190319933,
+          "previousReferenceMicros": 3173417231,
+          "priceHash": "d031466a6a60ea5ebea4fd738577a253fca5952410c20534c82eed0fedf18f2e",
+          "version": 381903
+        },
+        {
+          "asOf": "2026-08-28T19:00:00Z",
+          "entityId": "player:atzboo800gv7gic2rgvgo0kq1",
+          "logReturnPpm": 10855,
+          "newReferenceMicros": 3225139189,
+          "previousReferenceMicros": 3190319933,
+          "priceHash": "b4bb44c7ae3803a1218a35c631a4e6432017f233e56eabd4226577da16496ac1",
+          "version": 381904
+        }
+      ]
+    },
+    {
+      "symbol": "KANE",
+      "name": "Harry Kane",
+      "entityId": "player:b9g4qurpll4wizajo95c406hh",
+      "assetKey": "kane-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999999,
+        "displayName": "Harry Kane",
+        "entityId": "player:b9g4qurpll4wizajo95c406hh",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-28T18:30:00Z",
+        "lowerMicros": 4109173610,
+        "priceHash": "c4da2cf16dcdd02773278c94b19ca882ae5c6ea2fa6d717a751feb833e4d13dc",
+        "referenceMicros": 4248159967,
+        "status": "AVAILABLE",
+        "upperMicros": 4407122315,
+        "version": 380595
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-28T18:30:00Z",
+          "entityId": "player:b9g4qurpll4wizajo95c406hh",
+          "logReturnPpm": 993,
+          "newReferenceMicros": 4248159967,
+          "previousReferenceMicros": 4243943907,
+          "priceHash": "fc42227bc9a81d5c0947116d18780832be1b6d5ee15b27f613e462b42386662a",
+          "version": 380595
+        }
+      ]
+    },
+    {
+      "symbol": "VJR",
+      "name": "Vinícius Júnior",
+      "entityId": "player:b4witgokm49tidm1a83qcvbop",
+      "assetKey": "vinicius-junior",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999807,
+        "displayName": "Vinícius Júnior",
+        "entityId": "player:b4witgokm49tidm1a83qcvbop",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-30T15:00:00Z",
+        "lowerMicros": 3283660912,
+        "priceHash": "adcf7201f1a56610729d41d79e7d0be56da0c18cc3e9b903baba698ed373970a",
+        "referenceMicros": 3352800382,
+        "status": "AVAILABLE",
+        "upperMicros": 3521774323,
+        "version": 381443
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T19:30:00Z",
+          "entityId": "player:b4witgokm49tidm1a83qcvbop",
+          "logReturnPpm": -1459,
+          "newReferenceMicros": 3278886134,
+          "previousReferenceMicros": 3283674263,
+          "priceHash": "f34b74d9de7d75baae0a323a07a95947011bcd0ac46dfb3e36e94eeaa24941f6",
+          "version": 381441
+        },
+        {
+          "asOf": "2026-08-26T19:00:00Z",
+          "entityId": "player:b4witgokm49tidm1a83qcvbop",
+          "logReturnPpm": 13238,
+          "newReferenceMicros": 3322582167,
+          "previousReferenceMicros": 3278886134,
+          "priceHash": "d7588ddff382cbecbb021fd4380ef90c753dbd8ac7dc12db5613283e63f31fee",
+          "version": 381442
+        },
+        {
+          "asOf": "2026-08-30T15:00:00Z",
+          "entityId": "player:b4witgokm49tidm1a83qcvbop",
+          "logReturnPpm": 9054,
+          "newReferenceMicros": 3352800382,
+          "previousReferenceMicros": 3322582167,
+          "priceHash": "0f2541805b8df920bc8f1d1ed0399753a9bd8bfc5ec7ad0a73b73a88cd901fb9",
+          "version": 381443
+        }
+      ]
+    },
+    {
+      "symbol": "BJL",
+      "name": "Jude Bellingham",
+      "entityId": "player:e83ula4wockmc2xid7185kcq2",
+      "assetKey": "jude-bellingham",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999043,
+        "displayName": "Jude Bellingham",
+        "entityId": "player:e83ula4wockmc2xid7185kcq2",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-30T15:00:00Z",
+        "lowerMicros": 3607006262,
+        "priceHash": "3128f2f268794525c4ae6cc3d4a5f1d4e59d0444b23aa5d5cc89792cc75d8e39",
+        "referenceMicros": 3687759669,
+        "status": "AVAILABLE",
+        "upperMicros": 3868652046,
+        "version": 382313
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T19:30:00Z",
+          "entityId": "player:e83ula4wockmc2xid7185kcq2",
+          "logReturnPpm": 9554,
+          "newReferenceMicros": 3616951569,
+          "previousReferenceMicros": 3582561329,
+          "priceHash": "dd6081f091db95d4b54ea71f8c486811be111376476982743009a3d390cae50f",
+          "version": 382311
+        },
+        {
+          "asOf": "2026-08-26T19:00:00Z",
+          "entityId": "player:e83ula4wockmc2xid7185kcq2",
+          "logReturnPpm": 11342,
+          "newReferenceMicros": 3658210025,
+          "previousReferenceMicros": 3616951569,
+          "priceHash": "072de709f7c2045c3115bc7f3ab505fa6171770713aab71f59d152b7b36ecca8",
+          "version": 382312
+        },
+        {
+          "asOf": "2026-08-30T15:00:00Z",
+          "entityId": "player:e83ula4wockmc2xid7185kcq2",
+          "logReturnPpm": 8045,
+          "newReferenceMicros": 3687759669,
+          "previousReferenceMicros": 3658210025,
+          "priceHash": "5839a916c89ff7af3ab4d67e02d99dfceac4102733913946a91a52da8e6f446b",
+          "version": 382313
+        }
+      ]
+    },
+    {
+      "symbol": "OLI",
+      "name": "Michael Olise",
+      "entityId": "player:m2c4lckkcr7yilnqxrrsgh2i",
+      "assetKey": "olise-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 987894,
+        "displayName": "Michael Olise",
+        "entityId": "player:m2c4lckkcr7yilnqxrrsgh2i",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-28T18:30:00Z",
+        "lowerMicros": 3100828451,
+        "priceHash": "7d411232e60239a3d2aef7e683e6e861743b6fcc4385a47ce987a0e22d0da396",
+        "referenceMicros": 3171092983,
+        "status": "AVAILABLE",
+        "upperMicros": 3326874644,
+        "version": 380670
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-28T18:30:00Z",
+          "entityId": "player:m2c4lckkcr7yilnqxrrsgh2i",
+          "logReturnPpm": 7925,
+          "newReferenceMicros": 3171092983,
+          "previousReferenceMicros": 3146060387,
+          "priceHash": "94ca31bd0c733ef862598f16b8cc6e2d7519365cfd6af7c5cf8a369b118c1e18",
+          "version": 380670
+        }
+      ]
+    },
+    {
+      "symbol": "BRUNO",
+      "name": "Bruno Fernandes",
+      "entityId": "player:3vtjjrqof5z2tjj84ehadqc45",
+      "assetKey": "bruno-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999993,
+        "displayName": "Bruno Fernandes",
+        "entityId": "player:3vtjjrqof5z2tjj84ehadqc45",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-30T15:30:00Z",
+        "lowerMicros": 6390827966,
+        "priceHash": "117c6c381933cd0fbcdb4fa77d24525c0902e700cc28fd504f76472dfb3f8ad9",
+        "referenceMicros": 6461418218,
+        "status": "AVAILABLE",
+        "upperMicros": 6854215278,
+        "version": 382481
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-22T11:30:00Z",
+          "entityId": "player:3vtjjrqof5z2tjj84ehadqc45",
+          "logReturnPpm": 13291,
+          "newReferenceMicros": 6312319784,
+          "previousReferenceMicros": 6228976309,
+          "priceHash": "8a50b2ec645f76eca9b0ad85d43a2806d8ae45446c1cd80e23ccfb674facdc91",
+          "version": 382480
+        },
+        {
+          "asOf": "2026-08-30T15:30:00Z",
+          "entityId": "player:3vtjjrqof5z2tjj84ehadqc45",
+          "logReturnPpm": 23346,
+          "newReferenceMicros": 6461418218,
+          "previousReferenceMicros": 6312319784,
+          "priceHash": "8d572ce3e67c7f9c0fd95ff06b5193a1eeae7bffe245e36804483606c8004185",
+          "version": 382481
+        }
+      ]
+    },
+    {
+      "symbol": "ROD",
+      "name": "Rodri",
+      "entityId": "player:dqfk7czrayirrvonirtk2mk15",
+      "assetKey": "rodri-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999964,
+        "displayName": "Rodri",
+        "entityId": "player:dqfk7czrayirrvonirtk2mk15",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-05-19T00:00:00Z",
+        "lowerMicros": 3539445218,
+        "priceHash": "aeb9a9ec82825cf73922c81c82deaa44b843da3afb7575e5d2079944f2886c22",
+        "referenceMicros": 3674124955,
+        "status": "AVAILABLE",
+        "upperMicros": 3990721321,
+        "version": 381920
+      },
+      "movements": []
+    },
+    {
+      "symbol": "OSI",
+      "name": "Victor Osimhen",
+      "entityId": "player:1wynwp4x95o9w5tt4cdog6i1",
+      "assetKey": "osimhen-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 994216,
+        "displayName": "V. Osimhen",
+        "entityId": "player:1wynwp4x95o9w5tt4cdog6i1",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-03-18T00:00:00Z",
+        "lowerMicros": 1699268730,
+        "priceHash": "052cfcfb0aac6f428406f8a74c7da690b34f29b9512d23248d20b8b3d32346cf",
+        "referenceMicros": 1813912292,
+        "status": "AVAILABLE",
+        "upperMicros": 1916253543,
+        "version": 367439
+      },
+      "movements": []
+    },
+    {
+      "symbol": "MUS",
+      "name": "Jamal Musiala",
+      "entityId": "player:bhsdzppop8jwjsxwftizot1t6",
+      "assetKey": "musiala-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 988243,
+        "displayName": "J. Musiala",
+        "entityId": "player:bhsdzppop8jwjsxwftizot1t6",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-05-16T00:00:00Z",
+        "lowerMicros": 2287379862,
+        "priceHash": "7954176ade83495ebb4f2dc279b7acef18ded2a7079c0916ba20d88c108bb433",
+        "referenceMicros": 2430288556,
+        "status": "AVAILABLE",
+        "upperMicros": 2579921566,
+        "version": 380597
+      },
+      "movements": []
+    },
+    {
+      "symbol": "SAKA",
+      "name": "Bukayo Saka",
+      "entityId": "player:8tc7dcuwdeqbjgt7vw5p38xgq",
+      "assetKey": "saka-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 999613,
+        "displayName": "Bukayo Saka",
+        "entityId": "player:8tc7dcuwdeqbjgt7vw5p38xgq",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-31T19:00:00Z",
+        "lowerMicros": 2827751306,
+        "priceHash": "132cecc2f79d82fa7db9a96964a7c2401c01dad757a2a6bb3bd71dc5758c0f57",
+        "referenceMicros": 2900963155,
+        "status": "AVAILABLE",
+        "upperMicros": 3032822804,
+        "version": 383021
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-21T19:00:00Z",
+          "entityId": "player:8tc7dcuwdeqbjgt7vw5p38xgq",
+          "logReturnPpm": 13256,
+          "newReferenceMicros": 2884621277,
+          "previousReferenceMicros": 2846636143,
+          "priceHash": "50fda417c41cf4c0a49eeed71c3480e67c2f72b22601d9e9984fc91a065a771d",
+          "version": 383020
+        },
+        {
+          "asOf": "2026-08-31T19:00:00Z",
+          "entityId": "player:8tc7dcuwdeqbjgt7vw5p38xgq",
+          "logReturnPpm": 5649,
+          "newReferenceMicros": 2900963155,
+          "previousReferenceMicros": 2884621277,
+          "priceHash": "a65d11d50c845c7e5ca54994cdbb54bf6147fcf89960e49b64e69801d19a6a1a",
+          "version": 383021
+        }
+      ]
+    },
+    {
+      "symbol": "PAL",
+      "name": "Cole Palmer",
+      "entityId": "player:dl10343h8yopcgerzur5samwa",
+      "assetKey": "palmer-profile",
+      "snapshot": {
+        "asOf": "2026-09-01T00:00:00.000000Z",
+        "bandAsOf": "2026-09-01T00:00:00.000000Z",
+        "bandHorizonEnd": "2026-09-04T00:00:00.000000Z",
+        "densityPpm": 966971,
+        "displayName": "Cole Palmer",
+        "entityId": "player:dl10343h8yopcgerzur5samwa",
+        "kind": "PLAYER",
+        "lastSportingEventAt": "2026-08-30T13:00:00Z",
+        "lowerMicros": 2229999683,
+        "priceHash": "dea93eab03b6839899d382c8140cc0b6ad3944c313dc6c78565bb2bff8a7a3eb",
+        "referenceMicros": 2276234274,
+        "status": "AVAILABLE",
+        "upperMicros": 2394061853,
+        "version": 382864
+      },
+      "movements": [
+        {
+          "asOf": "2026-08-24T19:00:00Z",
+          "entityId": "player:dl10343h8yopcgerzur5samwa",
+          "logReturnPpm": 24083,
+          "newReferenceMicros": 2254606544,
+          "previousReferenceMicros": 2200956411,
+          "priceHash": "cfa4cc80eabeb0ef1e16ecbe42ac876664788e1ae47ebd702abf63693a31d4e4",
+          "version": 382863
+        },
+        {
+          "asOf": "2026-08-30T13:00:00Z",
+          "entityId": "player:dl10343h8yopcgerzur5samwa",
+          "logReturnPpm": 9547,
+          "newReferenceMicros": 2276234274,
+          "previousReferenceMicros": 2254606544,
+          "priceHash": "223961f92b55e36d7821436ed6cb07219ab447fdb89accb8d35aac1364d3cf17",
+          "version": 382864
+        }
+      ]
+    }
+  ]
+}

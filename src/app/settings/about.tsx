@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Alert, Platform } from 'react-native';
+import { APP_VERSION, checkForUpdate, downloadUpdate, type AppUpdate } from '@/lib/app-updates';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Screen } from '@/components/ui/screen';
@@ -19,11 +21,27 @@ const COPY: Record<Topic, string> = {
 export default function AboutScreen() {
   const styles = useStyles();
   const [topic, setTopic] = useState<Topic | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [update, setUpdate] = useState<AppUpdate | null>(null);
+  const [status, setStatus] = useState('');
+  const check = async () => {
+    if (checking) return;
+    setChecking(true);
+    try { const latest = await checkForUpdate(); setUpdate(latest); setStatus(latest ? `Version ${latest.version} available` : 'You have the latest version.'); }
+    catch { setStatus('Could not check for updates. Try again.'); }
+    finally { setChecking(false); }
+  };
   return (
     <Screen edges={['top', 'bottom']}>
       <TopBar back title="About BlackBook" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.brand}><Text accessibilityLabel="BlackBook" style={styles.wordmark}>BlackBook</Text><Text style={styles.version}>Version 0.1.0</Text></View>
+        <View style={styles.brand}><Text accessibilityLabel="BlackBook" style={styles.wordmark}>BlackBook</Text><Text style={styles.version}>Version {APP_VERSION}</Text></View>
+        <SettingsSection title="App updates">
+          <SettingRow icon="download" label={checking ? 'Checking…' : 'Check for updates'} onPress={check} />
+          {update && Platform.OS === 'android' ? <SettingRow icon="download" label={`Download BlackBook ${update.version}`} onPress={() => { void downloadUpdate(update).catch(() => Alert.alert('Download unavailable', 'Please try again.')); }} /> : null}
+        </SettingsSection>
+        {status ? <Text style={styles.disclosure}>{status}</Text> : null}
+        {update && Platform.OS !== 'android' ? <Text style={styles.disclosure}>APK downloads are available on Android.</Text> : null}
         <SettingsSection title="Information">
           <SettingRow icon="alert" label="Risk disclosure" onPress={() => setTopic('Risk disclosure')} />
           <SettingRow icon="lock" label="Privacy policy" onPress={() => setTopic('Privacy policy')} />

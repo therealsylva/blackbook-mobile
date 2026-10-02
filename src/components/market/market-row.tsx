@@ -41,7 +41,7 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
                 <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={market.series.slice(-16)} strokeWidth={1.7} />
               </View>
             ) : null}
-            {showVolume ? <Text numberOfLines={1} style={styles.volume}>Vol ${market.volume}</Text> : null}
+            {showVolume ? <Text numberOfLines={1} style={styles.volume}>Density {market.density.toFixed(1)}%</Text> : null}
           </View>
         </View>
       </View>

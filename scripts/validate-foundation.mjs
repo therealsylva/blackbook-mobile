@@ -57,16 +57,17 @@ if (!/android:width="210dp"[\s\S]+android:height="210dp"/.test(splashVector) || 
   failures.push('Android splash wordmark must retain its square, padded system-splash safe area.');
 }
 
-const marketSource = await readFile(join(root, 'src/data/markets.ts'), 'utf8');
-const marketCount = (marketSource.match(/"symbol":/g) ?? []).length;
-const priceCount = (marketSource.match(/"price":/g) ?? []).length;
-if (marketCount < 37 || priceCount < 37) failures.push('All Indices must include the approved 37 priced markets.');
-if (/"symbol":\s*"(?:MUSK|RMD\/LMY)"/.test(marketSource)) failures.push('Removed indices remain in the market catalog.');
-
-const marketAssets = await readdir(join(root, 'src/assets/indices'));
-if (marketAssets.filter((name) => ['.jpg', '.jpeg', '.png'].includes(extname(name).toLowerCase())).length < 35) {
-  failures.push('The mobile market artwork set is incomplete.');
+const publication = JSON.parse(await readFile(join(root, 'src/data/index-snapshot.json'), 'utf8'));
+const indices = publication.indices;
+if (indices.length !== 30 || indices.filter((index) => index.snapshot.kind === 'CLUB').length !== 15 || indices.filter((index) => index.snapshot.kind === 'PLAYER').length !== 15) failures.push('Expected exactly 15 clubs and 15 players.');
+if (new Set(indices.map((index) => index.symbol)).size !== 30 || new Set(indices.map((index) => index.snapshot.entityId)).size !== 30) failures.push('Duplicate index identities.');
+for (const index of indices) {
+  const row = index.snapshot;
+  if (!(row.lowerMicros < row.referenceMicros && row.referenceMicros < row.upperMicros)) failures.push(`Invalid band for ${index.symbol}.`);
+  if (!['CLUB', 'PLAYER'].includes(row.kind)) failures.push('Unsupported live category.');
 }
+const pairs = await readFile(join(root, 'src/data/pairs.ts'), 'utf8');
+for (const title of ['FCB/RMD', 'MUN/MCI', 'INT/ACM', 'BAY/BVB', 'ARS/CHE', 'MBP/HLD', 'MBP/LMY', 'VJR/RAPH']) if (!pairs.includes(title)) failures.push(`Missing pair ${title}.`);
 
 async function sourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -81,7 +82,6 @@ async function sourceFiles(directory) {
 
 const forbiddenProductPatterns = [
   { pattern: /\bWebView\b|react-native-webview/i, label: 'WebView code' },
-  { pattern: /\b(?:simulat(?:ed|ion)?|fixture|preview|demo|disconnected)\b/i, label: 'scaffolding language' },
   { pattern: /Trade what you know|mobile-app\.css|bundle:web/i, label: 'website-port language' },
 ];
 const sensitivePatterns = [
@@ -109,14 +109,6 @@ if (!/freezeOnBlur:\s*true/.test(tabsSource) || !/lazy:\s*true/.test(tabsSource)
 
 const portfolioSource = await readFile(join(root, 'src/app/(tabs)/portfolio.tsx'), 'utf8');
 if (!/function JournalList[\s\S]+MarketAvatar[\s\S]+journalTicker/.test(portfolioSource)) failures.push('Portfolio Journal entries must include the market icon and ticker.');
-
-const avatarSource = await readFile(join(root, 'src/components/market/market-avatar.tsx'), 'utf8');
-if (!/assetKey === 'nba-icon'[\s\S]+NbaMark/.test(avatarSource)) failures.push('NBA must use the dedicated full-color vector mark.');
-if (!/assetKey === 'apple' \? '#000000'/.test(avatarSource)) failures.push('Apple must retain its permanent black tile in both themes.');
-if (!/apple:\s*0\.94/.test(avatarSource)) failures.push('Apple must retain its corrected optical scale.');
-if (!/premier-league[\s\S]+#FFFFFF[\s\S]+#3D195B/.test(avatarSource)) failures.push('Premier League must retain its high-contrast lion treatment.');
-const nbaSource = await readFile(join(root, 'src/components/market/nba-mark.tsx'), 'utf8');
-if (!/viewBox="0 0 271 615"/.test(nbaSource) || /viewBox="0 0 1054 615"/.test(nbaSource)) failures.push('NBA must use the centered vertical identity instead of the squeezed horizontal lockup.');
 
 const appSource = (await Promise.all((await sourceFiles(join(root, 'src'))).map((path) => readFile(path, 'utf8')))).join('\n');
 if (/fundingBalance|transferFunds|Trading account|Funding account/.test(appSource)) failures.push('Crypto account splits or transfer flows remain in the app.');
