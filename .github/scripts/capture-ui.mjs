@@ -11,7 +11,7 @@ for (const [name, route] of [['home', ''], ['indices', 'indices'], ['trade', 'tr
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
   try {
     await page.goto(`http://127.0.0.1:4173/${route}`, { waitUntil: 'networkidle' });
-    await page.waitForFunction(() => document.body.innerText.trim().length > 20, { timeout: 15000 });
+    await page.waitForFunction(() => document.body.innerText.trim().length > 20, undefined, { timeout: 15000 });
     if (name === 'pair') {
       await page.getByRole('button', { name: 'Trade FCB', exact: true }).waitFor();
       await page.getByRole('button', { name: 'Trade RMD', exact: true }).waitFor();

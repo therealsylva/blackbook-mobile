@@ -53,6 +53,10 @@ jobs:
           class CleanRouteHandler(SimpleHTTPRequestHandler):
               def do_GET(self):
                   route = urlsplit(self.path).path
+                  if route == '/favicon.ico':
+                      self.send_response(204)
+                      self.end_headers()
+                      return
                   if route != '/' and '.' not in route.rsplit('/', 1)[-1] and os.path.isfile('.' + route + '.html'):
                       self.path = route + '.html'
                   super().do_GET()
