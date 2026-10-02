@@ -61,7 +61,7 @@ export default function AllIndicesScreen() {
   const openMarket = useCallback((symbol: string) => router.push({ pathname: '/market/[symbol]', params: { symbol } }), [router]);
   const renderItem = useCallback<ListRenderItem<DirectoryItem>>(({ item }) => {
     if (item.kind === 'pair') {
-      return <PairRow change={changeFor(item.left.symbol) - changeFor(item.right.symbol)} left={item.left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: item.pair.id } })} right={item.right} title={item.pair.title} />;
+      return <PairRow change={((priceFor(item.left.symbol) / priceFor(item.right.symbol)) / (item.left.reference / item.right.reference) - 1) * 100} left={item.left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: item.pair.id } })} right={item.right} title={item.pair.title} />;
     }
     return <MarketRow change={changeFor(item.market.symbol)} directory market={item.market} onPress={openMarket} price={priceFor(item.market.symbol)} showVolume />;
   }, [changeFor, openMarket, priceFor, router]);
@@ -71,7 +71,7 @@ export default function AllIndicesScreen() {
       <View style={styles.titleRow}>
         <View>
           <Text style={styles.title}>All indices</Text>
-          <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} pairs` : `${filtered.length} football indices`}</Text>
+          <Text style={styles.count}>{category === 'Coming Soon' ? 'Future performance categories' : category === 'Pairs' ? `${MAJOR_PAIRS.length} pairs` : `${filtered.length} football indices`}</Text>
         </View>
         <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}>
           <Icon name="filter" size={20} />
@@ -92,7 +92,7 @@ export default function AllIndicesScreen() {
         ))}
       </ScrollView>
 
-      {category !== 'Pairs' ? (
+      {category !== 'Pairs' && category !== 'Coming Soon' ? (
         <View style={styles.tableHeader}>
           <Text style={styles.column}>Index · density</Text>
           <Text style={styles.column}>Market · vs R</Text>

@@ -17,7 +17,7 @@ interface PairRowProps {
 export function PairRow({ change, left, right, title, onPress }: PairRowProps) {
   const styles = useStyles();
   return (
-    <Pressable accessibilityLabel={`${title}, ${formatPercent(change)} spread`} onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel={`${title}, ${formatPercent(change)} relative change`} onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={styles.marks}>
         <MarketAvatar assetKey={left.assetKey} size={42} symbol={left.symbol} />
         <View style={styles.overlap}><MarketAvatar assetKey={right.assetKey} size={42} symbol={right.symbol} /></View>

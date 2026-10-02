@@ -98,7 +98,7 @@ export default function HomeScreen() {
               const left = marketBySymbol(pair.left);
               const right = marketBySymbol(pair.right);
               if (!left || !right) return null;
-              return <PairRow change={changeFor(left.symbol) - changeFor(right.symbol)} key={pair.id} left={left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: pair.id } })} right={right} title={pair.title} />;
+              return <PairRow change={((priceFor(left.symbol) / priceFor(right.symbol)) / (left.reference / right.reference) - 1) * 100} key={pair.id} left={left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: pair.id } })} right={right} title={pair.title} />;
             })}
           </View>
         ) : <View style={styles.marketList}>
