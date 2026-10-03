@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
+import { PAIR_MARKETS, ALL_MARKETS } from '@/data/pair-markets';
 import { MARKETS, type MarketDefinition } from '@/data/markets';
 import { makeCandles, makeSeries, type CandlePoint } from '@/lib/market-series';
 import { useTheme, type ThemeMode } from '@/theme/theme-context';
@@ -15,6 +16,7 @@ interface PlaceOrderInput {
 
 interface ExchangeContextValue {
   markets: MarketDefinition[];
+  pairMarkets: MarketDefinition[];
   activeSymbol: string;
   setActiveSymbol: (symbol: string) => void;
   favorites: Set<string>;
@@ -56,29 +58,31 @@ const initialProfile: UserProfile = {
   displayName: 'Sylva', uid: '248 731 905', email: 'syl***@****', phone: 'Not added', verified: true,
 };
 
+const referenceFor = (symbol: string) => MARKETS.find((market) => market.symbol === symbol)!.reference;
+
 const initialPositions: Position[] = [
-  { id: 'P-RMD-01', symbol: 'RMD', side: 'long', size: 1880, entryPrice: 7358.42, leverage: 5, margin: 376, openedAt: Date.now() - 2_820_000 },
-  { id: 'P-CGPT-01', symbol: 'CGPT', side: 'long', size: 1320, entryPrice: 8144.6, leverage: 3, margin: 440, openedAt: Date.now() - 6_420_000 },
+  { id: 'P-RMD-01', symbol: 'RMD', side: 'long', size: 1880, entryPrice: referenceFor('RMD') * 0.995, leverage: 5, margin: 376, openedAt: Date.now() - 2_820_000 },
+  { id: 'P-FCB-01', symbol: 'FCB', side: 'long', size: 1320, entryPrice: referenceFor('FCB') * 1.003, leverage: 3, margin: 440, openedAt: Date.now() - 6_420_000 },
 ];
 
 const initialOrders: OpenOrder[] = [
-  { id: 'O-LIV-01', symbol: 'LIV', side: 'long', type: 'limit', size: 900, targetPrice: 7040, leverage: 3, createdAt: Date.now() - 740_000 },
+  { id: 'O-LIV-01', symbol: 'LIV', side: 'long', type: 'limit', size: 900, targetPrice: referenceFor('LIV') * 0.99, leverage: 3, createdAt: Date.now() - 740_000 },
 ];
 
 const initialHistory: TradeRecord[] = [
-  { id: 'H-MBP-01', symbol: 'MBP', side: 'short', event: 'closed', orderType: 'market', size: 780, leverage: 3, entryPrice: 6918.4, exitPrice: 6881.2, fee: 0.47, pnl: 42.18, openedAt: Date.now() - 91_800_000, createdAt: Date.now() - 86_400_000 },
-  { id: 'H-SPOT-01', symbol: 'SPOT', side: 'long', event: 'filled', orderType: 'limit', size: 620, leverage: 2, entryPrice: 7710.55, fee: 0.31, openedAt: Date.now() - 172_800_000, createdAt: Date.now() - 172_800_000 },
+  { id: 'H-MBP-01', symbol: 'MBP', side: 'short', event: 'closed', orderType: 'market', size: 780, leverage: 3, entryPrice: referenceFor('MBP') * 1.01, exitPrice: referenceFor('MBP'), fee: 0.47, pnl: 780 * (1 - 1 / 1.01), openedAt: Date.now() - 91_800_000, createdAt: Date.now() - 86_400_000 },
+  { id: 'H-HLD-01', symbol: 'HLD', side: 'long', event: 'filled', orderType: 'limit', size: 620, leverage: 2, entryPrice: referenceFor('HLD'), fee: 0.31, openedAt: Date.now() - 172_800_000, createdAt: Date.now() - 172_800_000 },
 ];
 
 const ExchangeContext = createContext<ExchangeContextValue | null>(null);
-const MARKET_LOOKUP = new Map(MARKETS.map((market) => [market.symbol, market]));
+const MARKET_LOOKUP = new Map(ALL_MARKETS.map((market) => [market.symbol, market]));
 
 export function ExchangeProvider({ children }: PropsWithChildren) {
   const { setMode } = useTheme();
   const [quotes, setQuotes] = useState<Record<string, number>>(() => Object.fromEntries(MARKETS.map((market) => [market.symbol, market.price])));
   const [activeSymbol, setActiveSymbolState] = useState('RMD');
   const [favorites, setFavorites] = useState(() => new Set<string>());
-  const [alerts, setAlerts] = useState(() => new Set(['CGPT']));
+  const [alerts, setAlerts] = useState(() => new Set(['FCB']));
   const [cashBalance, setCashBalance] = useState(9840.32);
   const [positions, setPositions] = useState<Position[]>(initialPositions);
   const [orders, setOrders] = useState<OpenOrder[]>(initialOrders);
@@ -95,7 +99,7 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
         const previous = current[market.symbol] ?? market.price;
         const wave = Math.sin((tickRef.current + market.rank * 2.7) / 3.8) * 0.00012;
         const drift = ((market.rank % 5) - 2) * 0.000008;
-        return [market.symbol, Math.max(0.001, previous * (1 + wave + drift))];
+        return [market.symbol, Math.min(market.upperBand, Math.max(market.lowerBand, market.price * 0.999, Math.min(market.price * 1.001, previous * (1 + wave + drift))))];
       })));
     }, settings.refreshRate === 'Every 15 seconds' ? 15_000 : settings.refreshRate === 'Every 5 seconds' ? 5_000 : 2_400);
     return () => clearInterval(interval);
@@ -103,19 +107,25 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
 
   const setActiveSymbol = useCallback((symbol: string) => { if (MARKET_LOOKUP.has(symbol)) setActiveSymbolState(symbol); }, []);
   const marketFor = useCallback((symbol: string) => MARKET_LOOKUP.get(symbol), []);
-  const priceFor = useCallback((symbol: string) => quotes[symbol] ?? MARKET_LOOKUP.get(symbol)?.price ?? 0, [quotes]);
+  const priceFor = useCallback((symbol: string) => {
+ const market = MARKET_LOOKUP.get(symbol);
+ if (market?.pairLegs) { const [left, right] = market.pairLegs; return ((quotes[left] ?? MARKET_LOOKUP.get(left)!.price) / (quotes[right] ?? MARKET_LOOKUP.get(right)!.price)) * 1000; }
+ return quotes[symbol] ?? market?.price ?? 0;
+ }, [quotes]);
   const changeFor = useCallback((symbol: string) => {
     const market = MARKET_LOOKUP.get(symbol);
-    return market ? market.change24h + ((priceFor(symbol) / market.price) - 1) * 100 : 0;
+    return market ? (priceFor(symbol) / (market.price / (1 + market.change24h / 100)) - 1) * 100 : 0;
   }, [priceFor]);
   const seriesFor = useCallback((symbol: string, range: ChartRange = '1D') => {
     const market = MARKET_LOOKUP.get(symbol);
-    return market ? makeSeries(market, range, priceFor(symbol)) : [];
-  }, [priceFor]);
+    if (!market) return [];
+ if (market.pairLegs) { const left = MARKET_LOOKUP.get(market.pairLegs[0])!; const right = MARKET_LOOKUP.get(market.pairLegs[1])!; const x = makeSeries({ ...left, change24h: changeFor(left.symbol) }, range, priceFor(left.symbol)); const y = makeSeries({ ...right, change24h: changeFor(right.symbol) }, range, priceFor(right.symbol)); return x.map((value,index) => value / y[index]! * 1000); }
+ return makeSeries({ ...market, change24h: changeFor(symbol) }, range, priceFor(symbol));
+  }, [priceFor, changeFor]);
   const candlesFor = useCallback((symbol: string, range: ChartRange = '15m') => {
     const market = MARKET_LOOKUP.get(symbol);
-    return market ? makeCandles(market, range, priceFor(symbol)) : [];
-  }, [priceFor]);
+    return market ? makeCandles({ ...market, change24h: changeFor(symbol) }, range, priceFor(symbol), seriesFor(symbol, range)) : [];
+  }, [priceFor, changeFor, seriesFor]);
 
   const toggleFavorite = useCallback((symbol: string) => setFavorites((current) => {
     const next = new Set(current); if (next.has(symbol)) next.delete(symbol); else next.add(symbol); return next;
@@ -140,7 +150,10 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
 
   const placeOrder = useCallback((input: PlaceOrderInput) => {
     const price = priceFor(input.symbol);
-    if (!MARKET_LOOKUP.has(input.symbol) || input.amount <= 0 || input.leverage <= 0) throw new Error('Invalid order');
+    const market = MARKET_LOOKUP.get(input.symbol);
+    if (!market || !Number.isFinite(input.amount) || !Number.isFinite(input.leverage) || input.amount <= 0 || input.leverage <= 0 || input.amount > cashBalance) throw new Error('Invalid order or insufficient balance');
+    const target = input.type === 'market' ? price : input.targetPrice ?? price;
+    if (!Number.isFinite(target) || target < market.lowerBand || target > market.upperBand) throw new Error('Order must be inside the active band');
     const now = Date.now(); const id = `${now}-${idRef.current++}`; const exposure = input.amount * input.leverage;
     if (input.type === 'market') {
       const position: Position = { id: `P-${id}`, symbol: input.symbol, side: input.side, size: exposure, entryPrice: price, leverage: input.leverage, margin: input.amount, openedAt: now };
@@ -151,7 +164,7 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
     const order: OpenOrder = { id: `O-${id}`, symbol: input.symbol, side: input.side, type: input.type, size: exposure, targetPrice: input.targetPrice || price, leverage: input.leverage, createdAt: now };
     setOrders((current) => [order, ...current]);
     return { kind: 'order' as const, id: order.id };
-  }, [priceFor]);
+  }, [cashBalance, priceFor]);
 
   const closePosition = useCallback((id: string) => setPositions((current) => {
     const position = current.find((item) => item.id === id); if (!position) return current;
@@ -174,7 +187,7 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
   }, [setMode]);
 
   const value = useMemo<ExchangeContextValue>(() => ({
-    markets: MARKETS, activeSymbol, setActiveSymbol, favorites, alerts, toggleFavorite, toggleAlert,
+    markets: MARKETS, pairMarkets: PAIR_MARKETS, activeSymbol, setActiveSymbol, favorites, alerts, toggleFavorite, toggleAlert,
     priceFor, changeFor, seriesFor, candlesFor, marketFor, cashBalance, usedMargin, totalEquity,
     unrealizedPnl, positions, orders, history, addFunds, withdrawFunds, placeOrder, closePosition,
     cancelOrder, positionPnl, profile, updateProfile, settings, updateSetting,

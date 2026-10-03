@@ -62,7 +62,7 @@ export function makeSeries(market: MarketDefinition, range: ChartRange, livePric
     const start = livePrice / Math.max(0.2, 1 + visibleChange * trendWeight);
     const baseline = start + (livePrice - start) * progress;
     const wave = Math.sin(progress * Math.PI * (3 + (market.rank % 4))) * livePrice * rangeScale * 0.32;
-    const noise = (rng() - 0.5) * livePrice * rangeScale;
+    const noise = (rng() - 0.5) * livePrice * rangeScale * Math.sin(Math.PI * progress);
     return Math.max(0.01, baseline + wave + noise);
   });
 
@@ -70,8 +70,8 @@ export function makeSeries(market: MarketDefinition, range: ChartRange, livePric
   return values.map((value) => value * anchor);
 }
 
-export function makeCandles(market: MarketDefinition, range: ChartRange, livePrice = market.price): CandlePoint[] {
-  const series = makeSeries(market, range, livePrice);
+export function makeCandles(market: MarketDefinition, range: ChartRange, livePrice = market.price, priceSeries?: number[]): CandlePoint[] {
+  const series = priceSeries ?? makeSeries(market, range, livePrice);
   const rng = random(hash(`${market.symbol}:${range}:ohlcv`));
   const volume = Number.parseFloat(market.volume.replace(/[^0-9.]/g, '')) || 10;
   const now = Date.now();

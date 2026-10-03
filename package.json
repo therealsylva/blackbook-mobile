@@ -1,6 +1,6 @@
 {
   "name": "blackbook-mobile",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "private": true,
   "main": "expo-router/entry",
   "engines": {
@@ -16,19 +16,20 @@
     "check": "npm run validate && npm run typecheck",
     "generate:splash": "node ./scripts/build-splash-vector.mjs",
     "prebuild:android": "npm run generate:splash && expo prebuild --platform android --clean",
-    "build:apk": "npm run prebuild:android && cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true"
+    "build:apk": "npm run prebuild:android && cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true",
+    "check:demo": "node scripts/check-demo-markets.cjs"
   },
   "dependencies": {
-    "expo": "~57.0.18",
-    "expo-constants": "~57.0.16",
-    "expo-font": "~57.0.2",
-    "expo-image-picker": "~57.0.14",
-    "expo-linking": "~57.0.4",
-    "expo-navigation-bar": "~57.0.2",
-    "expo-router": "~57.0.9",
-    "expo-splash-screen": "~57.0.5",
+    "expo": "~57.0.26",
+    "expo-constants": "~57.0.20",
+    "expo-font": "~57.0.4",
+    "expo-image-picker": "~57.0.20",
+    "expo-linking": "~57.0.11",
+    "expo-navigation-bar": "~57.0.3",
+    "expo-router": "~57.0.24",
+    "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
-    "expo-system-ui": "~57.0.2",
+    "expo-system-ui": "~57.0.4",
     "lucide-react-native": "1.34.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",

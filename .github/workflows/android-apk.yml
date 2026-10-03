@@ -5,9 +5,10 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [feat/mobile-foundation]
+    branches: [main, agent/mobile-demo-cleanup]
     paths:
       - package.json
+      - package-lock.json
       - app.json
       - src/**
       - assets/**
@@ -20,10 +21,11 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || github.head_ref != 'agent/mobile-demo-cleanup'
     name: Build native ARM64 release APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -42,9 +44,9 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Validate native exchange
-        run: npm run validate
+        run: npm run validate && npm run check:demo
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check
@@ -73,3 +75,8 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish downloadable demo APK
+        if: github.event_name != 'pull_request' && github.repository == 'therealsylva/blackbook-mobile'
+        run: bash .github/scripts/publish-apk.sh
+
