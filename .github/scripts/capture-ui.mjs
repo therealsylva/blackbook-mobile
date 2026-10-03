@@ -20,7 +20,7 @@ for (const width of [360,390,430]) {
     await page.getByText(/^Review long order$/i).click();
     await page.getByText('Confirm Long',{exact:true}).click();
     await page.getByText('Portfolio',{exact:true}).click();
-    await page.getByText('FCB/RMD',{exact:true}).first().waitFor();
+    await page.getByText('FCB/RMD',{exact:true}).filter({visible:true}).first().waitFor();
     await page.screenshot({path:`ui-renders/pair-position-${width}.png`,fullPage:true});
     await page.goto('http://127.0.0.1:4173/pair/fcb-rmd',{waitUntil:'networkidle'});
    }
