@@ -47,17 +47,15 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
           <MarketIdentityAvatar market={market} size={46} />
           <View style={styles.identity}>
             <Text numberOfLines={1} style={styles.name}>{market.pairLegs ? market.symbol : market.name}</Text>
-            <Text style={styles.symbol}>{market.symbol}</Text>
+            {!market.pairLegs ? <Text style={styles.symbol}>{market.symbol}</Text> : null}
           </View>
           <Pressable accessibilityLabel="Toggle price alert" onPress={() => toggleAlert(market.symbol)} style={styles.headerButton}><Icon color={alerts.has(market.symbol) ? colors.text : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} /></Pressable>
           <Pressable accessibilityLabel="Toggle favorite" onPress={() => toggleFavorite(market.symbol)} style={styles.headerButton}><Icon color={favorites.has(market.symbol) ? colors.text : colors.textMuted} filled={favorites.has(market.symbol)} name="star" size={21} /></Pressable>
         </View>
 
         <View style={styles.quote}>
-          
           <View style={styles.priceLine}>
             <Text style={styles.price}>{formatPrice(price)}</Text>
-            
           </View>
           <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text>
         </View>
@@ -84,8 +82,6 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview</Text>
           <Text style={styles.body}>{market.description ?? `${market.name} is a ${market.category === 'Clubs' ? 'football club' : 'professional footballer'}. The ${market.symbol} index tracks ${market.category === 'Clubs' ? 'its' : 'their'} on-field performance.`}</Text>
-
-
         </View>
 
         <View style={styles.actions}>
@@ -122,7 +118,7 @@ const useStyles = createThemedStyles((colors) => ({
   rangeText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11 },
   rangeTextActive: { color: colors.bg },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.lg, paddingHorizontal: spacing.page },
-  metric: { backgroundColor: colors.surface, borderRadius: radii.pill, flexDirection: 'row', gap: spacing.xs, paddingHorizontal: 12, paddingVertical: 8 },
+  metric: { width: '48.5%', justifyContent: 'space-between', backgroundColor: colors.surface, borderRadius: radii.pill, flexDirection: 'row', gap: spacing.xs, paddingHorizontal: 12, paddingVertical: 8 },
   metricLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
   metricValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 10 },
   section: { marginTop: spacing.xl, paddingHorizontal: spacing.page },
