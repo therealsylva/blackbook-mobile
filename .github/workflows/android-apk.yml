@@ -8,6 +8,7 @@ on:
     branches: [main, agent/mobile-demo-cleanup]
     paths:
       - package.json
+      - package-lock.json
       - app.json
       - src/**
       - assets/**
@@ -78,3 +79,4 @@ jobs:
       - name: Publish downloadable demo APK
         if: github.event_name != 'pull_request' && github.repository == 'therealsylva/blackbook-mobile'
         run: bash .github/scripts/publish-apk.sh
+
