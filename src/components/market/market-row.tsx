@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { MarketDefinition } from '@/data/markets';
 import { formatPercent, formatPrice } from '@/lib/format';
+import { makeSeries } from '@/lib/market-series';
 import { layout, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -38,10 +39,10 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
             <Text style={styles.symbol}>{market.symbol}</Text>
             {showSparkline ? (
               <View style={styles.sparkline}>
-                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={market.series.slice(-16)} strokeWidth={1.7} />
+                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={makeSeries({ ...market, change24h: change }, '1D', price).slice(-16)} strokeWidth={1.7} />
               </View>
             ) : null}
-            {showVolume ? <Text numberOfLines={1} style={styles.volume}>Density {market.density.toFixed(1)}%</Text> : null}
+            
           </View>
         </View>
       </View>

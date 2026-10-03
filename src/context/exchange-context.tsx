@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
+import { PAIR_MARKETS, ALL_MARKETS } from '@/data/pair-markets';
 import { MARKETS, type MarketDefinition } from '@/data/markets';
 import { makeCandles, makeSeries, type CandlePoint } from '@/lib/market-series';
 import { useTheme, type ThemeMode } from '@/theme/theme-context';
@@ -15,6 +16,7 @@ interface PlaceOrderInput {
 
 interface ExchangeContextValue {
   markets: MarketDefinition[];
+  pairMarkets: MarketDefinition[];
   activeSymbol: string;
   setActiveSymbol: (symbol: string) => void;
   favorites: Set<string>;
@@ -73,7 +75,7 @@ const initialHistory: TradeRecord[] = [
 ];
 
 const ExchangeContext = createContext<ExchangeContextValue | null>(null);
-const MARKET_LOOKUP = new Map(MARKETS.map((market) => [market.symbol, market]));
+const MARKET_LOOKUP = new Map(ALL_MARKETS.map((market) => [market.symbol, market]));
 
 export function ExchangeProvider({ children }: PropsWithChildren) {
   const { setMode } = useTheme();
@@ -97,7 +99,7 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
         const previous = current[market.symbol] ?? market.price;
         const wave = Math.sin((tickRef.current + market.rank * 2.7) / 3.8) * 0.00012;
         const drift = ((market.rank % 5) - 2) * 0.000008;
-        return [market.symbol, Math.min(market.upperBand, Math.max(market.lowerBand, previous * (1 + wave + drift)))];
+        return [market.symbol, Math.min(market.upperBand, Math.max(market.lowerBand, market.price * 0.999, Math.min(market.price * 1.001, previous * (1 + wave + drift))))];
       })));
     }, settings.refreshRate === 'Every 15 seconds' ? 15_000 : settings.refreshRate === 'Every 5 seconds' ? 5_000 : 2_400);
     return () => clearInterval(interval);
@@ -105,19 +107,25 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
 
   const setActiveSymbol = useCallback((symbol: string) => { if (MARKET_LOOKUP.has(symbol)) setActiveSymbolState(symbol); }, []);
   const marketFor = useCallback((symbol: string) => MARKET_LOOKUP.get(symbol), []);
-  const priceFor = useCallback((symbol: string) => quotes[symbol] ?? MARKET_LOOKUP.get(symbol)?.price ?? 0, [quotes]);
+  const priceFor = useCallback((symbol: string) => {
+ const market = MARKET_LOOKUP.get(symbol);
+ if (market?.pairLegs) { const [left, right] = market.pairLegs; return ((quotes[left] ?? MARKET_LOOKUP.get(left)!.price) / (quotes[right] ?? MARKET_LOOKUP.get(right)!.price)) * 1000; }
+ return quotes[symbol] ?? market?.price ?? 0;
+ }, [quotes]);
   const changeFor = useCallback((symbol: string) => {
     const market = MARKET_LOOKUP.get(symbol);
-    return market ? market.change24h + ((priceFor(symbol) / market.price) - 1) * 100 : 0;
+    return market ? (priceFor(symbol) / (market.price / (1 + market.change24h / 100)) - 1) * 100 : 0;
   }, [priceFor]);
   const seriesFor = useCallback((symbol: string, range: ChartRange = '1D') => {
     const market = MARKET_LOOKUP.get(symbol);
-    return market ? makeSeries(market, range, priceFor(symbol)) : [];
-  }, [priceFor]);
+    if (!market) return [];
+ if (market.pairLegs) { const left = MARKET_LOOKUP.get(market.pairLegs[0])!; const right = MARKET_LOOKUP.get(market.pairLegs[1])!; const x = makeSeries({ ...left, change24h: changeFor(left.symbol) }, range, priceFor(left.symbol)); const y = makeSeries({ ...right, change24h: changeFor(right.symbol) }, range, priceFor(right.symbol)); return x.map((value,index) => value / y[index]! * 1000); }
+ return makeSeries({ ...market, change24h: changeFor(symbol) }, range, priceFor(symbol));
+  }, [priceFor, changeFor]);
   const candlesFor = useCallback((symbol: string, range: ChartRange = '15m') => {
     const market = MARKET_LOOKUP.get(symbol);
-    return market ? makeCandles(market, range, priceFor(symbol)) : [];
-  }, [priceFor]);
+    return market ? makeCandles({ ...market, change24h: changeFor(symbol) }, range, priceFor(symbol), seriesFor(symbol, range)) : [];
+  }, [priceFor, changeFor, seriesFor]);
 
   const toggleFavorite = useCallback((symbol: string) => setFavorites((current) => {
     const next = new Set(current); if (next.has(symbol)) next.delete(symbol); else next.add(symbol); return next;
@@ -179,7 +187,7 @@ export function ExchangeProvider({ children }: PropsWithChildren) {
   }, [setMode]);
 
   const value = useMemo<ExchangeContextValue>(() => ({
-    markets: MARKETS, activeSymbol, setActiveSymbol, favorites, alerts, toggleFavorite, toggleAlert,
+    markets: MARKETS, pairMarkets: PAIR_MARKETS, activeSymbol, setActiveSymbol, favorites, alerts, toggleFavorite, toggleAlert,
     priceFor, changeFor, seriesFor, candlesFor, marketFor, cashBalance, usedMargin, totalEquity,
     unrealizedPnl, positions, orders, history, addFunds, withdrawFunds, placeOrder, closePosition,
     cancelOrder, positionPnl, profile, updateProfile, settings, updateSetting,

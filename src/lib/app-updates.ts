@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
-export const APP_VERSION = Constants.expoConfig?.version ?? '0.2.0';
+export const APP_VERSION = Constants.expoConfig?.version ?? '0.2.1';
 export interface AppUpdate { version: string; url: string }
 const DOWNLOAD_ROOT = 'https://raw.githubusercontent.com/therealsylva/blackbook-mobile/mobile-apk-downloads/';
 function compareVersions(a: string, b: string) {

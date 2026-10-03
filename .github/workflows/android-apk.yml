@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Validate native exchange
-        run: npm run validate
+        run: npm run validate && npm run check:demo
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check

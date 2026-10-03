@@ -13,13 +13,13 @@ import { layout, radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
-type Category = 'All' | 'Pairs' | 'Clubs' | 'Athletes' | 'Coming Soon';
+type Category = 'All' | 'Pairs' | 'Clubs' | 'Athletes';
 type SortMode = 'Rank' | 'Market change' | 'Index value';
 type DirectoryItem =
   | { kind: 'market'; market: MarketDefinition }
   | { kind: 'pair'; pair: MajorPair; left: MarketDefinition; right: MarketDefinition };
 
-const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Athletes', 'Coming Soon'];
+const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Athletes'];
 const SORTS: SortMode[] = ['Rank', 'Market change', 'Index value'];
 
 function itemKey(item: DirectoryItem) {
@@ -38,7 +38,7 @@ export default function AllIndicesScreen() {
 
   const baseFiltered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (category === 'Pairs' || category === 'Coming Soon') return [];
+    if (category === 'Pairs') return [];
     const list = markets.filter((market) => (category === 'All' || market.category === category) && (!normalized || market.name.toLowerCase().includes(normalized) || market.symbol.toLowerCase().includes(normalized)));
     if (sortMode === 'Index value') list.sort((a, b) => b.reference - a.reference);
     if (sortMode === 'Rank') list.sort((a, b) => a.rank - b.rank);
@@ -61,9 +61,9 @@ export default function AllIndicesScreen() {
   const openMarket = useCallback((symbol: string) => router.push({ pathname: '/market/[symbol]', params: { symbol } }), [router]);
   const renderItem = useCallback<ListRenderItem<DirectoryItem>>(({ item }) => {
     if (item.kind === 'pair') {
-      return <PairRow change={((priceFor(item.left.symbol) / priceFor(item.right.symbol)) / (item.left.reference / item.right.reference) - 1) * 100} left={item.left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: item.pair.id } })} right={item.right} title={item.pair.title} />;
+      return <PairRow price={priceFor(item.pair.title)} change={changeFor(item.pair.title)} left={item.left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: item.pair.id } })} right={item.right} title={item.pair.title} />;
     }
-    return <MarketRow change={changeFor(item.market.symbol)} directory market={item.market} onPress={openMarket} price={priceFor(item.market.symbol)} showVolume />;
+    return <MarketRow change={changeFor(item.market.symbol)} directory market={item.market} onPress={openMarket} price={priceFor(item.market.symbol)} />;
   }, [changeFor, openMarket, priceFor, router]);
 
   const listHeader = (
@@ -71,7 +71,7 @@ export default function AllIndicesScreen() {
       <View style={styles.titleRow}>
         <View>
           <Text style={styles.title}>All indices</Text>
-          <Text style={styles.count}>{category === 'Coming Soon' ? 'Future performance categories' : category === 'Pairs' ? `${MAJOR_PAIRS.length} pairs` : `${filtered.length} football indices`}</Text>
+          <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} pairs` : `${filtered.length} football indices`}</Text>
         </View>
         <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}>
           <Icon name="filter" size={20} />
@@ -92,10 +92,10 @@ export default function AllIndicesScreen() {
         ))}
       </ScrollView>
 
-      {category !== 'Pairs' && category !== 'Coming Soon' ? (
+      {category !== 'Pairs' ? (
         <View style={styles.tableHeader}>
-          <Text style={styles.column}>Index · density</Text>
-          <Text style={styles.column}>Market · vs R</Text>
+          <Text style={styles.column}>Index</Text>
+          <Text style={styles.column}>Price / Change</Text>
         </View>
       ) : null}
     </View>
@@ -109,7 +109,7 @@ export default function AllIndicesScreen() {
         initialNumToRender={8}
         keyboardShouldPersistTaps="handled"
         keyExtractor={itemKey}
-        ListEmptyComponent={category === 'Coming Soon' ? <View>{['Artists', 'Basketball', 'American football', 'Other sports'].filter((name) => name.toLowerCase().includes(query.trim().toLowerCase())).map((name) => <View key={name} style={{ paddingHorizontal: spacing.page, paddingVertical: spacing.md }}><Text style={styles.title}>{name}</Text><Text style={styles.count}>Coming Soon</Text></View>)}</View> : <Text style={styles.empty}>No matching indices.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>No matching indices.</Text>}
         ListHeaderComponent={listHeader}
         maxToRenderPerBatch={8}
         removeClippedSubviews

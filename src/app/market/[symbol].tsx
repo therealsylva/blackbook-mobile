@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MarketAvatar } from '@/components/market/market-avatar';
+import { MARKETS } from '@/data/markets';
 import { MarketChart } from '@/components/market/market-chart';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
@@ -10,21 +10,24 @@ import { formatPercent, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
-import { SNAPSHOT_LABEL } from '@/data/football-markets';
+import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
+import type { ChartRange } from '@/types/exchange';
 
-const RANGES = ['Published history'] as const;
+const RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
 
-export default function MarketOverviewScreen() {
+export function generateStaticParams() { return MARKETS.map(market => ({ symbol: market.symbol })); }
+
+export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
   const params = useLocalSearchParams<{ symbol?: string }>();
   const { marketFor, priceFor, changeFor, seriesFor, favorites, alerts, toggleFavorite, toggleAlert, setActiveSymbol } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
-  const market = marketFor(symbol ?? 'RMD');
-  const [range, setRange] = useState<string>('Published history');
+  const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
+  const [range, setRange] = useState<ChartRange>('1H');
 
-  const series = useMemo(() => market ? market.series : [], [market]);
+  const series = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   if (!market) return <Screen><View style={styles.missing}><Text style={styles.missingText}>Index unavailable</Text></View></Screen>;
 
   const price = priceFor(market.symbol);
@@ -41,9 +44,9 @@ export default function MarketOverviewScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Pressable accessibilityLabel="Go back" hitSlop={12} onPress={() => router.back()} style={styles.headerButton}><Icon name="back" /></Pressable>
-          <MarketAvatar assetKey={market.assetKey} size={46} symbol={market.symbol} />
+          <MarketIdentityAvatar market={market} size={46} />
           <View style={styles.identity}>
-            <Text numberOfLines={1} style={styles.name}>{market.name}</Text>
+            <Text numberOfLines={1} style={styles.name}>{market.pairLegs ? market.symbol : market.name}</Text>
             <Text style={styles.symbol}>{market.symbol}</Text>
           </View>
           <Pressable accessibilityLabel="Toggle price alert" onPress={() => toggleAlert(market.symbol)} style={styles.headerButton}><Icon color={alerts.has(market.symbol) ? colors.text : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} /></Pressable>
@@ -51,19 +54,18 @@ export default function MarketOverviewScreen() {
         </View>
 
         <View style={styles.quote}>
-          <Text style={styles.eyebrow}>Market price · P</Text>
+          
           <View style={styles.priceLine}>
             <Text style={styles.price}>{formatPrice(price)}</Text>
-            <Text style={styles.unit}>POINT</Text>
+            
           </View>
-          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)} · vs reference R</Text>
+          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text>
         </View>
 
         <View style={styles.chart}>
           <MarketChart area height={234} positive={change >= 0} series={series} strokeWidth={2} />
         </View>
 
-        <Text style={[styles.body, { paddingHorizontal: spacing.page }]}>{market.history.length ? `Published reference history · ${market.history.length} updates` : 'Snapshot only · no published movement history'}</Text>
         <View style={styles.ranges}>
           {RANGES.map((item) => (
             <Pressable accessibilityRole="tab" accessibilityState={{ selected: range === item }} key={item} onPress={() => setRange(item)} style={[styles.range, range === item && styles.rangeActive]}>
@@ -75,21 +77,15 @@ export default function MarketOverviewScreen() {
         <View style={styles.metrics}>
           <Metric label="Upper band" value={formatPrice(market.upperBand)} />
           <Metric label="Lower band" value={formatPrice(market.lowerBand)} />
-          <Metric label="Reference R" value={formatPrice(market.reference)} />
-          <Metric label="Density" value={`${market.density.toFixed(1)}%`} />
+          <Metric label="Index" value={formatPrice(market.reference)} />
+          <Metric label="24h volume" value={market.volume} />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview</Text>
-          <Text style={styles.body}>{market.name} is a football performance index. Reference R and its active asymmetric band come from the published snapshot dated {SNAPSHOT_LABEL}. Market price P trades separately within that band.</Text>
-          <View style={styles.signalLine}>
-            <Text style={styles.signalLabel}>Market vs R</Text>
-            <Text style={[styles.signalValue, { color: direction }]}>{formatPercent(change)}</Text>
-          </View>
-          <View style={styles.signalLine}>
-            <Text style={styles.signalLabel}>Market density</Text>
-            <Text style={styles.signalValue}>{market.density.toFixed(1)}%</Text>
-          </View>
+          <Text style={styles.body}>{market.description ?? `${market.name} is a ${market.category === 'Clubs' ? 'football club' : 'professional footballer'}. The ${market.symbol} index tracks ${market.category === 'Clubs' ? 'its' : 'their'} on-field performance.`}</Text>
+
+
         </View>
 
         <View style={styles.actions}>
@@ -144,3 +140,6 @@ const useStyles = createThemedStyles((colors) => ({
   missing: { alignItems: 'center', flex: 1, justifyContent: 'center' },
   missingText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 14 },
 }));
+
+
+export default function MarketOverviewScreen() { return <MarketOverview />; }

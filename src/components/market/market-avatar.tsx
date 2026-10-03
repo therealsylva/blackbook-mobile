@@ -29,8 +29,8 @@ export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps)
   const source = marketImage(assetKey);
   const portrait = PORTRAITS.has(assetKey);
   const circularProduct = false;
-  const productBackground = 'transparent';
-  const scale = OPTICAL_SCALE[assetKey] ?? 1;
+  const productBackground = assetKey === 'ac-milan' ? '#FFFFFF' : 'transparent';
+  const scale = assetKey === 'ac-milan' ? 0.82 : OPTICAL_SCALE[assetKey] ?? 1;
 
   return (
     <View style={[styles.frame, (portrait || circularProduct) && styles.circle, { backgroundColor: productBackground, borderRadius: size / 2, height: size, width: size }]}>
@@ -39,7 +39,7 @@ export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps)
           accessible={false}
           resizeMode={portrait || assetKey === 'claude-icon' ? 'cover' : 'contain'}
           source={source}
-          style={{ borderRadius: circularProduct ? size / 2 : 0, height: size * scale, tintColor: assetKey === 'premier-league' ? '#3D195B' : undefined, width: size * scale }}
+          style={{ ...(assetKey === 'raphinha-profile' ? { position: 'absolute' as const, top: 0, left: -size * 0.4 } : {}), borderRadius: circularProduct ? size / 2 : 0, height: assetKey === 'raphinha-profile' ? size * 1.8 : size * scale, tintColor: assetKey === 'premier-league' ? '#3D195B' : undefined, width: assetKey === 'raphinha-profile' ? size * 1.8 : size * scale }}
         />
       ) : (
         <View style={[styles.fallbackFrame, { borderRadius: size / 2, height: size, width: size }]}>

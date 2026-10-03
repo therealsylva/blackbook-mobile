@@ -18,7 +18,7 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'lamine-profile': require('./indices/lamine-avatar-v2.jpg'),
   'kylian-mbappe': require('./indices/mbappe-avatar-v2.jpg'),
   'dembele-profile': require('./indices/dembele-profile.jpg'),
-  'raphinha-profile': require('./indices/raphinha-profile.jpg'),
+  'raphinha-profile': require('./indices/raphinha-avatar-v3.jpg'),
   'erling-haaland': require('./indices/haaland-avatar-v2.jpg'),
   'kane-profile': require('./indices/kane-profile.jpg'),
   'vinicius-junior': require('./indices/vinicius-avatar-v2.jpg'),

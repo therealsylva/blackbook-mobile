@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { CandlestickChart, MarketChart } from '@/components/market/market-chart';
 import { Icon } from '@/components/ui/icon';
@@ -69,10 +70,10 @@ export default function TradeScreen() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Pressable onPress={() => setPairOpen(true)} style={({ pressed }) => [styles.pair, pressed && styles.pressed]}>
-              <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
+              <MarketIdentityAvatar market={market} size={42} />
               <View style={styles.pairCopy}>
                 <View style={styles.symbolLine}><Text style={styles.symbol}>{market.symbol}</Text><Icon color={colors.textMuted} name="chevron" size={16} /></View>
-                <Text numberOfLines={1} style={styles.marketName}>{market.name}</Text>
+                {!market.pairLegs ? <Text numberOfLines={1} style={styles.marketName}>{market.name}</Text> : null}
               </View>
             </Pressable>
             <View style={styles.liveQuote}>

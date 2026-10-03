@@ -1,19 +1,16 @@
-# Football mobile demo
+# Football mobile demo 0.2.1
 
-This work is separate from the paused production implementation. Trading/account behaviour remains the local mobile demo; this release does not establish real funding, settlement or production readiness.
+- 15 clubs, 15 athletes and eight tradable ticker pairs.
+- Home retains the original compact exchange layout; Hot includes Mbappé and Yamal in place of PSG and Liverpool.
+- Individual rows retain full names and ticker subtitles. Pair rows show both icons, ticker, price and daily percentage change only.
+- Pair price is X/Y × 1,000. Pair Index uses the underlying Index values. Each pair band uses the wider percentage from its two legs on that side.
+- Shared individual/pair overview: price, daily change, jagged market chart, timeframes, Upper band, Lower band, Index, 24h volume, brief description, News & analysis and Trade.
+- Remove density, publication labels, vs-reference labels and Coming Soon from market screens.
+- Shared pair/individual order ticket; pair orders and positions carry the pair ticker and both icons.
+- Seeded daily demo movement is 1–6% in either direction. Charts and candles share prices across Overview and Trade. Daily movement is measured from the demo opening price, not from Index.
+- ACM has a circular container with an undistorted crest. Raphinha uses the official Barcelona portrait with a face-focused display crop.
+- Version 0.2.1 / Android versionCode 3. Existing app identity and normal in-app APK update feed retained.
 
-- [x] 15 named football clubs and 15 named players.
-- [x] Import exact canonical identities, references, asymmetric bands and available movement history from the public index-price publication; verify manifest and shard hashes.
-- [x] Display snapshot date (1 September 2026); preserve publication metadata (RC3.1). This mobile change does not change the frozen engine methodology.
-- [x] Barcelona FCB, Manchester United MUN; eight agreed ticker pairs.
-- [x] Pair overview contains both indices, reference ratio, both R/bands/charts, and distinct overview/trade actions.
-- [x] Products removed; artists and other sports appear only as Coming Soon.
-- [x] Football sample positions/orders/history/alerts and index-guide feed.
-- [x] Published reference history in overviews; ROD, OSI and MUS show snapshot-only history. Trade charts and quotes remain bounded demo activity.
-- [x] About BlackBook: check the public APK version manifest, compare versions, download newer Android APK through the browser. Android handles installation; no custom signer/wallet/security system.
-- [x] Version 0.2.0 / Android versionCode 2; CI creates a downloadable APK feed on this branch and future main pushes.
-- [ ] CI APK and phone-render checks pass.
+Validation: npm run check; npm run check:demo; Expo web export; CI phone renders at 360/390/430 including light theme, pair order confirmation and pair position; ARM64 Android release build.
 
-Refresh data: clone therealsylva/index-price and run `node scripts/import-index-snapshot.mjs /path/to/index-price`. Snapshot bands persist until superseded; bandHorizonEnd is not an expiry. The import never invents values or history.
-
-Updates: bump Expo/package versions and Android versionCode for each release. CI uploads `BlackBook-VERSION.apk` and `update.json` to the dedicated `mobile-apk-downloads` branch. Settings > About BlackBook detects newer versions and downloads the APK. This uses normal public files because the Releases API rejected publishing with HTTP 403. Keep the existing Android application ID and build signing configuration so Android can update installed builds.
+The underlying publication and methodology remain unchanged. Trading, prices and volume are local demo data. Keep PR #2 open and unmerged for review.

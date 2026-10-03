@@ -1,8 +1,8 @@
 import publication from './index-snapshot.json';
-export type MarketCategory = 'Clubs' | 'Athletes';
+export type MarketCategory = 'Clubs' | 'Athletes' | 'Pairs';
 export interface ReferenceObservation { asOf: string; reference: number; previousReference: number }
 export interface MarketDefinition {
-  rank: number; symbol: string; name: string; category: MarketCategory;
+  pairLegs?: [string, string]; description?: string; rank: number; symbol: string; name: string; category: MarketCategory;
   entityId: string; price: number; reference: number; lowerBand: number; upperBand: number;
   change24h: number; volume: string; density: number; high24h: number; low24h: number;
   assetKey: string; series: number[]; history: ReferenceObservation[]; snapshotAsOf: string;
@@ -17,7 +17,7 @@ export const MARKETS: MarketDefinition[] = publication.indices.map((index, rank)
   return { rank: rank + 1, symbol: index.symbol, name: index.name, entityId: row.entityId,
     category: row.kind === 'CLUB' ? 'Clubs' : 'Athletes', price: reference, reference,
     lowerBand: row.lowerMicros / 1_000_000, upperBand: row.upperMicros / 1_000_000,
-    change24h: 0, volume: '0', density: row.densityPpm / 10_000,
+    change24h: ({FCB:3,RMD:-1.3,MUN:4,MCI:1.3,INT:-2,ACM:2,BAY:4,BVB:1.3,ARS:-2,CHE:2,MBP:3,HLD:-1.3,LMY:1.3,VJR:-2,RAPH:2} as Record<string,number>)[index.symbol] ?? (rank % 2 ? -1 : 1) * (1.4 + (rank % 5)), volume: `${(2.4 + rank * 0.73).toFixed(1)}M`, density: row.densityPpm / 10_000,
     high24h: row.upperMicros / 1_000_000, low24h: row.lowerMicros / 1_000_000,
     assetKey: index.assetKey, snapshotAsOf: row.asOf, history,
     series: history.length ? [history[0]!.previousReference, ...history.map((point) => point.reference), reference] : [reference, reference] };

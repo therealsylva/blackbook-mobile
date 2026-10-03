@@ -12,3 +12,6 @@ Existing football artwork retained. New club crests: ESPN team logo CDN (team id
 - File:Jamal Musiala Ecuador v Germany 25 June 2026-174 (cropped).jpg: Bryan Berlin; CC BY-SA 4.0; https://commons.wikimedia.org/wiki/File:Jamal_Musiala_Ecuador_v_Germany_25_June_2026-174_(cropped).jpg; https://creativecommons.org/licenses/by-sa/4.0
 - File:Ousmane Dembele France v Senegal 16 June 2026-341 (cropped) 2.jpg: Bryan Berlin; CC BY-SA 4.0; https://commons.wikimedia.org/wiki/File:Ousmane_Dembele_France_v_Senegal_16_June_2026-341_(cropped)_2.jpg; https://creativecommons.org/licenses/by-sa/4.0
 - File:Rodri Argentina v Spain 19 July 2026-187 (cropped).jpg: Bryan Berlin; CC BY-SA 4.0; https://commons.wikimedia.org/wiki/File:Rodri_Argentina_v_Spain_19_July_2026-187_(cropped).jpg; https://creativecommons.org/licenses/by-sa/4.0
+
+
+Raphinha updated portrait: FC Barcelona official player page, https://www.fcbarcelona.com/en/players/24156 (11-Raphinha-RED, July 2026). Display uses a face-focused circular crop.

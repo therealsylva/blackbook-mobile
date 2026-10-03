@@ -108,7 +108,7 @@ if (/tabBarIcon:[^\n]+filled=/.test(tabsSource)) failures.push('Active bottom na
 if (!/freezeOnBlur:\s*true/.test(tabsSource) || !/lazy:\s*true/.test(tabsSource)) failures.push('Inactive tabs must stay frozen and screens must remain lazy-mounted.');
 
 const portfolioSource = await readFile(join(root, 'src/app/(tabs)/portfolio.tsx'), 'utf8');
-if (!/function JournalList[\s\S]+MarketAvatar[\s\S]+journalTicker/.test(portfolioSource)) failures.push('Portfolio Journal entries must include the market icon and ticker.');
+if (!/function JournalList[\s\S]+MarketIdentityAvatar[\s\S]+journalTicker/.test(portfolioSource)) failures.push('Portfolio Journal entries must include the market icon and ticker.');
 
 const appSource = (await Promise.all((await sourceFiles(join(root, 'src'))).map((path) => readFile(path, 'utf8')))).join('\n');
 if (/fundingBalance|transferFunds|Trading account|Funding account/.test(appSource)) failures.push('Crypto account splits or transfer flows remain in the app.');
