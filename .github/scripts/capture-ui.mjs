@@ -17,7 +17,7 @@ for (const width of [360,390,430]) {
     await page.getByText('Trade FCB/RMD',{exact:true}).click();
     await page.getByText('Order ticket',{exact:true}).waitFor();
     await page.screenshot({path:`ui-renders/pair-trade-${width}.png`,fullPage:true});
-    await page.getByText('Review Long Order',{exact:true}).click();
+    await page.getByText(/^Review long order$/i).click();
     await page.getByText('Confirm Long',{exact:true}).click();
     await page.getByText('Portfolio',{exact:true}).click();
     await page.getByText('FCB/RMD',{exact:true}).first().waitFor();
@@ -33,8 +33,10 @@ for (const width of [360,390,430]) {
  const page=await context.newPage();
  try {
   await page.goto('http://127.0.0.1:4173/profile',{waitUntil:'networkidle'});
-  await page.getByRole('switch').first().click();
-  await page.getByText('Home',{exact:true}).click();
+  await page.getByText('Preferences',{exact:true}).click();
+  const themeSwitch=page.getByRole('switch').first();
+  if(await themeSwitch.getAttribute('aria-checked')==='true') await themeSwitch.click();
+  await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
   await page.getByText('All indices',{exact:true}).click();
   await page.screenshot({path:`ui-renders/indices-light-${width}.png`,fullPage:true});
   await page.getByRole('button',{name:/Real Madrid/}).click();
