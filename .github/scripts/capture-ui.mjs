@@ -32,11 +32,12 @@ for (const width of [360,390,430]) {
  }
  const page=await context.newPage();
  try {
-  await page.goto('http://127.0.0.1:4173/profile',{waitUntil:'networkidle'});
+  await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+  await page.getByLabel('Open profile',{exact:true}).click();
   await page.getByText('Preferences',{exact:true}).click();
   const themeSwitch=page.getByRole('switch').first();
-  if(await themeSwitch.getAttribute('aria-checked')==='true') await themeSwitch.click();
-  await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+  await themeSwitch.setChecked(false);
+  await page.getByLabel('Go back',{exact:true}).click();
   await page.getByText('All indices',{exact:true}).click();
   await page.screenshot({path:`ui-renders/indices-light-${width}.png`,fullPage:true});
   await page.getByRole('button',{name:/Real Madrid/}).click();
