@@ -13,14 +13,14 @@ import { layout, radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
-type Category = 'All' | 'Pairs' | 'Clubs' | 'Leagues' | 'Athletes' | 'Artists' | 'Products';
-type SortMode = 'Rank' | '24h change' | 'Volume';
+type Category = 'All' | 'Pairs' | 'Clubs' | 'Athletes';
+type SortMode = 'Rank' | 'Market change' | 'Index value';
 type DirectoryItem =
   | { kind: 'market'; market: MarketDefinition }
   | { kind: 'pair'; pair: MajorPair; left: MarketDefinition; right: MarketDefinition };
 
-const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Leagues', 'Athletes', 'Artists', 'Products'];
-const SORTS: SortMode[] = ['Rank', '24h change', 'Volume'];
+const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Athletes'];
+const SORTS: SortMode[] = ['Rank', 'Market change', 'Index value'];
 
 function itemKey(item: DirectoryItem) {
   return item.kind === 'market' ? item.market.symbol : item.pair.id;
@@ -40,11 +40,11 @@ export default function AllIndicesScreen() {
     const normalized = query.trim().toLowerCase();
     if (category === 'Pairs') return [];
     const list = markets.filter((market) => (category === 'All' || market.category === category) && (!normalized || market.name.toLowerCase().includes(normalized) || market.symbol.toLowerCase().includes(normalized)));
-    if (sortMode === 'Volume') list.sort((a, b) => Number.parseFloat(b.volume) - Number.parseFloat(a.volume));
+    if (sortMode === 'Index value') list.sort((a, b) => b.reference - a.reference);
     if (sortMode === 'Rank') list.sort((a, b) => a.rank - b.rank);
     return list;
   }, [category, markets, query, sortMode]);
-  const filtered = useMemo(() => sortMode === '24h change'
+  const filtered = useMemo(() => sortMode === 'Market change'
     ? [...baseFiltered].sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol))
     : baseFiltered, [baseFiltered, changeFor, sortMode]);
 
@@ -54,24 +54,24 @@ export default function AllIndicesScreen() {
     return MAJOR_PAIRS.flatMap((pair) => {
       const left = lookup.get(pair.left);
       const right = lookup.get(pair.right);
-      return left && right ? [{ kind: 'pair' as const, pair, left, right }] : [];
+      return left && right && (!query.trim() || `${pair.title} ${left.name} ${right.name}`.toLowerCase().includes(query.trim().toLowerCase())) ? [{ kind: 'pair' as const, pair, left, right }] : [];
     });
-  }, [category, filtered, markets]);
+  }, [category, filtered, markets, query]);
 
   const openMarket = useCallback((symbol: string) => router.push({ pathname: '/market/[symbol]', params: { symbol } }), [router]);
   const renderItem = useCallback<ListRenderItem<DirectoryItem>>(({ item }) => {
     if (item.kind === 'pair') {
-      return <PairRow change={changeFor(item.left.symbol) - changeFor(item.right.symbol)} left={item.left} onPress={() => openMarket(item.left.symbol)} right={item.right} title={item.pair.title} />;
+      return <PairRow price={priceFor(item.pair.title)} change={changeFor(item.pair.title)} left={item.left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: item.pair.id } })} right={item.right} title={item.pair.title} />;
     }
-    return <MarketRow change={changeFor(item.market.symbol)} directory market={item.market} onPress={openMarket} price={priceFor(item.market.symbol)} showVolume />;
-  }, [changeFor, openMarket, priceFor]);
+    return <MarketRow change={changeFor(item.market.symbol)} directory market={item.market} onPress={openMarket} price={priceFor(item.market.symbol)} />;
+  }, [changeFor, openMarket, priceFor, router]);
 
   const listHeader = (
     <View>
       <View style={styles.titleRow}>
         <View>
           <Text style={styles.title}>All indices</Text>
-          <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} major rivalries` : `${filtered.length} live markets`}</Text>
+          <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} pairs` : `${filtered.length} football indices`}</Text>
         </View>
         <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}>
           <Icon name="filter" size={20} />
@@ -94,8 +94,8 @@ export default function AllIndicesScreen() {
 
       {category !== 'Pairs' ? (
         <View style={styles.tableHeader}>
-          <Text style={styles.column}>Index · volume</Text>
-          <Text style={styles.column}>Price · 24h</Text>
+          <Text style={styles.column}>Index</Text>
+          <Text style={styles.column}>Price / Change</Text>
         </View>
       ) : null}
     </View>

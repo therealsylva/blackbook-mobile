@@ -32,9 +32,9 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Validate product boundary
-        run: npm run validate
+        run: npm run validate && npm run check:demo
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check
@@ -53,6 +53,10 @@ jobs:
           class CleanRouteHandler(SimpleHTTPRequestHandler):
               def do_GET(self):
                   route = urlsplit(self.path).path
+                  if route == '/favicon.ico':
+                      self.send_response(204)
+                      self.end_headers()
+                      return
                   if route != '/' and '.' not in route.rsplit('/', 1)[-1] and os.path.isfile('.' + route + '.html'):
                       self.path = route + '.html'
                   super().do_GET()
@@ -65,30 +69,14 @@ jobs:
           done
           BROWSER_BIN="$(command -v google-chrome || command -v chromium-browser || command -v chromium)"
           test -n "$BROWSER_BIN"
-          screens=(
-            "home|"
-            "indices|indices"
-            "trade|trade"
-            "trade-advanced|trade?mode=advanced"
-            "trade-order-book|trade?mode=advanced&panel=book"
-            "portfolio|portfolio"
-            "profile|profile"
-            "settings|settings"
-          )
-          dimensions=("360|800" "390|844" "430|932")
-          for dimension in "${dimensions[@]}"; do
-            width="${dimension%%|*}"
-            height="${dimension#*|}"
-            for screen in "${screens[@]}"; do
-              file_name="${screen%%|*}"
-              url_path="${screen#*|}"
-              "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3000 --window-size="$width,$height" --screenshot="ui-renders/$file_name-$width.png" "http://127.0.0.1:4173/$url_path"
-            done
-          done
+          export BROWSER_BIN
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright
+          node .github/scripts/capture-ui.mjs
       - name: Upload phone renders
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: blackbook-native-ui-${{ github.run_number }}
-          path: ui-renders/*.png
+          path: ui-renders/*
           if-no-files-found: error
           retention-days: 7

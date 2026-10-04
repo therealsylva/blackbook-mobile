@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { MarketAvatar } from '@/components/market/market-avatar';
+import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
@@ -73,7 +73,7 @@ function PositionsList() {
     return (
       <View key={position.id} style={styles.item}>
         <Pressable onPress={() => toggle(position.id)} style={({ pressed }) => [styles.itemMain, pressed && styles.pressed]}>
-          <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
+          <MarketIdentityAvatar market={market} size={42} />
           <View style={styles.itemCopy}>
             <View style={styles.itemTitleLine}><Text numberOfLines={1} style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
             <Text style={[styles.sideMeta, { color: position.side === 'long' ? colors.positive : colors.negative }]}>{position.side === 'long' ? 'Long' : 'Short'} · {position.leverage}x</Text>
@@ -114,7 +114,7 @@ function OrdersList() {
     return (
       <View key={order.id} style={styles.item}>
         <View style={styles.itemMain}>
-          <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
+          <MarketIdentityAvatar market={market} size={42} />
           <View style={styles.itemCopy}>
             <View style={styles.itemTitleLine}><Text numberOfLines={1} style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
             <Text style={[styles.sideMeta, { color: order.side === 'long' ? colors.positive : colors.negative }]}>{order.side === 'long' ? 'Long' : 'Short'} · {order.type} · {order.leverage}x</Text>
@@ -148,7 +148,7 @@ function JournalList() {
         {showDate ? <Text style={styles.dateHeading}>{formatDate(record.createdAt)}</Text> : null}
         <View style={styles.journalRow}>
           <View style={styles.journalIdentity}>
-            <MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} />
+            <MarketIdentityAvatar market={market} size={38} />
             <View style={[styles.journalEventDot, { backgroundColor: record.pnl === undefined ? colors.textMuted : record.pnl >= 0 ? colors.positive : colors.negative }]} />
           </View>
           <View style={styles.journalCopy}>

@@ -1,9 +1,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
 import { marketImage } from '@/assets/market-images';
 import { typography } from '@/theme/tokens';
 import { createThemedStyles } from '@/theme/use-themed-styles';
-import { NbaMark } from './nba-mark';
 
 interface MarketAvatarProps {
   assetKey: string;
@@ -11,15 +9,7 @@ interface MarketAvatarProps {
   size?: number;
 }
 
-const PORTRAITS = new Set([
-  'lamine-profile', 'kendrick-lamar', 'drake', 'kylian-mbappe', 'eminem-profile',
-  'lebron-profile', 'vinicius-junior', 'erling-haaland', 'jude-bellingham',
-  'taylor-swift', 'beyonce', 'the-weeknd', 'bad-bunny', 'kanye-west',
-  'travis-scott', 'doja-cat', 'future', 'central-cee',
-  'justin-bieber', 'tyla-profile',
-]);
-
-const CIRCULAR_PRODUCTS = new Set(['openai-icon', 'claude-icon', 'apple', 'premier-league']);
+const PORTRAITS = new Set(["lamine-profile", "kylian-mbappe", "dembele-profile", "raphinha-profile", "erling-haaland", "kane-profile", "vinicius-junior", "jude-bellingham", "olise-profile", "bruno-profile", "rodri-profile", "osimhen-profile", "musiala-profile", "saka-profile", "palmer-profile"]);
 const OPTICAL_SCALE: Record<string, number> = {
   'openai-icon': 0.74,
   apple: 0.94,
@@ -34,27 +24,13 @@ const OPTICAL_SCALE: Record<string, number> = {
   'boston-celtics': 0.94,
 };
 
-function SpotifyMark({ size }: { size: number }) {
-  return (
-    <Svg height={size} viewBox="0 0 48 48" width={size}>
-      <Circle cx="24" cy="24" fill="#1ED760" r="23" />
-      <Path d="M12 18.2c8.7-2.3 18.9-1.4 25.2 2" fill="none" stroke="#000" strokeLinecap="round" strokeWidth="3.4" />
-      <Path d="M13.6 24.4c7.8-1.8 16.4-1 22 1.7" fill="none" stroke="#000" strokeLinecap="round" strokeWidth="3" />
-      <Path d="M15 30.2c6.3-1.2 13.2-.5 18.5 1.7" fill="none" stroke="#000" strokeLinecap="round" strokeWidth="2.7" />
-    </Svg>
-  );
-}
-
 export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps) {
   const styles = useStyles();
-  if (assetKey === 'spotify-icon') return <View style={{ height: size, width: size }}><SpotifyMark size={size} /></View>;
-  if (assetKey === 'nba-icon') return <View style={{ height: size, width: size }}><NbaMark size={size} /></View>;
-
   const source = marketImage(assetKey);
   const portrait = PORTRAITS.has(assetKey);
-  const circularProduct = CIRCULAR_PRODUCTS.has(assetKey);
-  const productBackground = assetKey === 'openai-icon' || assetKey === 'premier-league' ? '#FFFFFF' : assetKey === 'apple' ? '#000000' : 'transparent';
-  const scale = OPTICAL_SCALE[assetKey] ?? 1;
+  const circularProduct = false;
+  const productBackground = assetKey === 'ac-milan' ? '#FFFFFF' : 'transparent';
+  const scale = assetKey === 'ac-milan' ? 0.82 : OPTICAL_SCALE[assetKey] ?? 1;
 
   return (
     <View style={[styles.frame, (portrait || circularProduct) && styles.circle, { backgroundColor: productBackground, borderRadius: size / 2, height: size, width: size }]}>
@@ -63,7 +39,7 @@ export function MarketAvatar({ assetKey, symbol, size = 42 }: MarketAvatarProps)
           accessible={false}
           resizeMode={portrait || assetKey === 'claude-icon' ? 'cover' : 'contain'}
           source={source}
-          style={{ borderRadius: circularProduct ? size / 2 : 0, height: size * scale, tintColor: assetKey === 'premier-league' ? '#3D195B' : undefined, width: size * scale }}
+          style={{ ...(assetKey === 'raphinha-profile' ? { position: 'absolute' as const, top: 0, left: -size * 0.4 } : {}), borderRadius: circularProduct ? size / 2 : 0, height: assetKey === 'raphinha-profile' ? size * 1.8 : size * scale, tintColor: assetKey === 'premier-league' ? '#3D195B' : undefined, width: assetKey === 'raphinha-profile' ? size * 1.8 : size * scale }}
         />
       ) : (
         <View style={[styles.fallbackFrame, { borderRadius: size / 2, height: size, width: size }]}>

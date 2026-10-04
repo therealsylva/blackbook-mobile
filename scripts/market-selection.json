@@ -1,0 +1,182 @@
+[
+  {
+    "symbol": "RMD",
+    "name": "Real Madrid C.F.",
+    "entityId": "club:3kq9cckrnlogidldtdie2fkbl",
+    "assetKey": "real-madrid"
+  },
+  {
+    "symbol": "FCB",
+    "name": "FC Barcelona",
+    "entityId": "club:agh9ifb2mw3ivjusgedj7c3fe",
+    "assetKey": "fcb-icon"
+  },
+  {
+    "symbol": "MUN",
+    "name": "Manchester United F.C.",
+    "entityId": "club:6eqit8ye8aomdsrrq0hk3v7gh",
+    "assetKey": "manchester-united"
+  },
+  {
+    "symbol": "PSG",
+    "name": "Paris Saint-Germain F.C.",
+    "entityId": "club:2b3mar72yy8d6uvat1ka6tn3r",
+    "assetKey": "psg"
+  },
+  {
+    "symbol": "MCI",
+    "name": "Manchester City F.C.",
+    "entityId": "club:a3nyxabgsqlnqfkeg41m6tnpp",
+    "assetKey": "manchester-city"
+  },
+  {
+    "symbol": "LIV",
+    "name": "Liverpool F.C.",
+    "entityId": "club:c8h9bw1l82s06h77xxrelzhur",
+    "assetKey": "liverpool-crest"
+  },
+  {
+    "symbol": "JUV",
+    "name": "Juventus F.C.",
+    "entityId": "club:bqbbqm98ud8obe45ds9ohgyrd",
+    "assetKey": "juventus"
+  },
+  {
+    "symbol": "BAY",
+    "name": "FC Bayern Munich",
+    "entityId": "club:apoawtpvac4zqlancmvw4nk4o",
+    "assetKey": "bayern"
+  },
+  {
+    "symbol": "CHE",
+    "name": "Chelsea F.C.",
+    "entityId": "club:9q0arba2kbnywth8bkxlhgmdr",
+    "assetKey": "chelsea"
+  },
+  {
+    "symbol": "ARS",
+    "name": "Arsenal F.C.",
+    "entityId": "club:4dsgumo7d4zupm2ugsvm4zm4d",
+    "assetKey": "arsenal"
+  },
+  {
+    "symbol": "TOT",
+    "name": "Tottenham Hotspur F.C.",
+    "entityId": "club:22doj4sgsocqpxw45h607udje",
+    "assetKey": "tottenham"
+  },
+  {
+    "symbol": "ATM",
+    "name": "Atlético Madrid",
+    "entityId": "club:4ku8o6uf87yd8iecdalipo6wd",
+    "assetKey": "atletico"
+  },
+  {
+    "symbol": "INT",
+    "name": "Inter Milan",
+    "entityId": "club:3vo5mpj7catp66nrwwqiuhuup",
+    "assetKey": "inter-milan"
+  },
+  {
+    "symbol": "ACM",
+    "name": "AC Milan",
+    "entityId": "club:9dntj5dioj5ex52yrgwzxrq9l",
+    "assetKey": "ac-milan"
+  },
+  {
+    "symbol": "BVB",
+    "name": "Borussia Dortmund",
+    "entityId": "club:dt4pinj0vw0t0cvz7za6mhmzy",
+    "assetKey": "dortmund"
+  },
+  {
+    "symbol": "LMY",
+    "name": "Lamine Yamal",
+    "entityId": "player:abr79wsl0folgkyvl821ggs2c",
+    "assetKey": "lamine-profile"
+  },
+  {
+    "symbol": "MBP",
+    "name": "Kylian Mbappé",
+    "entityId": "player:5e9ilgrz3tzg9kd1gk3yvrahh",
+    "assetKey": "kylian-mbappe"
+  },
+  {
+    "symbol": "DEM",
+    "name": "Ousmane Dembélé",
+    "entityId": "player:ckaqxlw257qzj8vjdumvwbaad",
+    "assetKey": "dembele-profile"
+  },
+  {
+    "symbol": "RAPH",
+    "name": "Raphinha",
+    "entityId": "player:2wl6h1rlrfnn2mr65vuo3t815",
+    "assetKey": "raphinha-profile"
+  },
+  {
+    "symbol": "HLD",
+    "name": "Erling Haaland",
+    "entityId": "player:atzboo800gv7gic2rgvgo0kq1",
+    "assetKey": "erling-haaland"
+  },
+  {
+    "symbol": "KANE",
+    "name": "Harry Kane",
+    "entityId": "player:b9g4qurpll4wizajo95c406hh",
+    "assetKey": "kane-profile"
+  },
+  {
+    "symbol": "VJR",
+    "name": "Vinícius Júnior",
+    "entityId": "player:b4witgokm49tidm1a83qcvbop",
+    "assetKey": "vinicius-junior"
+  },
+  {
+    "symbol": "BJL",
+    "name": "Jude Bellingham",
+    "entityId": "player:e83ula4wockmc2xid7185kcq2",
+    "assetKey": "jude-bellingham"
+  },
+  {
+    "symbol": "OLI",
+    "name": "Michael Olise",
+    "entityId": "player:m2c4lckkcr7yilnqxrrsgh2i",
+    "assetKey": "olise-profile"
+  },
+  {
+    "symbol": "BRUNO",
+    "name": "Bruno Fernandes",
+    "entityId": "player:3vtjjrqof5z2tjj84ehadqc45",
+    "assetKey": "bruno-profile"
+  },
+  {
+    "symbol": "ROD",
+    "name": "Rodri",
+    "entityId": "player:dqfk7czrayirrvonirtk2mk15",
+    "assetKey": "rodri-profile"
+  },
+  {
+    "symbol": "OSI",
+    "name": "Victor Osimhen",
+    "entityId": "player:1wynwp4x95o9w5tt4cdog6i1",
+    "assetKey": "osimhen-profile"
+  },
+  {
+    "symbol": "MUS",
+    "name": "Jamal Musiala",
+    "entityId": "player:bhsdzppop8jwjsxwftizot1t6",
+    "assetKey": "musiala-profile"
+  },
+  {
+    "symbol": "SAKA",
+    "name": "Bukayo Saka",
+    "entityId": "player:8tc7dcuwdeqbjgt7vw5p38xgq",
+    "assetKey": "saka-profile"
+  },
+  {
+    "symbol": "PAL",
+    "name": "Cole Palmer",
+    "entityId": "player:dl10343h8yopcgerzur5samwa",
+    "assetKey": "palmer-profile"
+  }
+]

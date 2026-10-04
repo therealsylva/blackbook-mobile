@@ -7,6 +7,7 @@ import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Icon } from '@/components/ui/icon';
+import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import { MarketAvatar } from '@/components/market/market-avatar';
 
 interface PairSelectorSheetProps {
@@ -18,12 +19,12 @@ interface PairSelectorSheetProps {
 export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSheetProps) {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { markets, priceFor, changeFor } = useExchange();
+  const { markets, pairMarkets, priceFor, changeFor } = useExchange();
   const [query, setQuery] = useState('');
   const matches = useMemo(() => {
     const normalized = query.toLowerCase().trim();
-    return markets.filter((market) => !normalized || market.symbol.toLowerCase().includes(normalized) || market.name.toLowerCase().includes(normalized));
-  }, [markets, query]);
+    return [...markets, ...pairMarkets].filter((market) => !normalized || market.symbol.toLowerCase().includes(normalized) || market.name.toLowerCase().includes(normalized));
+  }, [markets, pairMarkets, query]);
   return (
     <BottomSheet onClose={onClose} scroll={false} title="Select market" visible={visible}>
       <View style={styles.search}>
@@ -35,7 +36,7 @@ export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSh
           const change = changeFor(market.symbol);
           return (
             <Pressable key={market.symbol} onPress={() => { onSelect(market.symbol); onClose(); }} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-              <MarketAvatar assetKey={market.assetKey} size={34} symbol={market.symbol} />
+              <MarketIdentityAvatar market={market} size={34} />
               <View style={styles.copy}><Text style={styles.symbol}>{market.symbol}</Text><Text numberOfLines={1} style={styles.name}>{market.name}</Text></View>
               <View style={styles.quote}><Text style={styles.price}>{formatPrice(priceFor(market.symbol))}</Text><Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text></View>
             </Pressable>

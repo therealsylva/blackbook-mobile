@@ -29,7 +29,7 @@ export default function HomeScreen() {
 
   const marketRows = useMemo(() => {
     const list = marketTab === 'Favorites' ? markets.filter((market) => favorites.has(market.symbol)) : [...markets];
-    if (marketTab === 'Hot') list.sort((a, b) => a.rank - b.rank);
+    if (marketTab === 'Hot') return ['RMD', 'FCB', 'MUN', 'MBP', 'MCI', 'LMY'].flatMap(symbol => markets.filter(market => market.symbol === symbol));
     if (marketTab === 'New') list.sort((a, b) => b.rank - a.rank);
     if (marketTab === 'Gainers') list.sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol));
     if (marketTab === 'Losers') list.sort((a, b) => changeFor(a.symbol) - changeFor(b.symbol));
@@ -98,7 +98,7 @@ export default function HomeScreen() {
               const left = marketBySymbol(pair.left);
               const right = marketBySymbol(pair.right);
               if (!left || !right) return null;
-              return <PairRow change={changeFor(left.symbol) - changeFor(right.symbol)} key={pair.id} left={left} onPress={() => openMarket(left.symbol)} right={right} title={pair.title} />;
+              return <PairRow price={priceFor(pair.title)} change={changeFor(pair.title)} key={pair.id} left={left} onPress={() => router.push({ pathname: '/pair/[id]', params: { id: pair.id } })} right={right} title={pair.title} />;
             })}
           </View>
         ) : <View style={styles.marketList}>

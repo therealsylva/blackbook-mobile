@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   const isDark = mode === 'Dark';
 
   useEffect(() => {
-    Appearance.setColorScheme(isDark ? 'dark' : 'light');
+    if (typeof Appearance.setColorScheme === 'function') Appearance.setColorScheme(isDark ? 'dark' : 'light');
   }, [isDark]);
 
   const value = useMemo<ThemeContextValue>(() => ({

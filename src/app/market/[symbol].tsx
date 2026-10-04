@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MarketAvatar } from '@/components/market/market-avatar';
+import { MARKETS } from '@/data/markets';
 import { MarketChart } from '@/components/market/market-chart';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
@@ -10,19 +10,22 @@ import { formatPercent, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
+import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import type { ChartRange } from '@/types/exchange';
 
-const RANGES: ChartRange[] = ['1H', '1D', '1W', '1M', '6M'];
+const RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
 
-export default function MarketOverviewScreen() {
+export function generateStaticParams() { return MARKETS.map(market => ({ symbol: market.symbol })); }
+
+export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
   const params = useLocalSearchParams<{ symbol?: string }>();
   const { marketFor, priceFor, changeFor, seriesFor, favorites, alerts, toggleFavorite, toggleAlert, setActiveSymbol } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
-  const market = marketFor(symbol ?? 'RMD');
-  const [range, setRange] = useState<ChartRange>('1D');
+  const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
+  const [range, setRange] = useState<ChartRange>('1H');
 
   const series = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   if (!market) return <Screen><View style={styles.missing}><Text style={styles.missingText}>Index unavailable</Text></View></Screen>;
@@ -41,22 +44,20 @@ export default function MarketOverviewScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Pressable accessibilityLabel="Go back" hitSlop={12} onPress={() => router.back()} style={styles.headerButton}><Icon name="back" /></Pressable>
-          <MarketAvatar assetKey={market.assetKey} size={46} symbol={market.symbol} />
+          <MarketIdentityAvatar market={market} size={46} />
           <View style={styles.identity}>
-            <Text numberOfLines={1} style={styles.name}>{market.name}</Text>
-            <Text style={styles.symbol}>{market.symbol}</Text>
+            <Text numberOfLines={1} style={styles.name}>{market.pairLegs ? market.symbol : market.name}</Text>
+            {!market.pairLegs ? <Text style={styles.symbol}>{market.symbol}</Text> : null}
           </View>
           <Pressable accessibilityLabel="Toggle price alert" onPress={() => toggleAlert(market.symbol)} style={styles.headerButton}><Icon color={alerts.has(market.symbol) ? colors.text : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} /></Pressable>
           <Pressable accessibilityLabel="Toggle favorite" onPress={() => toggleFavorite(market.symbol)} style={styles.headerButton}><Icon color={favorites.has(market.symbol) ? colors.text : colors.textMuted} filled={favorites.has(market.symbol)} name="star" size={21} /></Pressable>
         </View>
 
         <View style={styles.quote}>
-          <Text style={styles.eyebrow}>Index value</Text>
           <View style={styles.priceLine}>
             <Text style={styles.price}>{formatPrice(price)}</Text>
-            <Text style={styles.unit}>POINT</Text>
           </View>
-          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)} · 24h</Text>
+          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text>
         </View>
 
         <View style={styles.chart}>
@@ -72,23 +73,15 @@ export default function MarketOverviewScreen() {
         </View>
 
         <View style={styles.metrics}>
-          <Metric label="24h high" value={formatPrice(market.high24h)} />
-          <Metric label="24h low" value={formatPrice(market.low24h)} />
-          <Metric label="24h volume" value={`$${market.volume}`} />
-          <Metric label="Density" value={`${market.density}/100`} />
+          <Metric label="Upper band" value={formatPrice(market.upperBand)} />
+          <Metric label="Lower band" value={formatPrice(market.lowerBand)} />
+          <Metric label="Index" value={formatPrice(market.reference)} />
+          <Metric label="24h volume" value={market.volume} />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview</Text>
-          <Text style={styles.body}>{market.name} tracks the live attention and performance signals behind this {market.category.toLowerCase()} index.</Text>
-          <View style={styles.signalLine}>
-            <Text style={styles.signalLabel}>Current signal</Text>
-            <Text style={[styles.signalValue, { color: direction }]}>{change >= 0 ? 'Positive momentum' : 'Negative momentum'}</Text>
-          </View>
-          <View style={styles.signalLine}>
-            <Text style={styles.signalLabel}>Market density</Text>
-            <Text style={styles.signalValue}>{market.density}/100</Text>
-          </View>
+          <Text style={styles.body}>{market.description ?? `${market.name} is a ${market.category === 'Clubs' ? 'football club' : 'professional footballer'}. The ${market.symbol} index tracks ${market.category === 'Clubs' ? 'its' : 'their'} on-field performance.`}</Text>
         </View>
 
         <View style={styles.actions}>
@@ -125,7 +118,7 @@ const useStyles = createThemedStyles((colors) => ({
   rangeText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11 },
   rangeTextActive: { color: colors.bg },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.lg, paddingHorizontal: spacing.page },
-  metric: { backgroundColor: colors.surface, borderRadius: radii.pill, flexDirection: 'row', gap: spacing.xs, paddingHorizontal: 12, paddingVertical: 8 },
+  metric: { width: '48.5%', justifyContent: 'space-between', backgroundColor: colors.surface, borderRadius: radii.pill, flexDirection: 'row', gap: spacing.xs, paddingHorizontal: 12, paddingVertical: 8 },
   metricLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
   metricValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 10 },
   section: { marginTop: spacing.xl, paddingHorizontal: spacing.page },
@@ -143,3 +136,6 @@ const useStyles = createThemedStyles((colors) => ({
   missing: { alignItems: 'center', flex: 1, justifyContent: 'center' },
   missingText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 14 },
 }));
+
+
+export default function MarketOverviewScreen() { return <MarketOverview />; }
