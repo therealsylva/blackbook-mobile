@@ -45,24 +45,18 @@ export interface UserProfile {
   displayName: string;
   uid: string;
   email: string;
-  phone: string;
-  verified: boolean;
   avatarUri?: string;
 }
 
 export interface ExchangeSettings {
   interfaceMode: InterfaceMode;
   appearance: 'Dark' | 'Light';
-  language: 'English' | 'French' | 'Spanish';
-  currency: 'USD' | 'EUR' | 'GBP';
+  language: 'English';
+  currency: 'USD';
   colorPreference: 'Green up / Red down' | 'Red up / Green down';
   defaultOrderType: OrderType;
   defaultLeverage: number;
   confirmOrders: boolean;
   attachRiskControls: boolean;
-  pushNotifications: boolean;
-  appLock: boolean;
-  biometrics: boolean;
-  autoLock: 'Immediately' | 'After 1 minute' | 'After 5 minutes';
   refreshRate: 'Live' | 'Every 5 seconds' | 'Every 15 seconds';
 }

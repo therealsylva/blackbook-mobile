@@ -10,8 +10,8 @@ import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
-type FeedTab = 'Highlights' | 'News' | 'Strategies' | 'Movers';
-const TABS: FeedTab[] = ['Highlights', 'News', 'Strategies', 'Movers'];
+type FeedTab = 'Highlights' | 'Guides' | 'Strategies' | 'Movers';
+const TABS: FeedTab[] = ['Highlights', 'Guides', 'Strategies', 'Movers'];
 
 const STORIES = [
   { kicker: 'Football indices', title: 'Real Madrid: inspect the published reference and active band', symbol: 'RMD', meta: 'Index overview' },
@@ -44,7 +44,6 @@ export default function FeedScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Feed</Text>
-          <Pressable accessibilityLabel="Notification feeds" onPress={() => router.push('/settings/notifications')} style={styles.headerIcon}><Icon name="bell" size={21} /></Pressable>
         </View>
 
         <View style={styles.tabs}>
@@ -59,18 +58,18 @@ export default function FeedScreen() {
           <>
             <SectionTitle title="Market trends" />
             {movers.gainers.slice(0, 3).map((market) => <TrendRow change={changeFor(market.symbol)} key={market.symbol} market={market} onPress={openMarket} price={priceFor(market.symbol)} />)}
-            <SectionTitle action="See news" onAction={() => setTab('News')} title="Index guides" />
+            <SectionTitle action="See guides" onAction={() => setTab('Guides')} title="Index guides" />
             {STORIES.slice(0, 3).map((story) => <StoryRow key={story.title} onPress={openMarket} story={story} market={markets.find((market) => market.symbol === story.symbol)} />)}
             <SectionTitle action="Explore" onAction={() => setTab('Strategies')} title="Index tools & strategies" />
             {STRATEGIES.slice(0, 2).map((strategy) => <StrategyRow key={strategy.title} strategy={strategy} />)}
           </>
         ) : null}
 
-        {tab === 'News' ? (
+        {tab === 'Guides' ? (
           <>
             <SectionTitle title="Football index guides" />
             {STORIES.map((story) => <StoryRow key={story.title} onPress={openMarket} story={story} market={markets.find((market) => market.symbol === story.symbol)} />)}
-            <SectionTitle title="New index listings" />
+            <SectionTitle title="Available indices" />
             {markets.slice().sort((a, b) => b.rank - a.rank).slice(0, 4).map((market) => <ListingRow key={market.symbol} market={market} onPress={openMarket} />)}
           </>
         ) : null}
@@ -142,7 +141,7 @@ function StrategyRow({ strategy }: { strategy: typeof STRATEGIES[number] }) {
 
 function ListingRow({ market, onPress }: { market: Market; onPress: (symbol: string) => void }) {
   const styles = useStyles();
-  return <Pressable onPress={() => onPress(market.symbol)} style={styles.listingRow}><MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} /><Text style={styles.listingName}>{market.name}</Text><Text style={styles.listingTicker}>{market.symbol}</Text><Text style={styles.newPill}>New</Text></Pressable>;
+  return <Pressable onPress={() => onPress(market.symbol)} style={styles.listingRow}><MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} /><Text style={styles.listingName}>{market.name}</Text><Text style={styles.listingTicker}>{market.symbol}</Text></Pressable>;
 }
 
 function MoverSection({ title, markets, priceFor, changeFor, onPress }: { title: string; markets: Market[]; priceFor: (symbol: string) => number; changeFor: (symbol: string) => number; onPress: (symbol: string) => void }) {

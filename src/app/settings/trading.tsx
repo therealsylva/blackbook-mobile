@@ -30,7 +30,7 @@ export default function TradingSettingsScreen() {
       </ScrollView>
       <ChoiceSheet format={(value) => value === 'basic' ? 'Basic' : 'Advanced'} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('interfaceMode', value)} options={['basic', 'advanced'] as const} title="Trading interface" value={settings.interfaceMode} visible={choice === 'interface'} />
       <ChoiceSheet format={(value) => value.charAt(0).toUpperCase() + value.slice(1)} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('defaultOrderType', value)} options={['market', 'limit', 'stop'] as const} title="Default order type" value={settings.defaultOrderType} visible={choice === 'orderType'} />
-      <ChoiceSheet format={(value) => `${value}x`} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('defaultLeverage', value)} options={[1, 2, 3, 5, 10, 20] as const} title="Default leverage" value={settings.defaultLeverage} visible={choice === 'leverage'} />
+      <ChoiceSheet format={(value) => `${value}x`} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('defaultLeverage', value)} options={[1, 2, 5, 10, 20, 50] as const} title="Default leverage" value={settings.defaultLeverage} visible={choice === 'leverage'} />
       <ChoiceSheet onClose={() => setChoice(null)} onSelect={(value) => updateSetting('refreshRate', value)} options={['Live', 'Every 5 seconds', 'Every 15 seconds'] as const} title="Market refresh" value={settings.refreshRate} visible={choice === 'refresh'} />
     </Screen>
   );
@@ -39,3 +39,4 @@ export default function TradingSettingsScreen() {
 const styles = StyleSheet.create({
   content: { paddingBottom: spacing.xl },
 });
+

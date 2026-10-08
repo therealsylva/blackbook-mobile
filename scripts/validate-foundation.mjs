@@ -22,8 +22,6 @@ const requiredFiles = [
   'src/app/market/[symbol].tsx',
   'src/app/settings/index.tsx',
   'src/app/settings/trading.tsx',
-  'src/app/settings/notifications.tsx',
-  'src/app/settings/security.tsx',
   'src/context/exchange-context.tsx',
   'src/data/markets.ts',
 ];

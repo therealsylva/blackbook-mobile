@@ -7,6 +7,8 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ExchangeProvider } from '@/context/exchange-context';
 import { ThemeProvider, useTheme } from '@/theme/theme-context';
+import {AuthProvider} from '@/context/auth-context';
+import {AuthGate} from '@/components/account/auth-gate';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -33,7 +35,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <RootNavigator />
+      <AuthProvider><RootNavigator /></AuthProvider>
     </ThemeProvider>
   );
 }
@@ -42,11 +44,11 @@ function RootNavigator() {
   const { colors, isDark } = useTheme();
   return (
     <SafeAreaProvider>
-      <ExchangeProvider>
+      <AuthGate><ExchangeProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <NavigationBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ animation: 'slide_from_right', contentStyle: { backgroundColor: colors.bg }, headerShown: false }} />
-      </ExchangeProvider>
+      </ExchangeProvider></AuthGate>
     </SafeAreaProvider>
   );
 }

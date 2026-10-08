@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { MarketDefinition } from '@/data/markets';
 import { formatPercent, formatPrice } from '@/lib/format';
-import { makeSeries } from '@/lib/market-series';
+import {useExchange} from '@/context/exchange-context';
 import { layout, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -22,6 +22,7 @@ interface MarketRowProps {
 
 function MarketRowComponent({ market, price, change, onPress, compact = false, showSparkline = false, showVolume = false, directory = false }: MarketRowProps) {
   const { colors } = useTheme();
+  const {seriesFor}=useExchange();
   const styles = useStyles();
   const direction = change >= 0 ? colors.positive : colors.negative;
   return (
@@ -39,7 +40,7 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
             <Text style={styles.symbol}>{market.symbol}</Text>
             {showSparkline ? (
               <View style={styles.sparkline}>
-                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={makeSeries({ ...market, change24h: change }, '1D', price).slice(-16)} strokeWidth={1.7} />
+                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={seriesFor(market.symbol,'1D').slice(-16)} strokeWidth={1.7} />
               </View>
             ) : null}
             
