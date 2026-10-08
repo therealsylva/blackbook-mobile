@@ -33,7 +33,7 @@ const rangeMs:Record<ChartRange,number>={'1m':60000,'5m':300000,'15m':900000,'1H
 async function pages(path:string):Promise<Row[]>{const items:Row[]=[];let cursor:string|null=null;do{const response: {items:Row[];nextCursor:string|null}=await api(path+(cursor?'?cursor='+encodeURIComponent(cursor):''));items.push(...response.items);cursor=response.nextCursor;}while(cursor);return items;}
 export function ExchangeProvider({children}:PropsWithChildren){
  const {session}=useAuth(),{setMode}=useTheme();
- const userId=session?.user.id??'',key='blackbook.preferences.'+userId;
+ const userId=session?.user.id??'',key='blackbook.preferences.'+userId,pendingKey='blackbook.pending-command.'+userId;
  const [accountMode,setModeState]=useState<AccountMode>('real'),[hydrated,setHydrated]=useState(false);
  const [settings,setSettings]=useState(defaults),[profile,setProfile]=useState<UserProfile>({displayName:session?.user.user_metadata?.display_name??session?.user.email?.split('@')[0]??'Trader',uid:userId,email:session?.user.email??'',avatarUri:'void'});
  const [favorites,setFavorites]=useState(new Set<string>()),[activeSymbol,setActiveSymbol]=useState('RMD');
@@ -48,9 +48,9 @@ export function ExchangeProvider({children}:PropsWithChildren){
   setModeState(p.accountMode==='demo'?'demo':'real');
  },[setMode]);
  useEffect(()=>{let alive=true;generation.current++;pending.current=null;setHydrated(false);
-  void (async()=>{try{const saved=await api<{preferences:Row}>('/v1/preferences');if(alive){applyPreferences(saved.preferences);await AsyncStorage.setItem(key,JSON.stringify(saved.preferences));}}catch(e){if(alive){setError(message(e));const local=await AsyncStorage.getItem(key);if(local)try{applyPreferences(JSON.parse(local));}catch{}}}finally{if(alive)setHydrated(true);}})();
+  void (async()=>{try{const stored=await AsyncStorage.getItem(pendingKey);if(alive&&stored)pending.current=JSON.parse(stored);const saved=await api<{preferences:Row}>('/v1/preferences');if(alive){applyPreferences(saved.preferences);await AsyncStorage.setItem(key,JSON.stringify(saved.preferences));}}catch(e){if(alive){setError(message(e));const local=await AsyncStorage.getItem(key);if(local)try{applyPreferences(JSON.parse(local));}catch{}}}finally{if(alive)setHydrated(true);}})();
   return()=>{alive=false;generation.current++;};
- },[applyPreferences,key]);
+ },[applyPreferences,key,pendingKey]);
  const persist=useCallback((patch:Row)=>{
   const next=persistChain.current.then(async()=>{const saved=await api<{preferences:Row}>('/v1/preferences',patch,'PUT');await AsyncStorage.setItem(key,JSON.stringify(saved.preferences));});
   persistChain.current=next.catch(e=>{setError(message(e));Alert.alert('Preference not saved',message(e));});return next;
@@ -58,17 +58,25 @@ export function ExchangeProvider({children}:PropsWithChildren){
  const refresh=useCallback(async()=>{
   if(!hydrated||inFlight.current)return;inFlight.current=true;const version=generation.current;
   try{
+   if(pending.current&&!commandLock.current){
+    commandLock.current=true;setBusy(true);
+    try{await api(pending.current.path,pending.current.body);await AsyncStorage.removeItem(pendingKey);pending.current=null;}
+    catch(e){if(e instanceof Error&&'status'in e&&[400,403,409,422].includes(Number(e.status))){await AsyncStorage.removeItem(pendingKey);pending.current=null;Alert.alert('Saved request rejected',e.message);}else throw e;}
+    finally{commandLock.current=false;setBusy(false);}
+   }
    const catalog=await api<{items:RemoteMarket[]}>('/v1/markets');
    const modePrefix=accountMode==='demo'?'/v1/demo/account':'/v1/account';
    const [portfolio,positions,orders,fills,snapshots]=await Promise.all([pages(modePrefix+'/portfolio'),pages(modePrefix+'/positions'),pages(modePrefix+'/orders'),pages(modePrefix+'/fills'),Promise.all(catalog.items.map(async m=>[m.marketId,await api<BookSnapshot>('/v1/markets/'+encodeURIComponent(m.marketId)+'/snapshot')] as const))]);
+   const conditional=accountMode==='real'?await api<{items:Row[]}>('/v1/conditional-orders'):{items:[]};
+   const allOrders=[...new Map([...orders,...conditional.items].map(o=>[o.orderId,o])).values()];
    if(generation.current!==version)return;
-   setRemote(catalog.items);setBooks(Object.fromEntries(snapshots));setAccount({portfolio:portfolio.find(p=>p.assetCode==='USD')??{},positions,orders,fills});setReady(true);setError(null);
+   setRemote(catalog.items);setBooks(Object.fromEntries(snapshots));setAccount({portfolio:portfolio.find(p=>p.assetCode==='USD')??{},positions,orders:allOrders,fills});setReady(true);setError(null);
    if(catalog.items.length&&!catalog.items.some(m=>m.symbol===activeSymbol))setActiveSymbol(catalog.items[0]!.symbol);
    const active=catalog.items.find(m=>m.symbol===activeSymbol)??catalog.items[0];
    if(active){try{const candles=await api<{candles:CandlePoint[]}>('/v1/markets/'+encodeURIComponent(active.marketId)+'/candles?interval=1m&limit=2000');if(generation.current===version)setCandles(current=>({...current,[active.symbol]:candles.candles}));}catch{/* The account and book remain usable while history is unavailable. */}}
   }catch(e){if(generation.current===version){setError(message(e));setReady(false);}}finally{inFlight.current=false;if(generation.current===version)setLoading(false);}
- },[accountMode,activeSymbol,hydrated]);
- useEffect(()=>{generation.current++;setAccount({portfolio:{},positions:[],orders:[],fills:[]});setReady(false);setLoading(true);pending.current=null;},[accountMode]);
+ },[accountMode,activeSymbol,hydrated,pendingKey]);
+ useEffect(()=>{generation.current++;setAccount({portfolio:{},positions:[],orders:[],fills:[]});setReady(false);setLoading(true);},[accountMode]);
  useEffect(()=>{void refresh();const tick=setInterval(()=>{if(AppState.currentState==='active')void refresh();},settings.refreshRate==='Every 15 seconds'?15000:settings.refreshRate==='Every 5 seconds'?5000:2500);const event=AppState.addEventListener('change',s=>{if(s==='active')void refresh();});return()=>{clearInterval(tick);event.remove();};},[refresh,settings.refreshRate]);
  const lookup=useMemo(()=>new Map(remote.map(r=>[r.symbol,r])),[remote]);
  const markets=useMemo(()=>remote.map((r,index)=>{const old=metadata.get(r.symbol),scale=10**Number(r.terms.priceDecimals),book=books[r.marketId],reference=Number(r.referenceTicks)/scale;return {...old,rank:index+1,symbol:r.symbol,name:r.displayName??old?.name??r.symbol,category:r.kind==='PAIR'?'Pairs':r.kind==='CLUB'?'Clubs':'Athletes',entityId:r.entityId,price:Number(book?.lastTradePriceTicks??r.referenceTicks)/scale,reference,lowerBand:Number(r.lowerTicks)/scale,upperBand:Number(r.upperTicks)/scale,change24h:NaN,volume:'—',density:old?.density??0,high24h:NaN,low24h:NaN,assetKey:old?.assetKey??'',series:[],history:[],snapshotAsOf:''} as MarketDefinition;}),[books,remote]);
@@ -88,9 +96,9 @@ export function ExchangeProvider({children}:PropsWithChildren){
   if(commandLock.current)throw new Error('Another account action is being submitted.');if(!ready)throw new Error('Wait for the account and market connection.');
   if(pending.current&&pending.current.fingerprint!==fingerprint)throw new Error('Retry the previous action to resolve its outcome before placing another.');
   commandLock.current=true;setBusy(true);const request=pending.current??{path,body,fingerprint};pending.current=request;
-  try{const result=await api<Row>(request.path,request.body);pending.current=null;await refresh();return (result.order??result) as Row;}
-  catch(e){if(e instanceof Error&&'status' in e&&Number(e.status)<500)pending.current=null;throw e;}finally{commandLock.current=false;setBusy(false);}
- },[ready,refresh]);
+  try{await AsyncStorage.setItem(pendingKey,JSON.stringify(request));const result=await api<Row>(request.path,request.body);await AsyncStorage.removeItem(pendingKey);pending.current=null;await refresh();return (result.order??result) as Row;}
+  catch(e){if(e instanceof Error&&'status' in e&&[400,403,409,422].includes(Number(e.status))){await AsyncStorage.removeItem(pendingKey);pending.current=null;}throw e;}finally{commandLock.current=false;setBusy(false);}
+ },[ready,refresh,pendingKey]);
  const placeOrder=useCallback(async(input:PlaceOrderInput)=>{
   const m=lookup.get(input.symbol),book=bookFor(input.symbol);if(!m||!book||book.status!=='RUNNING')throw new Error('Market is unavailable.');
   if(!Number.isFinite(input.amount)||input.amount<=0||input.amount>cashBalance||input.leverage<1||input.leverage>maxLeverageFor(input.symbol))throw new Error('Check your margin and leverage.');
