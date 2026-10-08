@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [feat/mobile-foundation]
+    branches: [feat/mobile-foundation, codex/complete-blackbook-trading]
     paths:
       - package.json
       - app.json
@@ -12,6 +12,7 @@ on:
       - assets/**
       - scripts/**
       - .github/workflows/ui-checks.yml
+      - .github/scripts/**
 
 concurrency:
   group: native-ui-${{ github.ref }}
