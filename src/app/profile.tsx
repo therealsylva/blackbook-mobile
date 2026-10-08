@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import {Alert} from 'react-native';
+import {useAuth} from '@/context/auth-context';
 import { useRouter } from 'expo-router';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { ChoiceSheet } from '@/components/ui/choice-sheet';
@@ -11,31 +12,20 @@ import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
-type ProfileTab = 'My info' | 'Security' | 'Preferences' | 'General';
-type Choice = 'interface' | 'language' | 'currency' | null;
+type ProfileTab = 'My info' | 'Preferences' | 'General';
+type Choice = 'interface' | 'accountMode' | null;
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
-  const { profile, updateProfile, settings, updateSetting } = useExchange();
+  const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode } = useExchange();
+  const {signOut}=useAuth();
   const [tab, setTab] = useState<ProfileTab>('My info');
   const [editOpen, setEditOpen] = useState(false);
   const [choice, setChoice] = useState<Choice>(null);
   const [name, setName] = useState(profile.displayName);
   const [avatar, setAvatar] = useState(profile.avatarUri ?? 'void');
-
-  const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      mediaTypes: ['images'],
-      quality: 0.9,
-    });
-    if (!result.canceled && result.assets[0]?.uri) setAvatar(result.assets[0].uri);
-  };
 
   const save = () => {
     const displayName = name.trim();
@@ -59,14 +49,14 @@ export default function ProfileScreen() {
             <View style={styles.camera}><Icon color={colors.bg} name="camera" size={13} /></View>
           </Pressable>
           <View style={styles.identityCopy}>
-            <View style={styles.nameLine}><Text style={styles.name}>{profile.displayName}</Text>{profile.verified ? <Icon color={colors.positive} name="check" size={18} /> : null}</View>
+            <View style={styles.nameLine}><Text style={styles.name}>{profile.displayName}</Text></View>
             <Text style={styles.uid}>UID {profile.uid}</Text>
           </View>
           <Pressable accessibilityLabel="Edit profile" onPress={() => setEditOpen(true)} style={styles.edit}><Icon name="edit" size={19} /></Pressable>
         </View>
 
         <ScrollView contentContainerStyle={styles.tabs} horizontal showsHorizontalScrollIndicator={false}>
-          {(['My info', 'Security', 'Preferences', 'General'] as const).map((item) => (
+          {(['My info', 'Preferences', 'General'] as const).map((item) => (
             <Pressable key={item} onPress={() => setTab(item)} style={styles.tab}>
               <Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item}</Text>
               {tab === item ? <View style={styles.tabLine} /> : null}
@@ -80,27 +70,15 @@ export default function ProfileScreen() {
               <ProfileRow icon="profile" label="Profile picture" onPress={() => setEditOpen(true)} value="Edit" />
               <ProfileRow icon="edit" label="Display name" onPress={() => setEditOpen(true)} value={profile.displayName} />
               <ProfileRow icon="copy" label="UID" value={profile.uid} />
-              <ProfileRow icon="security" label="Identity verification" value={profile.verified ? 'Verified' : 'Not verified'} />
               <ProfileRow icon="document" label="Email" value={profile.email} />
-              <ProfileRow icon="profile" label="Phone" value={profile.phone} />
-            </>
-          ) : null}
-          {tab === 'Security' ? (
-            <>
-              <ProfileToggle icon="lock" label="App lock" onValueChange={(value) => updateSetting('appLock', value)} value={settings.appLock} />
-              <ProfileToggle icon="security" label="Biometrics" onValueChange={(value) => updateSetting('biometrics', value)} value={settings.biometrics} />
-              <ProfileRow icon="scan" label="Auto-lock" onPress={() => router.push('/settings/security')} value={settings.autoLock} />
-              <ProfileRow icon="security" label="Security activity" onPress={() => router.push('/settings/security')} />
             </>
           ) : null}
           {tab === 'Preferences' ? (
             <>
+              <ProfileRow icon="mode" label="Account mode" onPress={() => setChoice('accountMode')} value={accountMode === 'real' ? 'Real money' : 'Demo'} />
               <ProfileToggle icon="appearance" label="Dark theme" onValueChange={(value) => updateSetting('appearance', value ? 'Dark' : 'Light')} value={settings.appearance === 'Dark'} />
               <ProfileRow icon="mode" label="Trading interface" onPress={() => setChoice('interface')} value={settings.interfaceMode === 'basic' ? 'Basic' : 'Advanced'} />
               <ProfileRow icon="orders" label="Order defaults" onPress={() => router.push('/settings/trading')} />
-              <ProfileRow icon="bell" label="Notifications" onPress={() => router.push('/settings/notifications')} />
-              <ProfileRow icon="language" label="Language" onPress={() => setChoice('language')} value={settings.language} />
-              <ProfileRow icon="currency" label="Display currency" onPress={() => setChoice('currency')} value={settings.currency} />
             </>
           ) : null}
           {tab === 'General' ? (
@@ -108,7 +86,7 @@ export default function ProfileScreen() {
               <ProfileRow icon="help" label="Help center" onPress={() => router.push('/settings/about')} />
               <ProfileRow icon="document" label="Legal & risk" onPress={() => router.push('/settings/about')} />
               <ProfileRow icon="info" label="About BlackBook" onPress={() => router.push('/settings/about')} value="0.1.0" />
-              <ProfileRow icon="logout" label="Log out" />
+              <ProfileRow icon="logout" label="Log out" onPress={() => {void signOut().catch(e=>Alert.alert('Sign out unavailable',e.message));}} />
             </>
           ) : null}
         </View>
@@ -123,22 +101,13 @@ export default function ProfileScreen() {
             </Pressable>
           ))}
         </View>
-        <Pressable onPress={pickImage} style={({ pressed }) => [styles.photoPicker, pressed && styles.pressed]}>
-          <Icon name="camera" size={18} />
-          <View style={styles.photoPickerCopy}>
-            <Text style={styles.photoPickerTitle}>Choose from device</Text>
-            <Text style={styles.photoPickerMeta}>Select and crop a photo</Text>
-          </View>
-          <Icon color={colors.textMuted} name="chevron" size={17} />
-        </Pressable>
         <Text style={styles.sheetLabel}>Display name</Text>
         <View style={styles.nameInput}><TextInput autoCapitalize="words" onChangeText={setName} selectionColor={colors.text} style={styles.input} value={name} /></View>
         <Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>Save changes</Text></Pressable>
       </BottomSheet>
 
       <ChoiceSheet format={(value) => value === 'basic' ? 'Basic' : 'Advanced'} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('interfaceMode', value)} options={['basic', 'advanced'] as const} title="Trading interface" value={settings.interfaceMode} visible={choice === 'interface'} />
-      <ChoiceSheet onClose={() => setChoice(null)} onSelect={(value) => updateSetting('language', value)} options={['English', 'French', 'Spanish'] as const} title="Language" value={settings.language} visible={choice === 'language'} />
-      <ChoiceSheet onClose={() => setChoice(null)} onSelect={(value) => updateSetting('currency', value)} options={['USD', 'EUR', 'GBP'] as const} title="Display currency" value={settings.currency} visible={choice === 'currency'} />
+      <ChoiceSheet format={(value) => value === 'real' ? 'Real money' : 'Demo (practice funds)'} onClose={() => setChoice(null)} onSelect={(value) => {void setAccountMode(value).catch(e=>Alert.alert('Mode unchanged',e.message));}} options={['real', 'demo'] as const} title="Account mode" value={accountMode} visible={choice === 'accountMode'} />
     </Screen>
   );
 }

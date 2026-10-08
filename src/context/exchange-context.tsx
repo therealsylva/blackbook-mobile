@@ -1,203 +1,115 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
-import { PAIR_MARKETS, ALL_MARKETS } from '@/data/pair-markets';
-import { MARKETS, type MarketDefinition } from '@/data/markets';
-import { makeCandles, makeSeries, type CandlePoint } from '@/lib/market-series';
-import { useTheme, type ThemeMode } from '@/theme/theme-context';
-import type { ChartRange, ExchangeSettings, OpenOrder, OrderType, Position, Side, TradeRecord, UserProfile } from '@/types/exchange';
+import {createContext,useCallback,useContext,useEffect,useMemo,useRef,useState,type PropsWithChildren} from 'react';
+import {Alert,AppState} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {ALL_MARKETS} from '@/data/pair-markets';
+import type {MarketDefinition} from '@/data/markets';
+import type {CandlePoint} from '@/lib/market-series';
+import {api,uuid} from '@/lib/backend';
+import {useAuth} from '@/context/auth-context';
+import {useTheme,type ThemeMode} from '@/theme/theme-context';
+import type {ChartRange,ExchangeSettings,OpenOrder,OrderType,Position,Side,TradeRecord,UserProfile} from '@/types/exchange';
 
-interface PlaceOrderInput {
-  symbol: string;
-  side: Side;
-  type: OrderType;
-  amount: number;
-  leverage: number;
-  targetPrice?: number;
-}
-
+type Row=Record<string,unknown>;
+type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string};marginPolicy:{initialMarginPpm:string};phase?:string};
+export type BookSnapshot={marketId:string;status:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;lastTradePriceTicks?:string;bids:{priceTicks:string;quantityLots:string}[];asks:{priceTicks:string;quantityLots:string}[]};
+type AccountMode='real'|'demo';
+interface PlaceOrderInput {symbol:string;side:Side;type:OrderType;amount:number;leverage:number;targetPrice?:number;takeProfit?:number;stopLoss?:number}
 interface ExchangeContextValue {
-  markets: MarketDefinition[];
-  pairMarkets: MarketDefinition[];
-  activeSymbol: string;
-  setActiveSymbol: (symbol: string) => void;
-  favorites: Set<string>;
-  alerts: Set<string>;
-  toggleFavorite: (symbol: string) => void;
-  toggleAlert: (symbol: string) => void;
-  priceFor: (symbol: string) => number;
-  changeFor: (symbol: string) => number;
-  seriesFor: (symbol: string, range?: ChartRange) => number[];
-  candlesFor: (symbol: string, range?: ChartRange) => CandlePoint[];
-  marketFor: (symbol: string) => MarketDefinition | undefined;
-  cashBalance: number;
-  usedMargin: number;
-  totalEquity: number;
-  unrealizedPnl: number;
-  positions: Position[];
-  orders: OpenOrder[];
-  history: TradeRecord[];
-  addFunds: (amount: number) => void;
-  withdrawFunds: (amount: number) => boolean;
-  placeOrder: (input: PlaceOrderInput) => { kind: 'position' | 'order'; id: string };
-  closePosition: (id: string) => void;
-  cancelOrder: (id: string) => void;
-  positionPnl: (position: Position) => number;
-  profile: UserProfile;
-  updateProfile: (changes: Partial<UserProfile>) => void;
-  settings: ExchangeSettings;
-  updateSetting: <K extends keyof ExchangeSettings>(key: K, value: ExchangeSettings[K]) => void;
+ markets:MarketDefinition[];pairMarkets:MarketDefinition[];activeSymbol:string;setActiveSymbol:(symbol:string)=>void;favorites:Set<string>;toggleFavorite:(symbol:string)=>void;
+ priceFor:(symbol:string)=>number;changeFor:(symbol:string)=>number;seriesFor:(symbol:string,range?:ChartRange)=>number[];candlesFor:(symbol:string,range?:ChartRange)=>CandlePoint[];marketFor:(symbol:string)=>MarketDefinition|undefined;
+ cashBalance:number;usedMargin:number;totalEquity:number;unrealizedPnl:number;positions:Position[];orders:OpenOrder[];history:TradeRecord[];
+ placeOrder:(input:PlaceOrderInput)=>Promise<{kind:'position'|'order';id:string}>;closePosition:(id:string)=>Promise<void>;cancelOrder:(id:string)=>Promise<void>;positionPnl:(position:Position)=>number;
+ profile:UserProfile;updateProfile:(changes:Partial<UserProfile>)=>void;settings:ExchangeSettings;updateSetting:<K extends keyof ExchangeSettings>(key:K,value:ExchangeSettings[K])=>void;
+ accountMode:AccountMode;setAccountMode:(mode:AccountMode)=>Promise<void>;loading:boolean;error:string|null;refresh:()=>Promise<void>;bookFor:(symbol:string)=>BookSnapshot|undefined;maxLeverageFor:(symbol:string)=>number;busy:boolean;ready:boolean;
 }
-
-const initialSettings: ExchangeSettings = {
-  interfaceMode: 'basic', appearance: 'Dark', language: 'English', currency: 'USD',
-  colorPreference: 'Green up / Red down', defaultOrderType: 'market', defaultLeverage: 5,
-  confirmOrders: true, attachRiskControls: true, pushNotifications: true, appLock: false,
-  biometrics: false, autoLock: 'After 5 minutes', refreshRate: 'Live',
-};
-
-const initialProfile: UserProfile = {
-  displayName: 'Sylva', uid: '248 731 905', email: 'syl***@****', phone: 'Not added', verified: true,
-};
-
-const referenceFor = (symbol: string) => MARKETS.find((market) => market.symbol === symbol)!.reference;
-
-const initialPositions: Position[] = [
-  { id: 'P-RMD-01', symbol: 'RMD', side: 'long', size: 1880, entryPrice: referenceFor('RMD') * 0.995, leverage: 5, margin: 376, openedAt: Date.now() - 2_820_000 },
-  { id: 'P-FCB-01', symbol: 'FCB', side: 'long', size: 1320, entryPrice: referenceFor('FCB') * 1.003, leverage: 3, margin: 440, openedAt: Date.now() - 6_420_000 },
-];
-
-const initialOrders: OpenOrder[] = [
-  { id: 'O-LIV-01', symbol: 'LIV', side: 'long', type: 'limit', size: 900, targetPrice: referenceFor('LIV') * 0.99, leverage: 3, createdAt: Date.now() - 740_000 },
-];
-
-const initialHistory: TradeRecord[] = [
-  { id: 'H-MBP-01', symbol: 'MBP', side: 'short', event: 'closed', orderType: 'market', size: 780, leverage: 3, entryPrice: referenceFor('MBP') * 1.01, exitPrice: referenceFor('MBP'), fee: 0.47, pnl: 780 * (1 - 1 / 1.01), openedAt: Date.now() - 91_800_000, createdAt: Date.now() - 86_400_000 },
-  { id: 'H-HLD-01', symbol: 'HLD', side: 'long', event: 'filled', orderType: 'limit', size: 620, leverage: 2, entryPrice: referenceFor('HLD'), fee: 0.31, openedAt: Date.now() - 172_800_000, createdAt: Date.now() - 172_800_000 },
-];
-
-const ExchangeContext = createContext<ExchangeContextValue | null>(null);
-const MARKET_LOOKUP = new Map(ALL_MARKETS.map((market) => [market.symbol, market]));
-
-export function ExchangeProvider({ children }: PropsWithChildren) {
-  const { setMode } = useTheme();
-  const [quotes, setQuotes] = useState<Record<string, number>>(() => Object.fromEntries(MARKETS.map((market) => [market.symbol, market.price])));
-  const [activeSymbol, setActiveSymbolState] = useState('RMD');
-  const [favorites, setFavorites] = useState(() => new Set<string>());
-  const [alerts, setAlerts] = useState(() => new Set(['FCB']));
-  const [cashBalance, setCashBalance] = useState(9840.32);
-  const [positions, setPositions] = useState<Position[]>(initialPositions);
-  const [orders, setOrders] = useState<OpenOrder[]>(initialOrders);
-  const [history, setHistory] = useState<TradeRecord[]>(initialHistory);
-  const [profile, setProfile] = useState(initialProfile);
-  const [settings, setSettings] = useState(initialSettings);
-  const tickRef = useRef(0);
-  const idRef = useRef(10);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      tickRef.current += 1;
-      setQuotes((current) => Object.fromEntries(MARKETS.map((market) => {
-        const previous = current[market.symbol] ?? market.price;
-        const wave = Math.sin((tickRef.current + market.rank * 2.7) / 3.8) * 0.00012;
-        const drift = ((market.rank % 5) - 2) * 0.000008;
-        return [market.symbol, Math.min(market.upperBand, Math.max(market.lowerBand, market.price * 0.999, Math.min(market.price * 1.001, previous * (1 + wave + drift))))];
-      })));
-    }, settings.refreshRate === 'Every 15 seconds' ? 15_000 : settings.refreshRate === 'Every 5 seconds' ? 5_000 : 2_400);
-    return () => clearInterval(interval);
-  }, [settings.refreshRate]);
-
-  const setActiveSymbol = useCallback((symbol: string) => { if (MARKET_LOOKUP.has(symbol)) setActiveSymbolState(symbol); }, []);
-  const marketFor = useCallback((symbol: string) => MARKET_LOOKUP.get(symbol), []);
-  const priceFor = useCallback((symbol: string) => {
- const market = MARKET_LOOKUP.get(symbol);
- if (market?.pairLegs) { const [left, right] = market.pairLegs; return ((quotes[left] ?? MARKET_LOOKUP.get(left)!.price) / (quotes[right] ?? MARKET_LOOKUP.get(right)!.price)) * 1000; }
- return quotes[symbol] ?? market?.price ?? 0;
- }, [quotes]);
-  const changeFor = useCallback((symbol: string) => {
-    const market = MARKET_LOOKUP.get(symbol);
-    return market ? (priceFor(symbol) / (market.price / (1 + market.change24h / 100)) - 1) * 100 : 0;
-  }, [priceFor]);
-  const seriesFor = useCallback((symbol: string, range: ChartRange = '1D') => {
-    const market = MARKET_LOOKUP.get(symbol);
-    if (!market) return [];
- if (market.pairLegs) { const left = MARKET_LOOKUP.get(market.pairLegs[0])!; const right = MARKET_LOOKUP.get(market.pairLegs[1])!; const x = makeSeries({ ...left, change24h: changeFor(left.symbol) }, range, priceFor(left.symbol)); const y = makeSeries({ ...right, change24h: changeFor(right.symbol) }, range, priceFor(right.symbol)); return x.map((value,index) => value / y[index]! * 1000); }
- return makeSeries({ ...market, change24h: changeFor(symbol) }, range, priceFor(symbol));
-  }, [priceFor, changeFor]);
-  const candlesFor = useCallback((symbol: string, range: ChartRange = '15m') => {
-    const market = MARKET_LOOKUP.get(symbol);
-    return market ? makeCandles({ ...market, change24h: changeFor(symbol) }, range, priceFor(symbol), seriesFor(symbol, range)) : [];
-  }, [priceFor, changeFor, seriesFor]);
-
-  const toggleFavorite = useCallback((symbol: string) => setFavorites((current) => {
-    const next = new Set(current); if (next.has(symbol)) next.delete(symbol); else next.add(symbol); return next;
-  }), []);
-  const toggleAlert = useCallback((symbol: string) => setAlerts((current) => {
-    const next = new Set(current); if (next.has(symbol)) next.delete(symbol); else next.add(symbol); return next;
-  }), []);
-
-  const positionPnl = useCallback((position: Position) => {
-    const direction = position.side === 'long' ? 1 : -1;
-    return ((priceFor(position.symbol) - position.entryPrice) / position.entryPrice) * position.size * direction;
-  }, [priceFor]);
-  const unrealizedPnl = useMemo(() => positions.reduce((total, position) => total + positionPnl(position), 0), [positionPnl, positions]);
-  const usedMargin = useMemo(() => positions.reduce((total, position) => total + position.margin, 0), [positions]);
-  const totalEquity = cashBalance + usedMargin + unrealizedPnl;
-
-  const addFunds = useCallback((amount: number) => { if (Number.isFinite(amount) && amount > 0) setCashBalance((current) => current + amount); }, []);
-  const withdrawFunds = useCallback((amount: number) => {
-    if (!Number.isFinite(amount) || amount <= 0 || amount > cashBalance) return false;
-    setCashBalance((current) => current - amount); return true;
-  }, [cashBalance]);
-
-  const placeOrder = useCallback((input: PlaceOrderInput) => {
-    const price = priceFor(input.symbol);
-    const market = MARKET_LOOKUP.get(input.symbol);
-    if (!market || !Number.isFinite(input.amount) || !Number.isFinite(input.leverage) || input.amount <= 0 || input.leverage <= 0 || input.amount > cashBalance) throw new Error('Invalid order or insufficient balance');
-    const target = input.type === 'market' ? price : input.targetPrice ?? price;
-    if (!Number.isFinite(target) || target < market.lowerBand || target > market.upperBand) throw new Error('Order must be inside the active band');
-    const now = Date.now(); const id = `${now}-${idRef.current++}`; const exposure = input.amount * input.leverage;
-    if (input.type === 'market') {
-      const position: Position = { id: `P-${id}`, symbol: input.symbol, side: input.side, size: exposure, entryPrice: price, leverage: input.leverage, margin: input.amount, openedAt: now };
-      setPositions((current) => [position, ...current]); setCashBalance((current) => Math.max(0, current - input.amount));
-      setHistory((current) => [{ id: `H-${id}`, symbol: input.symbol, side: input.side, event: 'opened', orderType: input.type, size: exposure, leverage: input.leverage, entryPrice: price, fee: exposure * 0.0006, openedAt: now, createdAt: now }, ...current]);
-      return { kind: 'position' as const, id: position.id };
-    }
-    const order: OpenOrder = { id: `O-${id}`, symbol: input.symbol, side: input.side, type: input.type, size: exposure, targetPrice: input.targetPrice || price, leverage: input.leverage, createdAt: now };
-    setOrders((current) => [order, ...current]);
-    return { kind: 'order' as const, id: order.id };
-  }, [cashBalance, priceFor]);
-
-  const closePosition = useCallback((id: string) => setPositions((current) => {
-    const position = current.find((item) => item.id === id); if (!position) return current;
-    const pnl = positionPnl(position); const now = Date.now(); const exitPrice = priceFor(position.symbol);
-    setCashBalance((cash) => cash + position.margin + pnl);
-    setHistory((records) => [{ id: `H-CLOSE-${now}`, symbol: position.symbol, side: position.side, event: 'closed', orderType: 'market', size: position.size, leverage: position.leverage, entryPrice: position.entryPrice, exitPrice, fee: position.size * 0.0006, pnl, openedAt: position.openedAt, createdAt: now }, ...records]);
-    return current.filter((item) => item.id !== id);
-  }), [positionPnl, priceFor]);
-
-  const cancelOrder = useCallback((id: string) => setOrders((current) => {
-    const order = current.find((item) => item.id === id); if (!order) return current; const now = Date.now();
-    setHistory((records) => [{ id: `H-CANCEL-${now}`, symbol: order.symbol, side: order.side, event: 'cancelled', orderType: order.type, size: order.size, leverage: order.leverage, entryPrice: order.targetPrice, fee: 0, openedAt: order.createdAt, createdAt: now }, ...records]);
-    return current.filter((item) => item.id !== id);
-  }), []);
-
-  const updateProfile = useCallback((changes: Partial<UserProfile>) => setProfile((current) => ({ ...current, ...changes })), []);
-  const updateSetting = useCallback(<K extends keyof ExchangeSettings,>(key: K, value: ExchangeSettings[K]) => {
-    if (key === 'appearance') setMode(value as ThemeMode);
-    setSettings((current) => ({ ...current, [key]: value }));
-  }, [setMode]);
-
-  const value = useMemo<ExchangeContextValue>(() => ({
-    markets: MARKETS, pairMarkets: PAIR_MARKETS, activeSymbol, setActiveSymbol, favorites, alerts, toggleFavorite, toggleAlert,
-    priceFor, changeFor, seriesFor, candlesFor, marketFor, cashBalance, usedMargin, totalEquity,
-    unrealizedPnl, positions, orders, history, addFunds, withdrawFunds, placeOrder, closePosition,
-    cancelOrder, positionPnl, profile, updateProfile, settings, updateSetting,
-  }), [activeSymbol, addFunds, alerts, cancelOrder, candlesFor, cashBalance, changeFor, closePosition, favorites, history, marketFor, orders, placeOrder, positionPnl, positions, priceFor, profile, seriesFor, setActiveSymbol, settings, toggleAlert, toggleFavorite, totalEquity, unrealizedPnl, updateProfile, updateSetting, usedMargin, withdrawFunds]);
-
-  return <ExchangeContext.Provider value={value}>{children}</ExchangeContext.Provider>;
+const defaults:ExchangeSettings={interfaceMode:'basic',appearance:'Dark',language:'English',currency:'USD',colorPreference:'Green up / Red down',defaultOrderType:'market',defaultLeverage:5,confirmOrders:true,attachRiskControls:true,refreshRate:'Live'};
+const Context=createContext<ExchangeContextValue|null>(null);
+const metadata=new Map(ALL_MARKETS.map(m=>[m.symbol,m]));
+const message=(e:unknown)=>e instanceof Error?e.message:'BlackBook is unavailable. Please try again.';
+const time=(v:unknown)=>typeof v==='string'?Date.parse(v):0;
+const money=(v:unknown)=>v===null||v===undefined?NaN:Number(v)/100;
+const str=(v:unknown)=>String(v??'');
+const rangeMs:Record<ChartRange,number>={'1m':60000,'5m':300000,'15m':900000,'1H':3600000,'4H':14400000,'1D':86400000,'1W':604800000,'1M':2592000000,'6M':15552000000};
+async function pages(path:string):Promise<Row[]>{const items:Row[]=[];let cursor:string|null=null;do{const response: {items:Row[];nextCursor:string|null}=await api(path+(cursor?'?cursor='+encodeURIComponent(cursor):''));items.push(...response.items);cursor=response.nextCursor;}while(cursor);return items;}
+export function ExchangeProvider({children}:PropsWithChildren){
+ const {session}=useAuth(),{setMode}=useTheme();
+ const userId=session?.user.id??'',key='blackbook.preferences.'+userId;
+ const [accountMode,setModeState]=useState<AccountMode>('real'),[hydrated,setHydrated]=useState(false);
+ const [settings,setSettings]=useState(defaults),[profile,setProfile]=useState<UserProfile>({displayName:session?.user.user_metadata?.display_name??session?.user.email?.split('@')[0]??'Trader',uid:userId,email:session?.user.email??'',avatarUri:'void'});
+ const [favorites,setFavorites]=useState(new Set<string>()),[activeSymbol,setActiveSymbol]=useState('RMD');
+ const [remote,setRemote]=useState<RemoteMarket[]>([]),[books,setBooks]=useState<Record<string,BookSnapshot>>({}),[marketCandles,setCandles]=useState<Record<string,CandlePoint[]>>({});
+ const [account,setAccount]=useState<{portfolio:Row;positions:Row[];orders:Row[];fills:Row[]}>({portfolio:{},positions:[],orders:[],fills:[]});
+ const [loading,setLoading]=useState(true),[error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
+ const generation=useRef(0),inFlight=useRef(false),commandLock=useRef(false),pending=useRef<{fingerprint:string;path:string;body:Row}|null>(null),persistChain=useRef(Promise.resolve());
+ const applyPreferences=useCallback((p:Row)=>{
+  const next={...defaults,...Object.fromEntries(Object.keys(defaults).filter(k=>k!=='language'&&k!=='currency'&&p[k]!==undefined).map(k=>[k,p[k]]))} as ExchangeSettings;
+  setSettings(next);setMode(next.appearance);setFavorites(new Set(Array.isArray(p.favorites)?p.favorites.filter((v):v is string=>typeof v==='string'):[]));
+  setProfile(current=>({...current,...(typeof p.displayName==='string'?{displayName:p.displayName}:{}),...(typeof p.avatar==='string'?{avatarUri:p.avatar}:{})}));
+  setModeState(p.accountMode==='demo'?'demo':'real');
+ },[setMode]);
+ useEffect(()=>{let alive=true;generation.current++;pending.current=null;setHydrated(false);
+  void (async()=>{try{const saved=await api<{preferences:Row}>('/v1/preferences');if(alive){applyPreferences(saved.preferences);await AsyncStorage.setItem(key,JSON.stringify(saved.preferences));}}catch(e){if(alive){setError(message(e));const local=await AsyncStorage.getItem(key);if(local)try{applyPreferences(JSON.parse(local));}catch{}}}finally{if(alive)setHydrated(true);}})();
+  return()=>{alive=false;generation.current++;};
+ },[applyPreferences,key]);
+ const persist=useCallback((patch:Row)=>{
+  const next=persistChain.current.then(async()=>{const saved=await api<{preferences:Row}>('/v1/preferences',patch,'PUT');await AsyncStorage.setItem(key,JSON.stringify(saved.preferences));});
+  persistChain.current=next.catch(e=>{setError(message(e));Alert.alert('Preference not saved',message(e));});return next;
+ },[key]);
+ const refresh=useCallback(async()=>{
+  if(!hydrated||inFlight.current)return;inFlight.current=true;const version=generation.current;
+  try{
+   const catalog=await api<{items:RemoteMarket[]}>('/v1/markets');
+   const modePrefix=accountMode==='demo'?'/v1/demo/account':'/v1/account';
+   const [portfolio,positions,orders,fills,snapshots]=await Promise.all([pages(modePrefix+'/portfolio'),pages(modePrefix+'/positions'),pages(modePrefix+'/orders'),pages(modePrefix+'/fills'),Promise.all(catalog.items.map(async m=>[m.marketId,await api<BookSnapshot>('/v1/markets/'+encodeURIComponent(m.marketId)+'/snapshot')] as const))]);
+   if(generation.current!==version)return;
+   setRemote(catalog.items);setBooks(Object.fromEntries(snapshots));setAccount({portfolio:portfolio.find(p=>p.assetCode==='USD')??{},positions,orders,fills});setReady(true);setError(null);
+   if(catalog.items.length&&!catalog.items.some(m=>m.symbol===activeSymbol))setActiveSymbol(catalog.items[0]!.symbol);
+   const active=catalog.items.find(m=>m.symbol===activeSymbol)??catalog.items[0];
+   if(active){try{const candles=await api<{candles:CandlePoint[]}>('/v1/markets/'+encodeURIComponent(active.marketId)+'/candles?interval=1m&limit=2000');if(generation.current===version)setCandles(current=>({...current,[active.symbol]:candles.candles}));}catch{/* The account and book remain usable while history is unavailable. */}}
+  }catch(e){if(generation.current===version){setError(message(e));setReady(false);}}finally{inFlight.current=false;if(generation.current===version)setLoading(false);}
+ },[accountMode,activeSymbol,hydrated]);
+ useEffect(()=>{generation.current++;setAccount({portfolio:{},positions:[],orders:[],fills:[]});setReady(false);setLoading(true);pending.current=null;},[accountMode]);
+ useEffect(()=>{void refresh();const tick=setInterval(()=>{if(AppState.currentState==='active')void refresh();},settings.refreshRate==='Every 15 seconds'?15000:settings.refreshRate==='Every 5 seconds'?5000:2500);const event=AppState.addEventListener('change',s=>{if(s==='active')void refresh();});return()=>{clearInterval(tick);event.remove();};},[refresh,settings.refreshRate]);
+ const lookup=useMemo(()=>new Map(remote.map(r=>[r.symbol,r])),[remote]);
+ const markets=useMemo(()=>remote.map((r,index)=>{const old=metadata.get(r.symbol),scale=10**Number(r.terms.priceDecimals),book=books[r.marketId],reference=Number(r.referenceTicks)/scale;return {...old,rank:index+1,symbol:r.symbol,name:r.displayName??old?.name??r.symbol,category:r.kind==='PAIR'?'Pairs':r.kind==='CLUB'?'Clubs':'Athletes',entityId:r.entityId,price:Number(book?.lastTradePriceTicks??r.referenceTicks)/scale,reference,lowerBand:Number(r.lowerTicks)/scale,upperBand:Number(r.upperTicks)/scale,change24h:NaN,volume:'—',density:old?.density??0,high24h:NaN,low24h:NaN,assetKey:old?.assetKey??'',series:[],history:[],snapshotAsOf:''} as MarketDefinition;}),[books,remote]);
+ const marketFor=useCallback((symbol:string)=>markets.find(m=>m.symbol===symbol),[markets]);
+ const priceFor=useCallback((symbol:string)=>marketFor(symbol)?.price??NaN,[marketFor]);
+ const changeFor=useCallback((symbol:string)=>{const c=marketCandles[symbol]??[],cut=Date.now()-86400000,first=c.find(x=>x.time>=cut);return first&&c[0]!.time<=cut?(priceFor(symbol)/first.open-1)*100:NaN;},[marketCandles,priceFor]);
+ const candlesFor=useCallback((symbol:string,range:ChartRange='15m')=>{const rows=marketCandles[symbol]??[],step=rangeMs[range],buckets=new Map<number,CandlePoint>();for(const row of rows){const t=Math.floor(row.time/step)*step,old=buckets.get(t);buckets.set(t,old?{...old,high:Math.max(old.high,row.high),low:Math.min(old.low,row.low),close:row.close,volume:old.volume+row.volume}:{...row,time:t});}return [...buckets.values()].slice(-200);},[marketCandles]);
+ const seriesFor=useCallback((symbol:string,range:ChartRange='1D')=>candlesFor(symbol,range).map(x=>x.close),[candlesFor]);
+ const bookFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?books[m.marketId]:undefined;},[books,lookup]);
+ const maxLeverageFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?Math.floor(1000000/Number(m.marginPolicy.initialMarginPpm)):1;},[lookup]);
+ const positions=useMemo(()=>account.positions.flatMap(p=>{const m=remote.find(m=>m.marketId===p.marketId);if(!m)return [];const lots=Number(p.positionLots),entry=Number(p.entryPriceTicks)/10**Number(m.terms.priceDecimals),size=Math.abs(lots)*entry*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,margin=size*Number(m.marginPolicy.initialMarginPpm)/1000000;return [{id:m.marketId,symbol:m.symbol,side:lots>0?'long':'short',size,entryPrice:entry,leverage:Math.round(size/Math.max(margin,0.01)),margin,openedAt:time(p.openedAt??p.updatedAt)} as Position];}),[account.positions,remote]);
+ const orders=useMemo(()=>account.orders.flatMap(o=>{const m=remote.find(m=>m.marketId===o.marketId);if(!m)return [];const target=Number(o.triggerTicks??o.priceTicks??m.referenceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(o.orderId),symbol:m.symbol,side:o.side==='BID'?'long':'short',type:o.type==='STOP'?'stop':'limit',size:Number(o.remainingQuantityLots??o.quantityLots)*target*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,targetPrice:target,leverage:maxLeverageFor(m.symbol),createdAt:time(o.createdAt)} as OpenOrder];}),[account.orders,maxLeverageFor,remote]);
+ const history=useMemo(()=>account.fills.flatMap(f=>{const m=remote.find(m=>m.marketId===f.marketId);if(!m||!f.priceTicks)return [];const price=Number(f.priceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(f.fillId??f.id??f.tradeId),symbol:m.symbol,side:f.side==='BID'?'long':'short',event:'filled',orderType:'market',size:Number(f.quantityLots)*price*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,leverage:1,entryPrice:price,fee:money(f.feeMinor??'0'),pnl:money(f.realizedPnlMinor??'0'),openedAt:time(f.createdAt),createdAt:time(f.createdAt)} as TradeRecord];}),[account.fills,remote]);
+ const positionPnl=useCallback((p:Position)=>money(account.positions.find(x=>x.marketId===p.id)?.unrealizedPnlMinor),[account.positions]);
+ const cashBalance=money(account.portfolio.availableToTradeMinor),totalEquity=money(account.portfolio.equityMinor),unrealizedPnl=money(account.portfolio.unrealizedPnlMinor),usedMargin=account.portfolio.usedMarginMinor===undefined?positions.reduce((sum,p)=>sum+p.margin,0)+money(account.portfolio.reservedMarginMinor??'0'):money(account.portfolio.usedMarginMinor)+money(account.portfolio.reservedMarginMinor??'0');
+ const submit=useCallback(async(path:string,body:Row,fingerprint:string)=>{
+  if(commandLock.current)throw new Error('Another account action is being submitted.');if(!ready)throw new Error('Wait for the account and market connection.');
+  if(pending.current&&pending.current.fingerprint!==fingerprint)throw new Error('Retry the previous action to resolve its outcome before placing another.');
+  commandLock.current=true;setBusy(true);const request=pending.current??{path,body,fingerprint};pending.current=request;
+  try{const result=await api<Row>(request.path,request.body);pending.current=null;await refresh();return (result.order??result) as Row;}
+  catch(e){if(e instanceof Error&&'status' in e&&Number(e.status)<500)pending.current=null;throw e;}finally{commandLock.current=false;setBusy(false);}
+ },[ready,refresh]);
+ const placeOrder=useCallback(async(input:PlaceOrderInput)=>{
+  const m=lookup.get(input.symbol),book=bookFor(input.symbol);if(!m||!book||book.status!=='RUNNING')throw new Error('Market is unavailable.');
+  if(!Number.isFinite(input.amount)||input.amount<=0||input.amount>cashBalance||input.leverage<1||input.leverage>maxLeverageFor(input.symbol))throw new Error('Check your margin and leverage.');
+  const scale=10**Number(m.terms.priceDecimals),price=input.type==='market'?Number((input.side==='long'?book.asks:book.bids)[0]?.priceTicks??book.lastTradePriceTicks??m.referenceTicks)/scale:input.targetPrice;
+  if(!price||!Number.isFinite(price))throw new Error('Enter a valid price.');
+  const lots=Math.floor(input.amount*100*input.leverage/(price*Number(m.terms.quoteMinorPerIndexUnitPerLot)));if(!Number.isSafeInteger(lots)||lots<Number(m.terms.minimumOrderLots))throw new Error('Amount is below the minimum lot size.');
+  const ticks=(v:number)=>{const value=Math.round(v*scale);if(!Number.isSafeInteger(value)||value<=0)throw new Error('Invalid price.');return String(value);};
+  const body:Row={commandId:uuid(),orderId:uuid(),marketId:m.marketId,side:input.side==='long'?'BID':'ASK',type:input.type.toUpperCase(),quantityLots:String(lots),expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,...(input.type==='limit'?{priceTicks:ticks(price)}:{}),...(input.type==='stop'?{triggerTicks:ticks(price)}:{}),...(input.takeProfit===undefined?{}:{takeProfitTicks:ticks(input.takeProfit)}),...(input.stopLoss===undefined?{}:{stopLossTicks:ticks(input.stopLoss)})};
+  const result=await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',body,accountMode+JSON.stringify(input));
+  if(result.status==='CANCELLED')throw new Error('Order cancelled without a fill. Check available liquidity.');
+  return {kind:result.status==='RESTING'?'order':'position',id:str(result.orderId)} as const;
+ },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,submit]);
+ const closePosition=useCallback(async(id:string)=>{const p=account.positions.find(p=>p.marketId===id),m=remote.find(m=>m.marketId===id),book=m&&bookFor(m.symbol);if(!p||!m||!book)throw new Error('Position unavailable.');await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',{commandId:uuid(),orderId:uuid(),marketId:id,side:Number(p.positionLots)>0?'ASK':'BID',type:'MARKET',quantityLots:String(Math.abs(Number(p.positionLots))),expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,reduceOnly:true,expectedPositionSequence:str(p.lastTradeSequence)},accountMode+'close'+id);},[account.positions,accountMode,bookFor,remote,submit]);
+ const cancelOrder=useCallback(async(id:string)=>{await submit(accountMode==='demo'?'/v1/demo/orders/'+id+'/cancel':'/v1/orders/cancel',{commandId:uuid(),orderId:id},accountMode+'cancel'+id);},[accountMode,submit]);
+ const setAccountMode=useCallback(async(next:AccountMode)=>{if(commandLock.current||pending.current)throw new Error('Resolve the pending account action before switching modes.');if(next===accountMode)return;await persist({accountMode:next});generation.current++;setModeState(next);},[accountMode,persist]);
+ const toggleFavorite=useCallback((symbol:string)=>{const next=new Set(favorites);if(next.has(symbol))next.delete(symbol);else next.add(symbol);setFavorites(next);void persist({favorites:[...next]}).catch(()=>{});},[favorites,persist]);
+ const updateProfile=useCallback((changes:Partial<UserProfile>)=>{setProfile(current=>({...current,...changes}));void persist({...('displayName'in changes?{displayName:changes.displayName}:{}),...('avatarUri'in changes?{avatar:changes.avatarUri}:{})}).catch(()=>{});},[persist]);
+ const updateSetting=useCallback(<K extends keyof ExchangeSettings,>(k:K,v:ExchangeSettings[K])=>{if(k==='appearance')setMode(v as ThemeMode);setSettings(current=>({...current,[k]:v}));void persist({[k]:v}).catch(()=>{});},[persist,setMode]);
+ const value:ExchangeContextValue={markets:markets.filter(m=>m.category!=='Pairs'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,usedMargin,positions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,busy,ready};
+ return <Context.Provider value={value}>{children}</Context.Provider>;
 }
-
-export function useExchange() {
-  const context = useContext(ExchangeContext);
-  if (!context) throw new Error('useExchange must be used inside ExchangeProvider');
-  return context;
-}
+export function useExchange(){const value=useContext(Context);if(!value)throw new Error('Exchange provider required');return value;}

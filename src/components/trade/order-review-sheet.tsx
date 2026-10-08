@@ -35,7 +35,7 @@ export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, ty
         <ReviewRow label="Exposure" value={formatMoney(amount * leverage, currency)} />
         <ReviewRow label="Leverage" value={String(leverage) + 'x'} />
         <ReviewRow label="Execution" value={execution} />
-        <ReviewRow label="Estimated fee" value={formatMoney(amount * leverage * 0.0006, currency)} />
+        <ReviewRow label="Estimated fee" value={formatMoney(0, currency)} />
       </View>
       <Text style={styles.risk}>Leveraged positions can move quickly. Check your size and risk controls before confirming.</Text>
       <Pressable onPress={onConfirm} style={({ pressed }) => [styles.button, { backgroundColor: side === 'long' ? colors.positive : colors.negative }, pressed && styles.pressed]}>

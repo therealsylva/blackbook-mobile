@@ -1,3 +1,4 @@
+import {Alert} from 'react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
@@ -27,7 +28,7 @@ export default function PortfolioScreen() {
         <View style={styles.equity}>
           <Text style={styles.eyebrow}>Total equity</Text>
           <Text style={styles.equityValue}>{formatMoney(totalEquity, settings.currency)}</Text>
-          <Text style={[styles.today, { color: unrealizedPnl >= 0 ? colors.positive : colors.negative }]}>{unrealizedPnl >= 0 ? '+' : ''}{formatMoney(unrealizedPnl, settings.currency)} today</Text>
+          <Text style={[styles.today, { color: unrealizedPnl >= 0 ? colors.positive : colors.negative }]}>{unrealizedPnl >= 0 ? '+' : ''}{formatMoney(unrealizedPnl, settings.currency)} unrealized</Text>
           <View style={styles.balanceMetrics}>
             <BalanceMetric label="Available" value={formatMoney(cashBalance, settings.currency)} />
             <BalanceMetric label="In use" value={formatMoney(usedMargin, settings.currency)} />
@@ -94,7 +95,7 @@ function PositionsList() {
             <Detail label="Position size" value={formatMoney(position.size, settings.currency)} />
             <Detail label="Margin" value={formatMoney(position.margin, settings.currency)} />
             <Detail label="Opened" value={formatAge(position.openedAt)} />
-            <Pressable onPress={() => closePosition(position.id)} style={styles.outlineButton}><Text style={styles.outlineButtonText}>Close position</Text></Pressable>
+            <Pressable onPress={() => {void closePosition(position.id).catch(e=>Alert.alert('Close unavailable',e.message));}} style={styles.outlineButton}><Text style={styles.outlineButtonText}>Close position</Text></Pressable>
           </View>
         ) : null}
       </View>
@@ -126,7 +127,7 @@ function OrdersList() {
           </View>
           <View style={styles.orderQuote}>
             <Text style={[styles.distance, { color: distance >= 0 ? colors.positive : colors.negative }]}>{distance >= 0 ? '+' : ''}{distance.toFixed(2)}%</Text>
-            <Pressable onPress={() => cancelOrder(order.id)} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+            <Pressable onPress={() => {void cancelOrder(order.id).catch(e=>Alert.alert('Cancel unavailable',e.message));}} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
           </View>
         </View>
       </View>

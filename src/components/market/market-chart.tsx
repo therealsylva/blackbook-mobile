@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import type { CandlePoint } from '@/lib/market-series';
 import { useTheme } from '@/theme/theme-context';
@@ -24,7 +24,7 @@ const WIDTH = 360;
 const PAD_X = 8;
 
 function geometry(series: number[], height: number, bottom = 8) {
-  const clean = series.length > 1 ? series : [0, 0];
+  const clean = series.length ? series : [0];
   const min = Math.min(...clean);
   const max = Math.max(...clean);
   const span = Math.max(max - min, 1);
@@ -39,6 +39,7 @@ export function MarketChart({ series, positive, height = 190, grid = false, stro
   const styles = useStyles();
   const chart = useMemo(() => geometry(series, height), [height, series]);
   const lineColor = positive ? colors.overviewPositive : colors.overviewNegative;
+  if (!series.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}><Text style={{color:colors.textMuted}}>No trading history yet</Text></View>;
   const areaPath = `${chart.path} L ${chart.x(chart.clean.length - 1)} ${height} L ${chart.x(0)} ${height} Z`;
 
   return (
@@ -63,7 +64,7 @@ export function CandlestickChart({ candles, height = 212, showVolume = true }: C
   const { colors } = useTheme();
   const styles = useStyles();
   const chart = useMemo(() => {
-    const clean = candles.length > 1 ? candles : [{ time: 0, open: 0, high: 1, low: 0, close: 1, volume: 1 }, { time: 1, open: 1, high: 1, low: 0, close: 0, volume: 1 }];
+    const clean = candles;
     const priceHeight = showVolume ? height * 0.78 : height - 8;
     const min = Math.min(...clean.map((item) => item.low));
     const max = Math.max(...clean.map((item) => item.high));
@@ -73,6 +74,7 @@ export function CandlestickChart({ candles, height = 212, showVolume = true }: C
     const maxVolume = Math.max(...clean.map((item) => item.volume), 1);
     return { clean, priceHeight, xStep, y, maxVolume };
   }, [candles, height, showVolume]);
+  if (!candles.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}><Text style={{color:colors.textMuted}}>No trading history yet</Text></View>;
 
   return (
     <View style={[styles.candleFrame, { height }]}>

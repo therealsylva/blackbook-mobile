@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import {useExchange} from '@/context/exchange-context';
 import { Text, View } from 'react-native';
 import { formatPrice } from '@/lib/format';
 import { typography } from '@/theme/tokens';
@@ -14,16 +14,16 @@ interface OrderBookProps {
 
 export function OrderBook({ price, compact = false, lowerBand = 0, upperBand = Infinity }: OrderBookProps) {
   const styles = useStyles();
-  const rows = useMemo(() => {
-    const asks = Array.from({ length: compact ? 4 : 6 }, (_, index) => ({ price: price * (1 + (compact ? 4 - index : 6 - index) * 0.0007), size: 2.18 + ((index * 1.37) % 4.7) }));
-    const bids = Array.from({ length: compact ? 4 : 6 }, (_, index) => ({ price: price * (1 - (index + 1) * 0.0007), size: 1.76 + ((index * 1.91) % 5.2) }));
-    return { asks: asks.filter((row) => row.price <= upperBand), bids: bids.filter((row) => row.price >= lowerBand) };
-  }, [compact, price, lowerBand, upperBand]);
+  const {bookFor,activeSymbol,marketFor}=useExchange();
+  const book=bookFor(activeSymbol),market=marketFor(activeSymbol);
+  const scale=market && book? Number(book.referenceTicks)/market.reference : 1;
+  const rows={asks:(book?.asks??[]).slice(0,compact?4:6).reverse().map(row=>({price:Number(row.priceTicks)/scale,size:Number(row.quantityLots)})),bids:(book?.bids??[]).slice(0,compact?4:6).map(row=>({price:Number(row.priceTicks)/scale,size:Number(row.quantityLots)}))};
   return (
     <View style={styles.root}>
       <View style={styles.header}><Text style={styles.label}>Price</Text><Text style={styles.label}>Size</Text></View>
       {rows.asks.map((row, index) => <BookRow key={'a' + index} price={row.price} size={row.size} side="ask" strength={(index + 2) / (rows.asks.length + 2)} />)}
       <Text style={styles.mid}>{formatPrice(price)}</Text>
+      {!rows.asks.length && !rows.bids.length ? <Text style={styles.label}>No resting orders</Text> : null}
       {rows.bids.map((row, index) => <BookRow key={'b' + index} price={row.price} size={row.size} side="bid" strength={(rows.bids.length - index + 1) / (rows.bids.length + 2)} />)}
     </View>
   );

@@ -22,7 +22,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
   const styles = useStyles();
   const router = useRouter();
   const params = useLocalSearchParams<{ symbol?: string }>();
-  const { marketFor, priceFor, changeFor, seriesFor, favorites, alerts, toggleFavorite, toggleAlert, setActiveSymbol } = useExchange();
+  const { marketFor, priceFor, changeFor, seriesFor, favorites, toggleFavorite, setActiveSymbol } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
   const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
   const [range, setRange] = useState<ChartRange>('1H');
@@ -49,7 +49,6 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
             <Text numberOfLines={1} style={styles.name}>{market.pairLegs ? market.symbol : market.name}</Text>
             {!market.pairLegs ? <Text style={styles.symbol}>{market.symbol}</Text> : null}
           </View>
-          <Pressable accessibilityLabel="Toggle price alert" onPress={() => toggleAlert(market.symbol)} style={styles.headerButton}><Icon color={alerts.has(market.symbol) ? colors.text : colors.textMuted} filled={alerts.has(market.symbol)} name="bell" size={21} /></Pressable>
           <Pressable accessibilityLabel="Toggle favorite" onPress={() => toggleFavorite(market.symbol)} style={styles.headerButton}><Icon color={favorites.has(market.symbol) ? colors.text : colors.textMuted} filled={favorites.has(market.symbol)} name="star" size={21} /></Pressable>
         </View>
 

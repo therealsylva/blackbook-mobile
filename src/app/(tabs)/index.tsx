@@ -48,10 +48,7 @@ export default function HomeScreen() {
             <Icon name="profile" size={22} />
           </Pressable>
           <Text style={styles.wordmark}>BlackBook</Text>
-          <Pressable accessibilityLabel="Notifications" onPress={() => router.push('/settings/notifications')} style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}>
-            <Icon name="bell" size={22} />
-            <View style={styles.notificationDot} />
-          </Pressable>
+          <View style={styles.headerIcon} />
         </View>
 
         <Pressable accessibilityLabel="Search all indices" onPress={() => router.push('/(tabs)/indices')} style={({ pressed }) => [styles.search, pressed && styles.pressed]}>

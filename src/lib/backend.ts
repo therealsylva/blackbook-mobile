@@ -41,6 +41,6 @@ export async function api<T=Record<string,unknown>>(path:string,body?:unknown,me
  const {data,error}=await supabase.auth.getSession();if(error)throw error;
  if(!data.session)throw new Error('Sign in to continue.');
  const response=await fetch(`${apiUrl}${path}`,{method,headers:{authorization:`Bearer ${data.session.access_token}`,'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
- const result=await response.json();if(!response.ok)throw new Error(typeof result.error==='string'?result.error.replace(/_/g,' '):'BlackBook is unavailable. Please try again.');return result as T;
+ const result=await response.json();if(!response.ok)throw Object.assign(new Error(typeof result.error==='string'?result.error.replace(/_/g,' '):'BlackBook is unavailable. Please try again.'),{status:response.status});return result as T;
 }
 export const uuid=()=>Crypto.randomUUID();

@@ -20,7 +20,7 @@ type AdvancedPanel = 'Chart' | 'Book';
 const BASIC_RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
 const ADVANCED_RANGES: ChartRange[] = ['1m', '5m', '15m', '1H', '4H'];
 const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop'];
-const LEVERAGES = [1, 3, 5, 10];
+const LEVERAGES = [1, 2, 3, 5];
 
 export default function TradeScreen() {
   const { colors } = useTheme();
@@ -28,7 +28,7 @@ export default function TradeScreen() {
   const router = useRouter();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor,
-    cashBalance, positions, orders, settings, placeOrder,
+    cashBalance, positions, orders, settings, placeOrder, maxLeverageFor, busy, ready, accountMode, error,
   } = useExchange();
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
   const advanced = settings.interfaceMode === 'advanced';
@@ -50,15 +50,16 @@ export default function TradeScreen() {
   const change = market ? changeFor(market.symbol) : 0;
   const selectedType = advanced ? orderType : 'market';
   const numericTarget = Number(targetPrice) || price;
-  const exposure = numericAmount * leverage;
-  const canSubmit = numericAmount > 0 && numericAmount <= cashBalance;
+  const effectiveLeverage = Math.min(leverage, market ? maxLeverageFor(market.symbol) : 1);
+  const exposure = numericAmount * effectiveLeverage;
+  const canSubmit = ready && !busy && numericAmount > 0 && numericAmount <= cashBalance;
   const line = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   const candles = useMemo(() => market ? candlesFor(market.symbol, range) : [], [candlesFor, market, range]);
 
   if (!market) return null;
 
-  const execute = () => {
-    try { placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage, targetPrice: selectedType === 'market' ? undefined : numericTarget }); }
+  const execute = async () => {
+    try { await placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage: effectiveLeverage, ...(riskControls && takeProfit.trim() ? {takeProfit:Number(takeProfit)} : {}), ...(riskControls && stopLoss.trim() ? {stopLoss:Number(stopLoss)} : {}), targetPrice: selectedType === 'market' ? undefined : numericTarget }); }
     catch (error) { Alert.alert('Order unavailable', error instanceof Error ? error.message : 'Please try again.'); return; }
     setReviewOpen(false);
     setAmount('');
@@ -68,6 +69,7 @@ export default function TradeScreen() {
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Text style={{color:colors.textMuted,paddingHorizontal:spacing.page,paddingVertical:8}}>{accountMode === 'demo' ? 'Demo · practice funds' : 'Real money'}{error ? ' · '+error : ''}</Text>
           <View style={styles.header}>
             <Pressable onPress={() => setPairOpen(true)} style={({ pressed }) => [styles.pair, pressed && styles.pressed]}>
               <MarketIdentityAvatar market={market} size={42} />
@@ -139,7 +141,7 @@ export default function TradeScreen() {
             <View style={styles.leverageLine}>
               <Text style={styles.label}>Leverage</Text>
               <View style={styles.leverageRail}>
-                {LEVERAGES.map((value) => (
+                {LEVERAGES.filter(value => value <= maxLeverageFor(market.symbol)).map((value) => (
                   <Pressable key={value} onPress={() => setLeverage(value)} style={[styles.leveragePill, leverage === value && styles.leverageActive]}>
                     <Text style={[styles.leverageText, leverage === value && styles.leverageTextActive]}>{value}x</Text>
                   </Pressable>
@@ -149,7 +151,7 @@ export default function TradeScreen() {
 
             <View style={styles.summaryLine}>
               <Summary label="Exposure" value={formatMoney(exposure, settings.currency)} />
-              <Summary label="Fee" value={formatMoney(exposure * 0.0006, settings.currency)} />
+              <Summary label="Fee" value={formatMoney(0, settings.currency)} />
             </View>
 
             {advanced ? (
@@ -181,7 +183,7 @@ export default function TradeScreen() {
       </KeyboardAvoidingView>
 
       <PairSelectorSheet onClose={() => setPairOpen(false)} onSelect={setActiveSymbol} visible={pairOpen} />
-      <OrderReviewSheet amount={numericAmount} currency={settings.currency} leverage={leverage} onClose={() => setReviewOpen(false)} onConfirm={execute} price={price} side={side} symbol={market.symbol} targetPrice={numericTarget} type={selectedType} visible={reviewOpen} />
+      <OrderReviewSheet amount={numericAmount} currency={settings.currency} leverage={effectiveLeverage} onClose={() => setReviewOpen(false)} onConfirm={() => {void execute();}} price={price} side={side} symbol={market.symbol} targetPrice={numericTarget} type={selectedType} visible={reviewOpen} />
     </Screen>
   );
 }
