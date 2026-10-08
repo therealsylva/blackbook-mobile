@@ -20,7 +20,7 @@ type AdvancedPanel = 'Chart' | 'Book';
 const BASIC_RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
 const ADVANCED_RANGES: ChartRange[] = ['1m', '5m', '15m', '1H', '4H'];
 const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop'];
-const LEVERAGES = [1, 2, 3, 5];
+const LEVERAGES = [1, 2, 5, 10, 20, 50];
 
 export default function TradeScreen() {
   const { colors } = useTheme();
@@ -28,7 +28,7 @@ export default function TradeScreen() {
   const router = useRouter();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor,
-    cashBalance, positions, orders, settings, placeOrder, maxLeverageFor, busy, ready, accountMode, error,
+    cashBalance, positions, orders, settings, placeOrder, maxLeverageFor, liquidationEstimate, busy, ready, accountMode, error,
   } = useExchange();
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
   const advanced = settings.interfaceMode === 'advanced';
@@ -52,6 +52,7 @@ export default function TradeScreen() {
   const numericTarget = Number(targetPrice) || price;
   const effectiveLeverage = Math.min(leverage, market ? maxLeverageFor(market.symbol) : 1);
   const exposure = numericAmount * effectiveLeverage;
+  const liquidation=liquidationEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,targetPrice:numericTarget});
   const canSubmit = ready && !busy && numericAmount > 0 && numericAmount <= cashBalance;
   const line = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   const candles = useMemo(() => market ? candlesFor(market.symbol, range) : [], [candlesFor, market, range]);
@@ -142,8 +143,8 @@ export default function TradeScreen() {
               <Text style={styles.label}>Leverage</Text>
               <View style={styles.leverageRail}>
                 {LEVERAGES.filter(value => value <= maxLeverageFor(market.symbol)).map((value) => (
-                  <Pressable key={value} onPress={() => setLeverage(value)} style={[styles.leveragePill, leverage === value && styles.leverageActive]}>
-                    <Text style={[styles.leverageText, leverage === value && styles.leverageTextActive]}>{value}x</Text>
+                  <Pressable key={value} accessibilityRole="button" accessibilityLabel={`Select ${value}x leverage`} onPress={() => setLeverage(value)} style={[styles.leveragePill, effectiveLeverage === value && styles.leverageActive]}>
+                    <Text style={[styles.leverageText, effectiveLeverage === value && styles.leverageTextActive]}>{value}x</Text>
                   </Pressable>
                 ))}
               </View>
@@ -152,6 +153,7 @@ export default function TradeScreen() {
             <View style={styles.summaryLine}>
               <Summary label="Exposure" value={formatMoney(exposure, settings.currency)} />
               <Summary label="Fee" value={formatMoney(0, settings.currency)} />
+              <Summary label="Est. liquidation" value={Number.isFinite(liquidation)?formatPrice(liquidation):'—'} />
             </View>
 
             {advanced ? (
@@ -266,7 +268,7 @@ const useStyles = createThemedStyles((colors) => ({
   unit: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 9 },
   leverageLine: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
   leverageRail: { flexDirection: 'row', gap: spacing.xs },
-  leveragePill: { alignItems: 'center', borderRadius: radii.pill, height: 30, justifyContent: 'center', minWidth: 40 },
+  leveragePill: { alignItems: 'center', borderRadius: radii.pill, height: 30, justifyContent: 'center', minWidth: 32 },
   leverageActive: { backgroundColor: colors.text },
   leverageText: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 10 },
   leverageTextActive: { color: colors.bg },
@@ -289,3 +291,4 @@ const useStyles = createThemedStyles((colors) => ({
   activityDot: { color: colors.textFaint, fontFamily: typography.family },
   pressed: { opacity: 0.65 },
 }));
+

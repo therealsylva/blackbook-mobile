@@ -26,6 +26,9 @@ jobs:
     timeout-minutes: 18
     env:
       CI: "true"
+      EXPO_PUBLIC_SUPABASE_URL: https://auth.blackbook.test
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ui_fixture
+      EXPO_PUBLIC_BLACKBOOK_API_URL: https://api.blackbook.test
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -80,3 +83,4 @@ jobs:
           path: ui-renders/*
           if-no-files-found: error
           retention-days: 7
+
