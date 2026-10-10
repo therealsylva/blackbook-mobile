@@ -14,13 +14,15 @@ interface OrderReviewSheetProps {
   side: Side;
   type: OrderType;
   amount: number;
+  fee: number;
+  exposure: number;
   leverage: number;
   price: number;
   targetPrice?: number;
   currency: string;
 }
 
-export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, type, amount, leverage, price, targetPrice, currency }: OrderReviewSheetProps) {
+export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, type, amount, fee, exposure, leverage, price, targetPrice, currency }: OrderReviewSheetProps) {
   const { colors } = useTheme();
   const styles = useStyles();
   const execution = type === 'market' ? 'Best available' : formatPrice(targetPrice || price);
@@ -32,12 +34,12 @@ export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, ty
       </View>
       <View style={styles.rows}>
         <ReviewRow label="Margin" value={formatMoney(amount, currency)} />
-        <ReviewRow label="Exposure" value={formatMoney(amount * leverage, currency)} />
+        <ReviewRow label="Exposure" value={formatMoney(exposure, currency)} />
         <ReviewRow label="Leverage" value={String(leverage) + 'x'} />
         <ReviewRow label="Execution" value={execution} />
-        <ReviewRow label="Estimated fee" value={formatMoney(0, currency)} />
+        <ReviewRow label="Estimated fee" value={formatMoney(fee, currency)} />
       </View>
-      <Text style={styles.risk}>Leveraged positions can move quickly. Check your size and risk controls before confirming.</Text>
+      <Text style={styles.risk}>Fee estimate uses the taker rate. Each fill is charged on exposure; maker fills use the lower maker rate. Fees also apply when closing.</Text>
       <Pressable onPress={onConfirm} style={({ pressed }) => [styles.button, { backgroundColor: side === 'long' ? colors.positive : colors.negative }, pressed && styles.pressed]}>
         <Text style={styles.buttonText}>Confirm {side === 'long' ? 'Long' : 'Short'}</Text>
       </Pressable>

@@ -23,10 +23,14 @@ for (const width of [360,390,430]) {
     await page.getByRole('button',{name:'Select 20x leverage',exact:true}).click();
     await page.screenshot({path:`ui-renders/pair-trade-${width}.png`,fullPage:true});
     await page.getByText(/^Review long order$/i).click();
+    const feeText=await page.getByText('Estimated fee',{exact:true}).locator('..').innerText();
+    assert.doesNotMatch(feeText,/\$0\.00|—/,'review shows the current nonzero trading fee');
     await page.getByText('Confirm Long',{exact:true}).click();
     await page.waitForFunction(()=>!document.body.innerText.includes('Confirm order'));
     assert.equal(fixture.orders.at(-1)?.body.leverage,20);
     assert.equal(fixture.orders.at(-1)?.mode,'real');
+    assert.ok(Number(fixture.fills.real.at(-1)?.feeMinor)>0);
+    assert.equal(fixture.cash.real,1000000-Number(fixture.fills.real.at(-1).feeMinor));
     await page.getByText('Portfolio',{exact:true}).click();
     await page.getByText('FCB/RMD',{exact:true}).filter({visible:true}).first().waitFor();
     await page.screenshot({path:`ui-renders/pair-position-${width}.png`,fullPage:true});

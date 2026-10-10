@@ -6,12 +6,13 @@ import type {MarketDefinition} from '@/data/markets';
 import type {CandlePoint} from '@/lib/market-series';
 import {api,uuid} from '@/lib/backend';
 import {estimateLiquidation} from '@/lib/trade-risk';
+import {estimateTradingFees,type FeePolicy} from '@/lib/trading-fees';
 import {useAuth} from '@/context/auth-context';
 import {useTheme,type ThemeMode} from '@/theme/theme-context';
 import type {ChartRange,ExchangeSettings,OpenOrder,OrderType,Position,Side,TradeRecord,UserProfile} from '@/types/exchange';
 
 type Row=Record<string,unknown>;
-type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string};marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};phase?:string};
+type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};phase?:string};
 export type BookSnapshot={marketId:string;status:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;lastTradePriceTicks?:string;bids:{priceTicks:string;quantityLots:string}[];asks:{priceTicks:string;quantityLots:string}[]};
 type AccountMode='real'|'demo';
 interface PlaceOrderInput {symbol:string;side:Side;type:OrderType;amount:number;leverage:number;targetPrice?:number;takeProfit?:number;stopLoss?:number}
@@ -19,6 +20,7 @@ interface ExchangeContextValue {
  markets:MarketDefinition[];pairMarkets:MarketDefinition[];activeSymbol:string;setActiveSymbol:(symbol:string)=>void;favorites:Set<string>;toggleFavorite:(symbol:string)=>void;
  priceFor:(symbol:string)=>number;changeFor:(symbol:string)=>number;seriesFor:(symbol:string,range?:ChartRange)=>number[];candlesFor:(symbol:string,range?:ChartRange)=>CandlePoint[];marketFor:(symbol:string)=>MarketDefinition|undefined;
  cashBalance:number;usedMargin:number;totalEquity:number;unrealizedPnl:number;positions:Position[];orders:OpenOrder[];history:TradeRecord[];liquidationEstimate:(input:PlaceOrderInput)=>number;
+ orderEstimate:(input:PlaceOrderInput)=>{fee:number;reservedFee:number;exposure:number;requiredBalance:number};
  placeOrder:(input:PlaceOrderInput)=>Promise<{kind:'position'|'order';id:string}>;closePosition:(id:string)=>Promise<void>;cancelOrder:(id:string)=>Promise<void>;positionPnl:(position:Position)=>number;
  profile:UserProfile;updateProfile:(changes:Partial<UserProfile>)=>void;settings:ExchangeSettings;updateSetting:<K extends keyof ExchangeSettings>(key:K,value:ExchangeSettings[K])=>void;
  accountMode:AccountMode;setAccountMode:(mode:AccountMode)=>Promise<void>;loading:boolean;error:string|null;refresh:()=>Promise<void>;bookFor:(symbol:string)=>BookSnapshot|undefined;maxLeverageFor:(symbol:string)=>number;busy:boolean;ready:boolean;
@@ -101,18 +103,32 @@ export function ExchangeProvider({children}:PropsWithChildren){
   try{await AsyncStorage.setItem(pendingKey,JSON.stringify(request));const result=await api<Row>(request.path,request.body);await AsyncStorage.removeItem(pendingKey);pending.current=null;await refresh();return (result.order??result) as Row;}
   catch(e){if(e instanceof Error&&'status' in e&&[400,403,409,422].includes(Number(e.status))){await AsyncStorage.removeItem(pendingKey);pending.current=null;}throw e;}finally{commandLock.current=false;setBusy(false);}
  },[ready,refresh,pendingKey]);
+ const orderEstimate=useCallback((input:PlaceOrderInput)=>{
+  const m=lookup.get(input.symbol),book=bookFor(input.symbol);
+  const unavailable={fee:NaN,reservedFee:NaN,exposure:NaN,requiredBalance:NaN};
+  if(!m||!book||book.marketVersion!==m.marketVersion||book.marketHash!==m.marketHash||m.feePolicy?.policyVersion!==m.terms.feePolicyVersion)return unavailable;
+  const scale=10**Number(m.terms.priceDecimals),price=input.type==='market'?Number((input.side==='long'?book.asks:book.bids)[0]?.priceTicks??book.lastTradePriceTicks??m.referenceTicks)/scale:input.targetPrice??NaN;
+  const factor=Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,lots=Math.floor(input.amount*input.leverage/(price*factor));
+  if(!(price>0)||!Number.isSafeInteger(lots)||lots<Number(m.terms.minimumOrderLots))return unavailable;
+  const priceTicks=String(Math.round(price*scale));
+  const fees=estimateTradingFees({policy:m.feePolicy,quantityLots:lots,priceTicks,upperTicks:m.upperTicks,quoteMinorPerIndexUnitPerLot:m.terms.quoteMinorPerIndexUnitPerLot,priceDecimals:m.terms.priceDecimals});
+  return {...fees,exposure:lots*price*factor,requiredBalance:input.amount+fees.reservedFee};
+ },[bookFor,lookup]);
  const placeOrder=useCallback(async(input:PlaceOrderInput)=>{
   const m=lookup.get(input.symbol),book=bookFor(input.symbol);if(!m||!book||book.status!=='RUNNING')throw new Error('Market is unavailable.');
   if(!Number.isFinite(input.amount)||input.amount<=0||input.amount>cashBalance||!Number.isInteger(input.leverage)||input.leverage<1||input.leverage>maxLeverageFor(input.symbol))throw new Error('Check your margin and leverage.');
   const scale=10**Number(m.terms.priceDecimals),price=input.type==='market'?Number((input.side==='long'?book.asks:book.bids)[0]?.priceTicks??book.lastTradePriceTicks??m.referenceTicks)/scale:input.targetPrice;
   if(!price||!Number.isFinite(price))throw new Error('Enter a valid price.');
   const lots=Math.floor(input.amount*100*input.leverage/(price*Number(m.terms.quoteMinorPerIndexUnitPerLot)));if(!Number.isSafeInteger(lots)||lots<Number(m.terms.minimumOrderLots))throw new Error('Amount is below the minimum lot size.');
+  const estimate=orderEstimate(input);
+  if(!Number.isFinite(estimate.requiredBalance))throw new Error('Wait for the current fee policy and market quote.');
+  if(estimate.requiredBalance>cashBalance)throw new Error('Available balance must cover margin and trading fees.');
   const ticks=(v:number)=>{const value=Math.round(v*scale);if(!Number.isSafeInteger(value)||value<=0)throw new Error('Invalid price.');return String(value);};
   const body:Row={commandId:uuid(),orderId:uuid(),marketId:m.marketId,side:input.side==='long'?'BID':'ASK',type:input.type.toUpperCase(),quantityLots:String(lots),leverage:input.leverage,expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,...(input.type==='limit'?{priceTicks:ticks(price)}:{}),...(input.type==='stop'?{triggerTicks:ticks(price)}:{}),...(input.takeProfit===undefined?{}:{takeProfitTicks:ticks(input.takeProfit)}),...(input.stopLoss===undefined?{}:{stopLossTicks:ticks(input.stopLoss)})};
   const result=await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',body,accountMode+JSON.stringify(input));
   if(result.status==='CANCELLED')throw new Error('Order cancelled without a fill. Check available liquidity.');
   return {kind:result.status==='RESTING'?'order':'position',id:str(result.orderId)} as const;
- },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,submit]);
+ },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,orderEstimate,submit]);
  const closePosition=useCallback(async(id:string)=>{const p=account.positions.find(p=>p.marketId===id),m=remote.find(m=>m.marketId===id),book=m&&bookFor(m.symbol);if(!p||!m||!book)throw new Error('Position unavailable.');await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',{commandId:uuid(),orderId:uuid(),marketId:id,side:Number(p.positionLots)>0?'ASK':'BID',type:'MARKET',quantityLots:String(Math.abs(Number(p.positionLots))),expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,reduceOnly:true,expectedPositionSequence:str(p.lastTradeSequence)},accountMode+'close'+id);},[account.positions,accountMode,bookFor,remote,submit]);
  const cancelOrder=useCallback(async(id:string)=>{await submit(accountMode==='demo'?'/v1/demo/orders/'+id+'/cancel':'/v1/orders/cancel',{commandId:uuid(),orderId:id},accountMode+'cancel'+id);},[accountMode,submit]);
  const setAccountMode=useCallback(async(next:AccountMode)=>{if(commandLock.current||pending.current)throw new Error('Resolve the pending account action before switching modes.');if(next===accountMode)return;await persist({accountMode:next});generation.current++;setModeState(next);},[accountMode,persist]);
@@ -126,9 +142,9 @@ export function ExchangeProvider({children}:PropsWithChildren){
   const factor=Number(m.terms.quoteMinorPerIndexUnitPerLot)/100;
   const lots=Math.floor(input.amount*input.leverage/(price*factor));if(!(lots>=Number(m.terms.minimumOrderLots)))return NaN;
   const p=account.positions.find(p=>p.marketId===m.marketId);
-  return estimateLiquidation({equity:totalEquity,maintenance:money(account.portfolio.maintenanceMarginMinor),existingUnits:p?Number(p.positionLots)*factor:0,existingMark:p?Number(p.markPriceTicks)/scale:0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
- },[account,bookFor,error,ready,remote,totalEquity]);
- const value:ExchangeContextValue={markets:markets.filter(m=>m.category!=='Pairs'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,usedMargin,positions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,busy,ready};
+  return estimateLiquidation({equity:totalEquity-orderEstimate(input).fee,maintenance:money(account.portfolio.maintenanceMarginMinor),existingUnits:p?Number(p.positionLots)*factor:0,existingMark:p?Number(p.markPriceTicks)/scale:0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
+ },[account,bookFor,error,orderEstimate,ready,remote,totalEquity]);
+ const value:ExchangeContextValue={markets:markets.filter(m=>m.category!=='Pairs'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,usedMargin,positions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,busy,ready};
  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useExchange(){const value=useContext(Context);if(!value)throw new Error('Exchange provider required');return value;}
