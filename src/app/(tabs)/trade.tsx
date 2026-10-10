@@ -28,7 +28,7 @@ export default function TradeScreen() {
   const router = useRouter();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor,
-    cashBalance, positions, orders, settings, placeOrder, maxLeverageFor, liquidationEstimate, busy, ready, accountMode, error,
+    cashBalance, positions, orders, settings, placeOrder, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error,
   } = useExchange();
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
   const advanced = settings.interfaceMode === 'advanced';
@@ -51,9 +51,10 @@ export default function TradeScreen() {
   const selectedType = advanced ? orderType : 'market';
   const numericTarget = Number(targetPrice) || price;
   const effectiveLeverage = Math.min(leverage, market ? maxLeverageFor(market.symbol) : 1);
-  const exposure = numericAmount * effectiveLeverage;
+  const estimate=orderEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,targetPrice:numericTarget});
+  const exposure = estimate.exposure;
   const liquidation=liquidationEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,targetPrice:numericTarget});
-  const canSubmit = ready && !busy && numericAmount > 0 && numericAmount <= cashBalance;
+  const canSubmit = ready && !busy && numericAmount > 0 && Number.isFinite(estimate.requiredBalance) && estimate.requiredBalance <= cashBalance;
   const line = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   const candles = useMemo(() => market ? candlesFor(market.symbol, range) : [], [candlesFor, market, range]);
 
@@ -138,6 +139,7 @@ export default function TradeScreen() {
               <Field label={selectedType === 'stop' ? 'Trigger price' : 'Limit price'} value={targetPrice} onChangeText={setTargetPrice} unit="POINT" />
             ) : null}
             <Field label="Margin" value={amount} onChangeText={setAmount} unit={settings.currency} />
+            <Text style={styles.available}>Estimated fee {formatMoney(estimate.fee, settings.currency)} · balance needed {formatMoney(estimate.requiredBalance, settings.currency)}</Text>
 
             <View style={styles.leverageLine}>
               <Text style={styles.label}>Leverage</Text>
@@ -185,7 +187,7 @@ export default function TradeScreen() {
       </KeyboardAvoidingView>
 
       <PairSelectorSheet onClose={() => setPairOpen(false)} onSelect={setActiveSymbol} visible={pairOpen} />
-      <OrderReviewSheet amount={numericAmount} currency={settings.currency} leverage={effectiveLeverage} onClose={() => setReviewOpen(false)} onConfirm={() => {void execute();}} price={price} side={side} symbol={market.symbol} targetPrice={numericTarget} type={selectedType} visible={reviewOpen} />
+      <OrderReviewSheet amount={numericAmount} fee={estimate.fee} exposure={exposure} currency={settings.currency} leverage={effectiveLeverage} onClose={() => setReviewOpen(false)} onConfirm={() => {void execute();}} price={price} side={side} symbol={market.symbol} targetPrice={numericTarget} type={selectedType} visible={reviewOpen} />
     </Screen>
   );
 }

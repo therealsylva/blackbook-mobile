@@ -13,6 +13,7 @@
     "web": "expo start --web",
     "validate": "node ./scripts/validate-foundation.mjs",
     "typecheck": "tsc --noEmit",
+    "test:fees": "node --experimental-strip-types --test scripts/trading-fees.test.mjs",
     "check": "npm run validate && npm run typecheck",
     "generate:splash": "node ./scripts/build-splash-vector.mjs",
     "prebuild:android": "npm run generate:splash && expo prebuild --platform android --clean",
