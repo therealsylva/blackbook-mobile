@@ -50,7 +50,22 @@ export interface UserProfile {
 
 export interface ExchangeSettings {
   interfaceMode: InterfaceMode;
-  appearance: 'Dark' | 'Light';
+  appearance: 'Dark' | 'Light' | 'System';
+  locale:'en-GB'|'en-US'|'de-DE'|'fr-FR';
+  timeZone:string;
+  chartType:'candles'|'line'|'bar';
+  candleInterval:'1m'|'5m'|'15m'|'1h'|'4h'|'1d'|'1w';
+  defaultMargin:number;
+  defaultTimeInForce:'GTC'|'IOC'|'FOK';
+  oneClickTrading:boolean;
+  marginWarnings:boolean;
+  stopLossPercent:number;
+  takeProfitPercent:number;
+  maxPositionUsd:number;
+  dailyLossUsd:number;
+  orderNotifications:boolean;
+  priceAlerts:boolean;
+  priceAlertRules:PriceAlertRule[];
   language: 'English';
   currency: 'USD';
   colorPreference: 'Green up / Red down' | 'Red up / Green down';
@@ -60,3 +75,5 @@ export interface ExchangeSettings {
   attachRiskControls: boolean;
   refreshRate: 'Live' | 'Every 5 seconds' | 'Every 15 seconds';
 }
+
+export interface PriceAlertRule {id:string;symbol:string;direction:'above'|'below';price:number;fired:boolean;}
