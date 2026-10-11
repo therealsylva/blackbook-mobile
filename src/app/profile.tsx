@@ -42,7 +42,7 @@ export default function ProfileScreen() {
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Pressable accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><Icon name="back" /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={styles.back}><Icon name="back" /></Pressable>
           <Text style={styles.title}>Account</Text>
           <View style={styles.back} />
         </View>
