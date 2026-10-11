@@ -3,6 +3,9 @@ import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'rea
 import {Alert} from 'react-native';
 import {useAuth} from '@/context/auth-context';
 import { useRouter } from 'expo-router';
+import {AddFundsSheet} from '@/components/account/add-funds-sheet';
+import {PaymentHistorySheet} from '@/components/account/payment-history-sheet';
+import {formatMoney} from '@/lib/format';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Icon, type IconName } from '@/components/ui/icon';
@@ -13,14 +16,15 @@ import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
 type ProfileTab = 'My info' | 'Preferences' | 'General';
-type Choice = 'interface' | 'accountMode' | null;
+type Choice = 'interface' | 'accountMode' | 'appearance' | null;
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
-  const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode } = useExchange();
+  const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode, cashBalance,totalEquity,unrealizedPnl,realizedPnl } = useExchange();
   const {signOut}=useAuth();
+  const [funding,setFunding]=useState<'deposit'|'withdraw'|null>(null),[payments,setPayments]=useState(false);
   const [tab, setTab] = useState<ProfileTab>('My info');
   const [editOpen, setEditOpen] = useState(false);
   const [choice, setChoice] = useState<Choice>(null);
@@ -38,8 +42,8 @@ export default function ProfileScreen() {
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Pressable accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><Icon name="back" /></Pressable>
-          <Text style={styles.title}>User center</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={styles.back}><Icon name="back" /></Pressable>
+          <Text style={styles.title}>Account</Text>
           <View style={styles.back} />
         </View>
 
@@ -55,6 +59,13 @@ export default function ProfileScreen() {
           <Pressable accessibilityLabel="Edit profile" onPress={() => setEditOpen(true)} style={styles.edit}><Icon name="edit" size={19} /></Pressable>
         </View>
 
+        <View style={{marginHorizontal:spacing.page,padding:spacing.md,backgroundColor:colors.section,borderRadius:16,gap:10}}>
+          <ProfileRow icon="mode" label="Account mode" onPress={()=>setChoice('accountMode')} value={accountMode==='demo'?'Demo':'Live'}/>
+          <Text style={{color:colors.text}}>Equity {formatMoney(totalEquity)} · Available {formatMoney(cashBalance)}</Text>
+          <Text style={{color:colors.textMuted}}>Unrealized P&L {formatMoney(unrealizedPnl)}</Text>
+          <Text style={{color:colors.textMuted}}>Realized P&L {formatMoney(realizedPnl)}</Text>
+          {accountMode==='real'?<View style={{flexDirection:'row',gap:20,flexWrap:'wrap'}}>{(['deposit','withdraw'] as const).map(mode=><Pressable accessibilityRole="button" key={mode} onPress={()=>setFunding(mode)} style={{paddingVertical:12}}><Text style={{color:colors.text}}>{mode==='deposit'?'Deposit':'Withdraw'}</Text></Pressable>)}<Pressable accessibilityRole="button" onPress={()=>setPayments(true)} style={{paddingVertical:12}}><Text style={{color:colors.text}}>Payment history</Text></Pressable></View>:<Text style={{color:colors.textMuted}}>Demo uses practice funds.</Text>}
+        </View>
         <ScrollView contentContainerStyle={styles.tabs} horizontal showsHorizontalScrollIndicator={false}>
           {(['My info', 'Preferences', 'General'] as const).map((item) => (
             <Pressable key={item} onPress={() => setTab(item)} style={styles.tab}>
@@ -75,10 +86,9 @@ export default function ProfileScreen() {
           ) : null}
           {tab === 'Preferences' ? (
             <>
-              <ProfileRow icon="mode" label="Account mode" onPress={() => setChoice('accountMode')} value={accountMode === 'real' ? 'Real money' : 'Demo'} />
-              <ProfileToggle icon="appearance" label="Dark theme" onValueChange={(value) => updateSetting('appearance', value ? 'Dark' : 'Light')} value={settings.appearance === 'Dark'} />
+              <ProfileRow icon="appearance" label="Theme" onPress={()=>setChoice('appearance')} value={settings.appearance}/>
               <ProfileRow icon="mode" label="Trading interface" onPress={() => setChoice('interface')} value={settings.interfaceMode === 'basic' ? 'Basic' : 'Advanced'} />
-              <ProfileRow icon="orders" label="Order defaults" onPress={() => router.push('/settings/trading')} />
+              <ProfileRow icon="orders" label="Settings" onPress={() => router.push('/settings/trading')} />
             </>
           ) : null}
           {tab === 'General' ? (
@@ -106,6 +116,9 @@ export default function ProfileScreen() {
         <Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>Save changes</Text></Pressable>
       </BottomSheet>
 
+      <AddFundsSheet visible={funding!==null} mode={funding??'deposit'} onClose={()=>setFunding(null)}/>
+      <PaymentHistorySheet visible={payments&&accountMode==='real'} onClose={()=>setPayments(false)}/>
+      <ChoiceSheet onClose={()=>setChoice(null)} onSelect={value=>updateSetting('appearance',value)} options={['Dark','Light','System'] as const} title="Theme" value={settings.appearance} visible={choice==='appearance'}/>
       <ChoiceSheet format={(value) => value === 'basic' ? 'Basic' : 'Advanced'} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('interfaceMode', value)} options={['basic', 'advanced'] as const} title="Trading interface" value={settings.interfaceMode} visible={choice === 'interface'} />
       <ChoiceSheet format={(value) => value === 'real' ? 'Real money' : 'Demo (practice funds)'} onClose={() => setChoice(null)} onSelect={(value) => {void setAccountMode(value).catch(e=>Alert.alert('Mode unchanged',e.message));}} options={['real', 'demo'] as const} title="Account mode" value={accountMode} visible={choice === 'accountMode'} />
     </Screen>

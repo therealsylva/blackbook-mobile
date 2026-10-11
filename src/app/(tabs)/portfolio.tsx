@@ -1,3 +1,4 @@
+import {formatTimestamp} from '@/lib/format';
 import {Alert} from 'react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -192,9 +193,7 @@ function formatAge(timestamp: number) {
 }
 
 function formatDate(timestamp: number) {
-  const date = new Date(timestamp);
-  if (date.toDateString() === new Date().toDateString()) return 'Today';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return formatTimestamp(timestamp);
 }
 
 const useStyles = createThemedStyles((colors) => ({

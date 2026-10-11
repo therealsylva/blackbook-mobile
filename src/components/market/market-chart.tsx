@@ -18,6 +18,7 @@ interface CandlestickChartProps {
   candles: CandlePoint[];
   height?: number;
   showVolume?: boolean;
+  mode?:'candles'|'bar';
 }
 
 const WIDTH = 360;
@@ -60,7 +61,7 @@ export function MarketChart({ series, positive, height = 190, grid = false, stro
   );
 }
 
-export function CandlestickChart({ candles, height = 212, showVolume = true }: CandlestickChartProps) {
+export function CandlestickChart({ candles, height = 212, showVolume = true, mode='candles' }: CandlestickChartProps) {
   const { colors } = useTheme();
   const styles = useStyles();
   const chart = useMemo(() => {
@@ -90,7 +91,7 @@ export function CandlestickChart({ candles, height = 212, showVolume = true }: C
           return (
             <Path
               key={item.time}
-              d={`M ${x} ${chart.y(item.high)} L ${x} ${chart.y(item.low)} M ${x - bodyWidth / 2} ${bodyY} L ${x + bodyWidth / 2} ${bodyY} L ${x + bodyWidth / 2} ${bodyY + bodyHeight} L ${x - bodyWidth / 2} ${bodyY + bodyHeight} Z`}
+              d={mode==='bar'?`M ${x} ${chart.y(item.high)} L ${x} ${chart.y(item.low)} M ${x-bodyWidth} ${chart.y(item.open)} L ${x} ${chart.y(item.open)} M ${x} ${chart.y(item.close)} L ${x+bodyWidth} ${chart.y(item.close)}`:`M ${x} ${chart.y(item.high)} L ${x} ${chart.y(item.low)} M ${x - bodyWidth / 2} ${bodyY} L ${x + bodyWidth / 2} ${bodyY} L ${x + bodyWidth / 2} ${bodyY + bodyHeight} L ${x - bodyWidth / 2} ${bodyY + bodyHeight} Z`}
               fill={color}
               stroke={color}
               strokeWidth="1"
