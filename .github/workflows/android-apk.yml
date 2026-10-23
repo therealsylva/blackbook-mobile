@@ -31,6 +31,9 @@ jobs:
     timeout-minutes: 45
     env:
       CI: "true"
+      EXPO_PUBLIC_BLACKBOOK_API_URL: ${{ vars.EXPO_PUBLIC_BLACKBOOK_API_URL }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - name: Check out source
         uses: actions/checkout@v5
@@ -46,11 +49,13 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Validate native exchange
-        run: npm run validate && npm run check:demo
+        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check
         run: npm run typecheck
+      - name: Verify release connection
+        run: npm run check:connection
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
       - name: Build stripped ARM64 release APK

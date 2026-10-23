@@ -1,3 +1,4 @@
+import {useAuth} from '@/context/auth-context';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -26,9 +27,10 @@ export default function TradeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
+  const {session,requestAuth}=useAuth();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor,
-    cashBalance, positions, orders, settings, updateSetting, placeOrder, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error,
+    cashBalance, positions, orders, settings, updateSetting, placeOrder, isTradableFor, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error,
   } = useExchange();
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
   const advanced = settings.interfaceMode === 'advanced';
@@ -55,6 +57,7 @@ export default function TradeScreen() {
   const exposure = estimate.exposure;
   const liquidation=liquidationEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,targetPrice:numericTarget});
   const canSubmit = ready && !busy && numericAmount > 0 && Number.isFinite(estimate.requiredBalance) && estimate.requiredBalance <= cashBalance;
+  const tradable=market?isTradableFor(market.symbol):false;
   const priceReady=price>0;
   const changeRange=(value:ChartRange)=>{setRange(value);const interval=value.toLowerCase();if(['1m','5m','15m','1h','4h','1d','1w'].includes(interval))updateSetting('candleInterval',interval as typeof settings.candleInterval);};
   const line = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
@@ -62,7 +65,7 @@ export default function TradeScreen() {
 
   useEffect(()=>{setOrderType(settings.defaultOrderType);setLeverage(settings.defaultLeverage);setAmount(String(settings.defaultMargin));},[settings.defaultOrderType,settings.defaultLeverage,settings.defaultMargin]);
   useEffect(()=>{if(!(price>0))return;setTakeProfit(settings.takeProfitPercent>0?String(price*(1+(side==='long'?1:-1)*settings.takeProfitPercent/100)):'');setStopLoss(settings.stopLossPercent>0?String(price*(1+(side==='long'?-1:1)*settings.stopLossPercent/100)):'');},[activeSymbol,side,priceReady,settings.takeProfitPercent,settings.stopLossPercent]);
-  if (!market) return null;
+  if (!market) return <Screen><View style={{padding:24}}><Text style={{color:colors.text}}>Loading market…</Text></View></Screen>;
 
   const execute = async () => {
     try { await placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage: effectiveLeverage, ...(riskControls && takeProfit.trim() ? {takeProfit:Number(takeProfit)} : {}), ...(riskControls && stopLoss.trim() ? {stopLoss:Number(stopLoss)} : {}), targetPrice: selectedType === 'market' ? undefined : numericTarget }); }
@@ -75,7 +78,7 @@ export default function TradeScreen() {
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Text style={{color:colors.textMuted,paddingHorizontal:spacing.page,paddingVertical:8}}>{accountMode === 'demo' ? 'Demo · practice funds' : 'Real money'}{error ? ' · '+error : ''}</Text>
+          <Text style={{color:colors.textMuted,paddingHorizontal:spacing.page,paddingVertical:8}}>{!session?'Browsing markets':accountMode === 'demo' ? 'Demo · practice funds' : 'Live account'}{error ? ' · '+error : ''}</Text>
           <View style={styles.header}>
             <Pressable onPress={() => setPairOpen(true)} style={({ pressed }) => [styles.pair, pressed && styles.pressed]}>
               <MarketIdentityAvatar market={market} size={42} />
@@ -121,6 +124,7 @@ export default function TradeScreen() {
               <Text style={styles.available}>{formatMoney(cashBalance, settings.currency)} available</Text>
             </View>
 
+            {!tradable?<Text style={{color:colors.textMuted,marginBottom:16}}>Trading is unavailable for this index. You can still browse its prices and history.</Text>:null}
             <View style={styles.sidePill}>
               {(['long', 'short'] as const).map((item) => (
                 <Pressable key={item} onPress={() => setSide(item)} style={[styles.sideChoice, side === item && (item === 'long' ? styles.longChoice : styles.shortChoice)]}>
@@ -178,8 +182,8 @@ export default function TradeScreen() {
               </>
             ) : null}
 
-            <Pressable disabled={!canSubmit} onPress={() => {if(settings.confirmOrders)setReviewOpen(true);else void execute();}} style={({ pressed }) => [styles.submit, side === 'long' ? styles.submitLong : styles.submitShort, !canSubmit && styles.disabled, pressed && styles.pressed]}>
-              <Text style={styles.submitText}>Review {side} order</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={!tradable?'Trading unavailable':session?`Review ${side} order`:'Sign in to trade'} disabled={!tradable||Boolean(session)&&!canSubmit} onPress={() => {if(!session){requestAuth();return;}if(settings.confirmOrders)setReviewOpen(true);else void execute();}} style={({ pressed }) => [styles.submit, side === 'long' ? styles.submitLong : styles.submitShort, (!tradable||Boolean(session)&&!canSubmit) && styles.disabled, pressed && styles.pressed]}>
+              <Text style={styles.submitText}>{!tradable?'Trading unavailable':session?`Review ${side} order`:'Sign in to trade'}</Text>
             </Pressable>
 
             <Pressable onPress={() => router.push('/(tabs)/portfolio')} style={styles.activityLink}>

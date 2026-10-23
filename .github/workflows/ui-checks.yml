@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Validate product boundary
-        run: npm run validate && npm run check:demo
+        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check
@@ -75,6 +75,7 @@ jobs:
           test -n "$BROWSER_BIN"
           export BROWSER_BIN
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright
+          node .github/scripts/capture-auth.mjs
           node .github/scripts/capture-ui.mjs
       - name: Upload phone renders
         if: always()

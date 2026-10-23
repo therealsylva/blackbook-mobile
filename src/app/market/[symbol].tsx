@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MARKETS } from '@/data/markets';
@@ -27,6 +27,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
   const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
   const [range, setRange] = useState<ChartRange>('1H');
 
+  useEffect(()=>{setActiveSymbol(selectedSymbol??symbol??'RMD');},[selectedSymbol,symbol,setActiveSymbol]);
   const series = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   if (!market) return <Screen><View style={styles.missing}><Text style={styles.missingText}>Index unavailable</Text></View></Screen>;
 

@@ -12,7 +12,11 @@ Blackbook Mobile is the native phone experience for Blackbook index perpetuals. 
 - **Feed** — highlights, news, strategies, gainers, losers, volume and volatility coverage.
 - **User center** — editable identity, security, notification and trading preferences, reached from the Home avatar.
 
-The current build runs end-to-end on-device: prices move, funds can be deposited or withdrawn, positions can be opened and closed, limit/stop orders can be submitted and cancelled, favorites and alerts can be changed, and trading preferences update the order surface. Service integration can replace the context boundary later without redesigning the UI.
+The app opens on public markets. Quotes and published index history are available without an account; account balances, funding, orders and portfolio data require a signed-in Supabase session. Guest preferences stay on the device, and private data resets when the account changes. Authentication uses email and password only.
+
+Release builds include the public connection settings in `src/lib/public-connection.json`. An alternate environment can override `EXPO_PUBLIC_BLACKBOOK_API_URL`, `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (override the auth pair together). These settings are public; never put a service-role key in a mobile bundle. `npm run check:connection` rejects incomplete or unsafe release configuration before APK compilation. GitHub Actions accepts the same names as repository variables.
+
+Supabase Email must remain enabled. Allow `blackbook://auth/callback` in Auth redirect URLs for confirmation and password recovery links to return to the Android app. Existing website redirects can remain. The app reports provider errors inline and tells users to confirm their email when required; email delivery and redirect settings belong to the Supabase project.
 
 ## Run locally
 

@@ -20,3 +20,5 @@ yarn-error.log*
 /web/
 /src/assets/source/
 /src/assets/rendered/
+
+ui-renders/

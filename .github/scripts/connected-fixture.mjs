@@ -6,7 +6,7 @@ const pairs=JSON.parse(pairSource.slice(pairSource.indexOf('= [')+2).trim().repl
 const user={id:'00000000-0000-4000-8000-000000005001',email:'ui@blackbook.test',aud:'authenticated',role:'authenticated',app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-01-01T00:00:00Z'};
 const jwt=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
 const accessToken=jwt({alg:'HS256',typ:'JWT'})+'.'+jwt({sub:user.id,aud:'authenticated',role:'authenticated',exp:Math.floor(Date.now()/1000)+3600})+'.ui-fixture';
-const catalog=publication.indices.map(row=>({marketId:'fixture:'+row.symbol.toLowerCase(),entityId:row.entityId,symbol:row.symbol,displayName:row.name,kind:row.snapshot.kind,referenceTicks:String(row.snapshot.referenceMicros),lowerTicks:String(row.snapshot.lowerMicros),upperTicks:String(row.snapshot.upperMicros)}));
+const catalog=publication.indices.map(row=>({marketId:'fixture:'+row.symbol.toLowerCase(),entityId:row.snapshot.entityId,symbol:row.symbol,displayName:row.name,kind:row.snapshot.kind,referenceTicks:String(row.snapshot.referenceMicros),lowerTicks:String(row.snapshot.lowerMicros),upperTicks:String(row.snapshot.upperMicros)}));
 for(const pair of pairs){const x=catalog.find(m=>m.symbol===pair.left),y=catalog.find(m=>m.symbol===pair.right),reference=Math.round(Number(x.referenceTicks)/Number(y.referenceTicks)*1e9);catalog.push({marketId:'fixture:'+pair.id,entityId:pair.id,symbol:pair.title,displayName:pair.title,kind:'PAIR',referenceTicks:String(reference),lowerTicks:String(Math.floor(reference*.94)),upperTicks:String(Math.ceil(reference*1.06)),numeratorEntityId:x.entityId,denominatorEntityId:y.entityId});}
 for(const market of catalog)Object.assign(market,{marketVersion:'1',marketHash:'a'.repeat(64),terms:{priceDecimals:'6',quoteMinorPerIndexUnitPerLot:'100',minimumOrderLots:'1',feePolicyVersion:'2'},feePolicy:{policyVersion:'2',makerRatePpm:'200',takerRatePpm:'600',rounding:'ceil_per_fill'},marginPolicy:{initialMarginPpm:'20000',maintenanceMarginPpm:'10000'}});
 export async function installConnectedFixture(context){
@@ -22,9 +22,10 @@ export async function installConnectedFixture(context){
   const request=route.request(),url=new URL(request.url()),path=url.pathname,body=request.postData()?request.postDataJSON():null;
   requests.push({path,body,method:request.method()});
   try{
-   assert.equal(request.headers().authorization,'Bearer '+accessToken,'API request must carry the signed-in session');
+   if(!path.startsWith('/v1/markets')&&!path.startsWith('/v1/indices'))assert.equal(request.headers().authorization,'Bearer '+accessToken,'Private API request must carry the signed-in session');
    let json;
    if(path==='/v1/preferences'){if(body)Object.assign(preferences,body);json={preferences};}
+   else if(path==='/v1/indices/catalog')json={items:[]};
    else if(path==='/v1/markets')json={items:catalog};
    else if(path.endsWith('/snapshot')){const m=catalog.find(m=>path==='/v1/markets/'+encodeURIComponent(m.marketId)+'/snapshot');assert.ok(m);json={...m,status:'RUNNING',cursor:'1',observedAtMs:String(Date.now()),lastTradePriceTicks:m.referenceTicks,bids:[{priceTicks:String(Number(m.referenceTicks)-10000),quantityLots:'1000'}],asks:[{priceTicks:String(Number(m.referenceTicks)+10000),quantityLots:'1000'}]};}
    else if(path.endsWith('/candles')){const m=catalog.find(m=>path==='/v1/markets/'+encodeURIComponent(m.marketId)+'/candles');assert.ok(m);const price=Number(m.referenceTicks)/1e6;json={candles:Array.from({length:1500},(_,i)=>({time:Date.now()-(1500-i)*60000,open:price*(.97+i/50000),high:price*(.975+i/50000),low:price*(.965+i/50000),close:price*(.973+i/50000),volume:10}))};}
@@ -47,8 +48,10 @@ export async function installConnectedFixture(context){
 }
 export async function signInFixture(page){
  await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await page.getByLabel('Email',{exact:true}).fill(user.email);
  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
- await page.getByText('Sign in',{exact:true}).click();
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await page.getByLabel('Email',{exact:true}).waitFor({state:'hidden'});
  await page.getByLabel('Open profile',{exact:true}).waitFor();
 }
