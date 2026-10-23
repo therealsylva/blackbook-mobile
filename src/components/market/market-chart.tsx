@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
-import type { CandlePoint } from '@/lib/market-series';
+import { candleGeometry, type CandlePoint } from '@/lib/market-series';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
 interface MarketChartProps {
   series: number[];
+  candles?: CandlePoint[];
   positive: boolean;
   height?: number;
   grid?: boolean;
@@ -35,10 +36,15 @@ function geometry(series: number[], height: number, bottom = 8) {
   return { clean, min, max, span, x, y, path };
 }
 
-export function MarketChart({ series, positive, height = 190, grid = false, strokeWidth = 2, area = false }: MarketChartProps) {
+export function MarketChart({ series, candles, positive, height = 190, grid = false, strokeWidth = 2, area = false }: MarketChartProps) {
   const { colors } = useTheme();
   const styles = useStyles();
-  const chart = useMemo(() => geometry(series, height), [height, series]);
+  const chart = useMemo(() => {
+    const base=geometry(series,height);
+    if(!candles?.length||candles.length!==series.length)return base;
+    const timing=candleGeometry(candles,WIDTH);
+    return {...base,x:timing.x,path:candles.map((c,i)=>`${i===0||c.breakBefore||(i>0&&c.time-candles[i-1]!.time>timing.step*1.5)?'M':'L'} ${timing.x(i).toFixed(2)} ${base.y(c.close).toFixed(2)}`).join(' ')};
+  }, [height, series, candles]);
   const lineColor = positive ? colors.overviewPositive : colors.overviewNegative;
   if (!series.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}><Text style={{color:colors.textMuted}}>No trading history yet</Text></View>;
   const areaPath = `${chart.path} L ${chart.x(chart.clean.length - 1)} ${height} L ${chart.x(0)} ${height} Z`;
@@ -54,7 +60,7 @@ export function MarketChart({ series, positive, height = 190, grid = false, stro
           </LinearGradient>
         </Defs>
         {grid ? [0.25, 0.5, 0.75].map((ratio) => <Line key={ratio} opacity={0.55} stroke={colors.dividerSoft} strokeDasharray="2 7" strokeWidth="0.6" x1="0" x2={WIDTH} y1={height * ratio} y2={height * ratio} />) : null}
-        {area ? <Path d={areaPath} fill="url(#area)" /> : null}
+        {area && !candles?.some((c,i)=>c.breakBefore||(i>0&&c.time-candles[i-1]!.time>(c.intervalMs??3600000)*1.5)) ? <Path d={areaPath} fill="url(#area)" /> : null}
         <Path d={chart.path} fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
       </Svg>
     </View>
@@ -70,10 +76,11 @@ export function CandlestickChart({ candles, height = 212, showVolume = true, mod
     const min = Math.min(...clean.map((item) => item.low));
     const max = Math.max(...clean.map((item) => item.high));
     const span = Math.max(max - min, 1);
-    const xStep = (WIDTH - PAD_X * 2) / clean.length;
+    const timing=candleGeometry(clean,WIDTH);
+    const xStep = (WIDTH - PAD_X * 2) * timing.step/timing.span;
     const y = (value: number) => 8 + ((max - value) / span) * (priceHeight - 14);
-    const maxVolume = Math.max(...clean.map((item) => item.volume), 1);
-    return { clean, priceHeight, xStep, y, maxVolume };
+    const maxVolume = Math.max(...clean.map((item) => item.volume??0), 1);
+    return { clean, priceHeight, xStep, y, maxVolume, x:timing.x };
   }, [candles, height, showVolume]);
   if (!candles.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}><Text style={{color:colors.textMuted}}>No trading history yet</Text></View>;
 
@@ -84,7 +91,7 @@ export function CandlestickChart({ candles, height = 212, showVolume = true, mod
         {chart.clean.map((item, index) => {
           const up = item.close >= item.open;
           const color = up ? colors.positive : colors.negative;
-          const x = PAD_X + chart.xStep * index + chart.xStep / 2;
+          const x = chart.x(index);
           const bodyWidth = Math.max(2, Math.min(7, chart.xStep * 0.58));
           const bodyY = Math.min(chart.y(item.open), chart.y(item.close));
           const bodyHeight = Math.max(1.5, Math.abs(chart.y(item.open) - chart.y(item.close)));
@@ -100,8 +107,9 @@ export function CandlestickChart({ candles, height = 212, showVolume = true, mod
         })}
         {showVolume ? chart.clean.map((item, index) => {
           const color = item.close >= item.open ? colors.positive : colors.negative;
+          if(item.volume===null)return null;
           const volumeHeight = (item.volume / chart.maxVolume) * (height - chart.priceHeight - 5);
-          return <Rect fill={color} height={volumeHeight} key={`v-${item.time}`} opacity={0.18} width={Math.max(1, chart.xStep * 0.55)} x={PAD_X + chart.xStep * index + chart.xStep * 0.22} y={height - volumeHeight} />;
+          return <Rect fill={color} height={volumeHeight} key={`v-${item.time}`} opacity={0.18} width={Math.max(1, chart.xStep * 0.55)} x={chart.x(index)-chart.xStep*.275} y={height - volumeHeight} />;
         }) : null}
       </Svg>
     </View>
@@ -112,3 +120,4 @@ const useStyles = createThemedStyles((colors) => ({
   frame: { overflow: 'hidden', width: '100%' },
   candleFrame: { backgroundColor: colors.chart, overflow: 'hidden', width: '100%' },
 }));
+

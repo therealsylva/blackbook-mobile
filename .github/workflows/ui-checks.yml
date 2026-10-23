@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Validate product boundary
-        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees
+        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees && node --test scripts/market-history.test.mjs
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check
@@ -85,4 +85,5 @@ jobs:
           path: ui-renders/*
           if-no-files-found: error
           retention-days: 7
+
 
