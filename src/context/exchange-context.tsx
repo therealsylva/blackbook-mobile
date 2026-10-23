@@ -3,7 +3,7 @@ import {Alert,AppState} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ALL_MARKETS} from '@/data/pair-markets';
 import type {MarketDefinition} from '@/data/markets';
-import type {CandlePoint} from '@/lib/market-series';
+import {aggregateCandles,type CandlePoint} from '@/lib/market-series';
 import {configureDisplay} from '@/lib/format';
 import {useTradingNotifications} from '@/hooks/use-trading-notifications';
 import {api,publicApi,uuid} from '@/lib/backend';
@@ -86,7 +86,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
    if(active){
     try{
      let rows: CandlePoint[]=[];
-     if(active.marketId){const result=await publicApi<{candles:CandlePoint[]}>('/v1/markets/'+encodeURIComponent(active.marketId)+'/candles?interval='+settings.candleInterval+'&limit=2000');rows=result.candles;}
+     if(active.marketId){const result=await publicApi<{candles:CandlePoint[];intervalMs?:number}>('/v1/markets/'+encodeURIComponent(active.marketId)+'/candles?interval='+settings.candleInterval+'&limit=2000');rows=result.candles.map(row=>({...row,volume:row.volume??null,intervalMs:result.intervalMs}));}
      if(!rows.length){
       const result=await publicApi<{points:{asOf:string;referenceMicros:number|string}[]}>('/v1/indices/'+encodeURIComponent(active.entityId)+'/history?limit=1000');
       rows=result.points.map(point=>{const price=Number(point.referenceMicros)/1e6;return {time:Date.parse(point.asOf),open:price,high:price,low:price,close:price,volume:0};}).filter(point=>Number.isFinite(point.time)&&point.close>0).sort((a,b)=>a.time-b.time);
@@ -117,7 +117,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const marketFor=useCallback((symbol:string)=>markets.find(m=>m.symbol===symbol),[markets]);
  const priceFor=useCallback((symbol:string)=>marketFor(symbol)?.price??NaN,[marketFor]);
  const changeFor=useCallback((symbol:string)=>{const c=marketCandles[symbol]??[],cut=Date.now()-86400000,first=c.find(x=>x.time>=cut);return first&&c[0]!.time<=cut?(priceFor(symbol)/first.open-1)*100:lookup.get(symbol)?.indexChangePct??NaN;},[marketCandles,priceFor,lookup]);
- const candlesFor=useCallback((symbol:string,range:ChartRange='15m')=>{const rows=marketCandles[symbol]??[],step=rangeMs[range],buckets=new Map<number,CandlePoint>();for(const row of rows){const t=Math.floor(row.time/step)*step,old=buckets.get(t);buckets.set(t,old?{...old,high:Math.max(old.high,row.high),low:Math.min(old.low,row.low),close:row.close,volume:old.volume+row.volume}:{...row,time:t});}return [...buckets.values()].slice(-200);},[marketCandles]);
+ const candlesFor=useCallback((symbol:string,range:ChartRange='15m')=>aggregateCandles(marketCandles[symbol]??[],rangeMs[range]),[marketCandles]);
  const seriesFor=useCallback((symbol:string,range:ChartRange='1D')=>candlesFor(symbol,range).map(x=>x.close),[candlesFor]);
  const bookFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?books[m.marketId]:undefined;},[books,lookup]);
  const isTradableFor=useCallback((symbol:string)=>Boolean(lookup.get(symbol)?.tradable),[lookup]);
@@ -181,4 +181,5 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useExchange(){const value=useContext(Context);if(!value)throw new Error('Exchange provider required');return value;}
+
 

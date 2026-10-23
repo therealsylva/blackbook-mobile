@@ -22,12 +22,13 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
   const styles = useStyles();
   const router = useRouter();
   const params = useLocalSearchParams<{ symbol?: string }>();
-  const { marketFor, priceFor, changeFor, seriesFor, favorites, toggleFavorite, setActiveSymbol } = useExchange();
+  const { marketFor, priceFor, changeFor, seriesFor, candlesFor, favorites, toggleFavorite, setActiveSymbol } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
   const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
   const [range, setRange] = useState<ChartRange>('1H');
 
   useEffect(()=>{setActiveSymbol(selectedSymbol??symbol??'RMD');},[selectedSymbol,symbol,setActiveSymbol]);
+  const candles=useMemo(()=>market?candlesFor(market.symbol,range):[],[market,range,candlesFor]);
   const series = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   if (!market) return <Screen><View style={styles.missing}><Text style={styles.missingText}>Index unavailable</Text></View></Screen>;
 
@@ -61,7 +62,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
         </View>
 
         <View style={styles.chart}>
-          <MarketChart area height={234} positive={change >= 0} series={series} strokeWidth={2} />
+          <MarketChart candles={candles} area height={234} positive={change >= 0} series={series} strokeWidth={2} />
         </View>
 
         <View style={styles.ranges}>
@@ -139,3 +140,4 @@ const useStyles = createThemedStyles((colors) => ({
 
 
 export default function MarketOverviewScreen() { return <MarketOverview />; }
+

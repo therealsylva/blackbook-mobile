@@ -106,13 +106,13 @@ export default function TradeScreen() {
                 <RangeRail onChange={changeRange} range={range} ranges={ADVANCED_RANGES} />
               </View>
               <View style={styles.advancedMarket}>
-                {panel === 'Chart' ? (settings.chartType==='line'?<MarketChart series={line} positive={change>=0} height={204} />:<CandlestickChart candles={candles} mode={settings.chartType} height={204} />) : <View style={styles.book}><OrderBook lowerBand={market.lowerBand} upperBand={market.upperBand} price={price} /></View>}
+                {panel === 'Chart' ? (settings.chartType==='line'?<MarketChart candles={candles} series={line} positive={change>=0} height={204} />:<CandlestickChart candles={candles} mode={settings.chartType} height={204} />) : <View style={styles.book}><OrderBook lowerBand={market.lowerBand} upperBand={market.upperBand} price={price} /></View>}
               </View>
             </>
           ) : (
             <>
               <View style={styles.basicChart}>
-                {settings.chartType==='line'?<MarketChart area height={170} positive={change >= 0} series={line} strokeWidth={2} />:<CandlestickChart candles={candles} mode={settings.chartType} height={170}/>}
+                {settings.chartType==='line'?<MarketChart candles={candles} area height={170} positive={change >= 0} series={line} strokeWidth={2} />:<CandlestickChart candles={candles} mode={settings.chartType} height={170}/>}
               </View>
               <View style={styles.basicRanges}><RangeRail onChange={changeRange} range={range} ranges={BASIC_RANGES} /></View>
             </>
@@ -124,6 +124,7 @@ export default function TradeScreen() {
               <Text style={styles.available}>{formatMoney(cashBalance, settings.currency)} available</Text>
             </View>
 
+            {candles.some(c=>c.source==='history')?<Text style={{color:colors.textMuted,marginBottom:8}}>History uses hourly source candles; larger intervals aggregate them.</Text>:null}
             {!tradable?<Text style={{color:colors.textMuted,marginBottom:16}}>Trading is unavailable for this index. You can still browse its prices and history.</Text>:null}
             <View style={styles.sidePill}>
               {(['long', 'short'] as const).map((item) => (
@@ -302,4 +303,5 @@ const useStyles = createThemedStyles((colors) => ({
   activityDot: { color: colors.textFaint, fontFamily: typography.family },
   pressed: { opacity: 0.65 },
 }));
+
 

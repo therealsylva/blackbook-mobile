@@ -28,6 +28,9 @@ for(const width of [360,390,430]){
  await page.getByRole('button',{name:'Create account',exact:true}).last().click();
  await page.getByRole('heading',{name:'Create your account',exact:true}).waitFor();
  assert.doesNotMatch(await page.locator('body').innerText(),/Google|connection configuration/i);
+ // Wait for the modal slide to settle before comparing two screen-space boxes.
+ // Trial clicks run Playwright's visibility/stability checks without navigating.
+ await page.getByRole('button',{name:'Browse markets first',exact:true}).last().click({trial:true});
  const browse=await page.getByRole('button',{name:'Browse markets first',exact:true}).last().boundingBox(),email=await page.getByLabel('Email',{exact:true}).last().boundingBox();
  assert.ok(browse.width>=email.width-4&&browse.height>=48&&browse.y<email.y,`Browse button (${browse.width}×${browse.height}) must match the email field (${email.width}px) and appear above it`);
  await page.screenshot({path:`ui-renders/signup-${width}.png`,fullPage:true,animations:'disabled'});
