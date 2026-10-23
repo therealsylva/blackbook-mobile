@@ -26,10 +26,10 @@ for(const width of [360,390,430]){
  await page.getByRole('button',{name:'Browse markets first',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
  await page.getByText('Explore BlackBook',{exact:true}).last().waitFor();
  await page.getByRole('button',{name:'Create account',exact:true}).last().click();
- await page.getByRole('button',{name:'Browse markets first',exact:true}).waitFor();
+ await page.getByRole('heading',{name:'Create your account',exact:true}).waitFor();
  assert.doesNotMatch(await page.locator('body').innerText(),/Google|connection configuration/i);
- const browse=await page.getByRole('button',{name:'Browse markets first',exact:true}).boundingBox(),email=await page.getByLabel('Email',{exact:true}).boundingBox();
- assert.ok(browse.width>=width-70&&browse.height>=48&&browse.y<email.y,'Prominent guest button must be above email and full width');
+ const browse=await page.getByRole('button',{name:'Browse markets first',exact:true}).last().boundingBox(),email=await page.getByLabel('Email',{exact:true}).last().boundingBox();
+ assert.ok(browse.width>=email.width-4&&browse.height>=48&&browse.y<email.y,`Browse button (${browse.width}×${browse.height}) must match the email field (${email.width}px) and appear above it`);
  await page.screenshot({path:`ui-renders/signup-${width}.png`,fullPage:true,animations:'disabled'});
  await page.getByRole('button',{name:'Create account',exact:true}).last().click();
  await page.getByText('Enter a valid email address.',{exact:true}).waitFor();assert.equal(authRequests.length,0);
