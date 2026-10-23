@@ -1,3 +1,4 @@
+import {useAuth} from '@/context/auth-context';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -22,7 +23,8 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
-  const { markets, favorites, priceFor, changeFor, totalEquity, unrealizedPnl, settings } = useExchange();
+  const {session,requestAuth}=useAuth();
+  const { markets, favorites, priceFor, changeFor, totalEquity, unrealizedPnl, settings,loading,error,refresh } = useExchange();
   const [marketTab, setMarketTab] = useState<MarketTab>('Hot');
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [fundsMode, setFundsMode] = useState<FundsMode>(null);
@@ -56,7 +58,7 @@ export default function HomeScreen() {
           <Text style={styles.searchText}>Search indices</Text>
         </Pressable>
 
-        <View style={styles.balanceRow}>
+        {session?<View style={styles.balanceRow}>
           <View style={styles.balance}>
             <Pressable accessibilityLabel="Toggle balance visibility" onPress={() => setBalanceVisible((value) => !value)} style={styles.balanceLabelRow}>
               <Text style={styles.balanceLabel}>Total balance</Text>
@@ -73,6 +75,12 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        :<View style={styles.guest}>
+          <Text style={styles.guestTitle}>Explore BlackBook</Text>
+          <Text style={styles.guestCopy}>Browse indices and charts. Sign in when you’re ready to trade.</Text>
+          <View style={styles.guestActions}><Pressable accessibilityRole="button" onPress={()=>requestAuth('signup')} style={styles.guestPrimary}><Text style={styles.guestPrimaryText}>Create account</Text></Pressable><Pressable accessibilityRole="button" onPress={()=>requestAuth('signin')} style={styles.guestSecondary}><Text style={styles.guestSecondaryText}>Sign in</Text></Pressable></View>
+        </View>}
+        {error?<View style={styles.connection}><Text style={styles.guestCopy}>{error}</Text><Pressable accessibilityRole="button" onPress={()=>void refresh()}><Text style={styles.guestSecondaryText}>Retry</Text></Pressable></View>:loading?<Text style={styles.loading}>Loading market prices…</Text>:null}
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>Indices</Text>
           <Pressable hitSlop={8} onPress={() => router.push('/(tabs)/indices')} style={({ pressed }) => [styles.seeAllButton, pressed && styles.pressed]}>
@@ -120,6 +128,7 @@ function FundsAction({ icon, label, onPress }: { icon: 'deposit' | 'withdraw'; l
 }
 
 const useStyles = createThemedStyles((colors) => ({
+  guest:{paddingHorizontal:spacing.page,paddingVertical:28},guestTitle:{color:colors.text,fontFamily:typography.semibold,fontSize:24,letterSpacing:-.6},guestCopy:{color:colors.textMuted,fontFamily:typography.family,fontSize:14,lineHeight:22,marginTop:8},guestActions:{flexDirection:'row',gap:12,marginTop:20},guestPrimary:{backgroundColor:colors.text,borderRadius:8,minHeight:46,paddingHorizontal:20,justifyContent:'center'},guestPrimaryText:{color:colors.bg,fontFamily:typography.semibold,fontSize:14},guestSecondary:{minHeight:46,paddingHorizontal:20,justifyContent:'center'},guestSecondaryText:{color:colors.text,fontFamily:typography.semibold,fontSize:14},connection:{paddingHorizontal:spacing.page,paddingBottom:16,gap:12},loading:{color:colors.textMuted,fontFamily:typography.family,padding:spacing.page},
   content: { paddingBottom: spacing.lg },
   header: { alignItems: 'center', flexDirection: 'row', height: layout.header, justifyContent: 'space-between', paddingHorizontal: spacing.page },
   headerIcon: { alignItems: 'center', height: 42, justifyContent: 'center', width: 42 },

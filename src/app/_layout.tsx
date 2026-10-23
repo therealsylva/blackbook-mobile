@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { NavigationBar } from 'expo-navigation-bar';
@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ExchangeProvider } from '@/context/exchange-context';
 import { ThemeProvider, useTheme } from '@/theme/theme-context';
-import {AuthProvider} from '@/context/auth-context';
+import {AuthProvider,useAuth} from '@/context/auth-context';
 import {AuthGate} from '@/components/account/auth-gate';
 
 void SplashScreen.preventAutoHideAsync();
@@ -42,11 +42,13 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { colors, isDark } = useTheme();
+  const {session,loading}=useAuth();
+  const [selectedSymbol,setSelectedSymbol]=useState('RMD');
   return (
     <SafeAreaProvider>
-      <AuthGate><ExchangeProvider>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <NavigationBar style={isDark ? 'light' : 'dark'} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <NavigationBar style={isDark ? 'light' : 'dark'} />
+      <AuthGate><ExchangeProvider key={loading?'restoring':session?.user.id??'guest'} selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol}>
         <Stack screenOptions={{ animation: 'slide_from_right', contentStyle: { backgroundColor: colors.bg }, headerShown: false }} />
       </ExchangeProvider></AuthGate>
     </SafeAreaProvider>

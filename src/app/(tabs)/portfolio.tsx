@@ -1,3 +1,5 @@
+import {useAuth} from '@/context/auth-context';
+import {AccountPrompt} from '@/components/account/account-prompt';
 import {formatTimestamp} from '@/lib/format';
 import {Alert} from 'react-native';
 import { useState } from 'react';
@@ -19,6 +21,8 @@ export default function PortfolioScreen() {
   const styles = useStyles();
   const { cashBalance, usedMargin, totalEquity, unrealizedPnl, positions, orders, history, settings } = useExchange();
   const [tab, setTab] = useState<PortfolioTab>('Positions');
+  const {session}=useAuth();
+  if(!session)return <AccountPrompt title="Your portfolio" description="Sign in to see your positions, orders and trading history."/>;
   const counts = { Positions: positions.length, Orders: orders.length, Journal: history.length };
 
   return (

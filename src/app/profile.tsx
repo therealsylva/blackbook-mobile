@@ -1,3 +1,4 @@
+import {AccountPrompt} from '@/components/account/account-prompt';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import {Alert} from 'react-native';
@@ -23,13 +24,15 @@ export default function ProfileScreen() {
   const styles = useStyles();
   const router = useRouter();
   const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode, cashBalance,totalEquity,unrealizedPnl,realizedPnl } = useExchange();
-  const {signOut}=useAuth();
+  const {signOut,session}=useAuth();
   const [funding,setFunding]=useState<'deposit'|'withdraw'|null>(null),[payments,setPayments]=useState(false);
   const [tab, setTab] = useState<ProfileTab>('My info');
   const [editOpen, setEditOpen] = useState(false);
   const [choice, setChoice] = useState<Choice>(null);
   const [name, setName] = useState(profile.displayName);
   const [avatar, setAvatar] = useState(profile.avatarUri ?? 'void');
+
+  if(!session)return <AccountPrompt title="Your account" description="Sign in to manage your profile, balance and account settings."/>;
 
   const save = () => {
     const displayName = name.trim();
