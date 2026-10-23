@@ -15,7 +15,7 @@ export function AuthGate({children}:PropsWithChildren){
  useEffect(()=>{if(auth.view){setMode(auth.view);setPassword('');setShowPassword(false);setFeedback(null);}},[auth.view]);
  const changeMode=(next:FormMode)=>{if(locked.current)return;setMode(next);setPassword('');setShowPassword(false);setFeedback(null);};
  const dismiss=()=>{if(!locked.current){setPassword('');setFeedback(null);auth.dismissAuth();}};
- const browse=()=>{if(!locked.current){dismiss();router.dismissTo('/(tabs)');}};
+ const browse=()=>{if(!locked.current){dismiss();router.replace('/(tabs)');}};
  const submit=async()=>{
   if(locked.current)return;
   const address=email.trim();
