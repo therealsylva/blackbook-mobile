@@ -47,8 +47,14 @@ for (const width of [360,390,430]) {
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
   await page.getByLabel('Open profile',{exact:true}).click();
   await page.getByText('Preferences',{exact:true}).click();
-  const themeSwitch=page.getByRole('switch').first();
-  await themeSwitch.setChecked(false);
+  await page.getByText('Theme',{exact:true}).click();
+  const savedTheme=page.waitForResponse(r=>r.url().endsWith('/v1/preferences')&&r.request().method()==='PUT');
+  await page.getByText('Light',{exact:true}).click();
+  await savedTheme;
+  assert.equal(fixture.preferences.appearance,'Light');
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByText('Preferences',{exact:true}).click();
+  await page.getByText('Light',{exact:true}).waitFor();
   await page.getByLabel('Go back',{exact:true}).click();
   await page.getByText('All indices',{exact:true}).click();
   await page.screenshot({path:`ui-renders/indices-light-${width}.png`,fullPage:true});

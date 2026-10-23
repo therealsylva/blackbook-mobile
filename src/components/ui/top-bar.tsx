@@ -17,7 +17,7 @@ export function TopBar({ title, subtitle, rightIcon, onRightPress, back = false 
   const styles = useStyles();
   return (
     <View style={styles.bar}>
-      {back ? <Pressable accessibilityLabel="Go back" hitSlop={12} onPress={() => router.back()} style={styles.leading}><Icon name="back" /></Pressable> : null}
+      {back ? <Pressable accessibilityRole="button" accessibilityLabel="Go back" hitSlop={12} onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={styles.leading}><Icon name="back" /></Pressable> : null}
       <View style={styles.copy}>
         <Text numberOfLines={1} style={styles.title}>{title}</Text>
         {subtitle ? <Text numberOfLines={1} style={styles.subtitle}>{subtitle}</Text> : null}

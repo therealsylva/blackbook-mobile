@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
@@ -20,7 +20,7 @@ type AdvancedPanel = 'Chart' | 'Book';
 const BASIC_RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
 const ADVANCED_RANGES: ChartRange[] = ['1m', '5m', '15m', '1H', '4H'];
 const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop'];
-const LEVERAGES = [1, 2, 5, 10, 20, 50];
+const LEVERAGES = [1, 2, 5, 10, 20, 25, 50];
 
 export default function TradeScreen() {
   const { colors } = useTheme();
@@ -28,16 +28,16 @@ export default function TradeScreen() {
   const router = useRouter();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor,
-    cashBalance, positions, orders, settings, placeOrder, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error,
+    cashBalance, positions, orders, settings, updateSetting, placeOrder, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error,
   } = useExchange();
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
   const advanced = settings.interfaceMode === 'advanced';
   const [pairOpen, setPairOpen] = useState(false);
   const [panel, setPanel] = useState<AdvancedPanel>('Chart');
-  const [range, setRange] = useState<ChartRange>(advanced ? '15m' : '1H');
+  const [range, setRange] = useState<ChartRange>(({ '1h':'1H','4h':'4H','1d':'1D','1w':'1W'} as Record<string,ChartRange>)[settings.candleInterval] || settings.candleInterval as ChartRange);
   const [side, setSide] = useState<Side>('long');
   const [orderType, setOrderType] = useState<OrderType>(settings.defaultOrderType);
-  const [amount, setAmount] = useState('100');
+  const [amount, setAmount] = useState(String(settings.defaultMargin));
   const [targetPrice, setTargetPrice] = useState('');
   const [leverage, setLeverage] = useState(settings.defaultLeverage);
   const [riskControls, setRiskControls] = useState(settings.attachRiskControls);
@@ -55,9 +55,13 @@ export default function TradeScreen() {
   const exposure = estimate.exposure;
   const liquidation=liquidationEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,targetPrice:numericTarget});
   const canSubmit = ready && !busy && numericAmount > 0 && Number.isFinite(estimate.requiredBalance) && estimate.requiredBalance <= cashBalance;
+  const priceReady=price>0;
+  const changeRange=(value:ChartRange)=>{setRange(value);const interval=value.toLowerCase();if(['1m','5m','15m','1h','4h','1d','1w'].includes(interval))updateSetting('candleInterval',interval as typeof settings.candleInterval);};
   const line = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   const candles = useMemo(() => market ? candlesFor(market.symbol, range) : [], [candlesFor, market, range]);
 
+  useEffect(()=>{setOrderType(settings.defaultOrderType);setLeverage(settings.defaultLeverage);setAmount(String(settings.defaultMargin));},[settings.defaultOrderType,settings.defaultLeverage,settings.defaultMargin]);
+  useEffect(()=>{if(!(price>0))return;setTakeProfit(settings.takeProfitPercent>0?String(price*(1+(side==='long'?1:-1)*settings.takeProfitPercent/100)):'');setStopLoss(settings.stopLossPercent>0?String(price*(1+(side==='long'?-1:1)*settings.stopLossPercent/100)):'');},[activeSymbol,side,priceReady,settings.takeProfitPercent,settings.stopLossPercent]);
   if (!market) return null;
 
   const execute = async () => {
@@ -96,18 +100,18 @@ export default function TradeScreen() {
                     </Pressable>
                   ))}
                 </View>
-                <RangeRail onChange={setRange} range={range} ranges={ADVANCED_RANGES} />
+                <RangeRail onChange={changeRange} range={range} ranges={ADVANCED_RANGES} />
               </View>
               <View style={styles.advancedMarket}>
-                {panel === 'Chart' ? <CandlestickChart candles={candles} height={204} /> : <View style={styles.book}><OrderBook lowerBand={market.lowerBand} upperBand={market.upperBand} price={price} /></View>}
+                {panel === 'Chart' ? (settings.chartType==='line'?<MarketChart series={line} positive={change>=0} height={204} />:<CandlestickChart candles={candles} mode={settings.chartType} height={204} />) : <View style={styles.book}><OrderBook lowerBand={market.lowerBand} upperBand={market.upperBand} price={price} /></View>}
               </View>
             </>
           ) : (
             <>
               <View style={styles.basicChart}>
-                <MarketChart area height={170} positive={change >= 0} series={line} strokeWidth={2} />
+                {settings.chartType==='line'?<MarketChart area height={170} positive={change >= 0} series={line} strokeWidth={2} />:<CandlestickChart candles={candles} mode={settings.chartType} height={170}/>}
               </View>
-              <View style={styles.basicRanges}><RangeRail onChange={setRange} range={range} ranges={BASIC_RANGES} /></View>
+              <View style={styles.basicRanges}><RangeRail onChange={changeRange} range={range} ranges={BASIC_RANGES} /></View>
             </>
           )}
 
@@ -138,6 +142,7 @@ export default function TradeScreen() {
             {advanced && selectedType !== 'market' ? (
               <Field label={selectedType === 'stop' ? 'Trigger price' : 'Limit price'} value={targetPrice} onChangeText={setTargetPrice} unit="POINT" />
             ) : null}
+            {settings.marginWarnings&&numericAmount>0&&estimate.requiredBalance>cashBalance*.8?<Text accessibilityRole="alert" style={{color:colors.negative,marginBottom:12}}>This order uses over 80% of your available trading balance.</Text>:null}
             <Field label="Margin" value={amount} onChangeText={setAmount} unit={settings.currency} />
             <Text style={styles.available}>Estimated fee {formatMoney(estimate.fee, settings.currency)} · balance needed {formatMoney(estimate.requiredBalance, settings.currency)}</Text>
 
@@ -173,7 +178,7 @@ export default function TradeScreen() {
               </>
             ) : null}
 
-            <Pressable disabled={!canSubmit} onPress={() => setReviewOpen(true)} style={({ pressed }) => [styles.submit, side === 'long' ? styles.submitLong : styles.submitShort, !canSubmit && styles.disabled, pressed && styles.pressed]}>
+            <Pressable disabled={!canSubmit} onPress={() => {if(settings.confirmOrders)setReviewOpen(true);else void execute();}} style={({ pressed }) => [styles.submit, side === 'long' ? styles.submitLong : styles.submitShort, !canSubmit && styles.disabled, pressed && styles.pressed]}>
               <Text style={styles.submitText}>Review {side} order</Text>
             </Pressable>
 

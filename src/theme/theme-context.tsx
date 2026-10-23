@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
-import { Appearance } from 'react-native';
+import { Appearance, useColorScheme } from 'react-native';
 import { darkColors, lightColors, type ThemeColors } from './tokens';
 
-export type ThemeMode = 'Dark' | 'Light';
+export type ThemeMode = 'Dark' | 'Light' | 'System';
 
 interface ThemeContextValue {
   colors: ThemeColors;
@@ -15,11 +15,12 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [mode, setMode] = useState<ThemeMode>('Dark');
-  const isDark = mode === 'Dark';
+  const system = useColorScheme();
+  const isDark = mode === 'System' ? system !== 'light' : mode === 'Dark';
 
   useEffect(() => {
-    if (typeof Appearance.setColorScheme === 'function') Appearance.setColorScheme(isDark ? 'dark' : 'light');
-  }, [isDark]);
+    if (typeof Appearance.setColorScheme === 'function') Appearance.setColorScheme(mode === 'System' ? 'unspecified' : isDark ? 'dark' : 'light');
+  }, [isDark, mode]);
 
   const value = useMemo<ThemeContextValue>(() => ({
     colors: isDark ? darkColors : lightColors,
