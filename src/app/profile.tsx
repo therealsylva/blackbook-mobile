@@ -4,9 +4,6 @@ import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'rea
 import {Alert} from 'react-native';
 import {useAuth} from '@/context/auth-context';
 import { useRouter } from 'expo-router';
-import {AddFundsSheet} from '@/components/account/add-funds-sheet';
-import {PaymentHistorySheet} from '@/components/account/payment-history-sheet';
-import {formatMoney} from '@/lib/format';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { ChoiceSheet } from '@/components/ui/choice-sheet';
 import { Icon, type IconName } from '@/components/ui/icon';
@@ -23,9 +20,8 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
-  const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode, cashBalance,totalEquity,unrealizedPnl,realizedPnl } = useExchange();
+  const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode } = useExchange();
   const {signOut,session}=useAuth();
-  const [funding,setFunding]=useState<'deposit'|'withdraw'|null>(null),[payments,setPayments]=useState(false);
   const [tab, setTab] = useState<ProfileTab>('My info');
   const [editOpen, setEditOpen] = useState(false);
   const [choice, setChoice] = useState<Choice>(null);
@@ -64,10 +60,7 @@ export default function ProfileScreen() {
 
         <View style={{marginHorizontal:spacing.page,padding:spacing.md,backgroundColor:colors.section,borderRadius:16,gap:10}}>
           <ProfileRow icon="mode" label="Account mode" onPress={()=>setChoice('accountMode')} value={accountMode==='demo'?'Demo':'Live'}/>
-          <Text style={{color:colors.text}}>Equity {formatMoney(totalEquity)} · Available {formatMoney(cashBalance)}</Text>
-          <Text style={{color:colors.textMuted}}>Unrealized P&L {formatMoney(unrealizedPnl)}</Text>
-          <Text style={{color:colors.textMuted}}>Realized P&L {formatMoney(realizedPnl)}</Text>
-          {accountMode==='real'?<View style={{flexDirection:'row',gap:20,flexWrap:'wrap'}}>{(['deposit','withdraw'] as const).map(mode=><Pressable accessibilityRole="button" key={mode} onPress={()=>setFunding(mode)} style={{paddingVertical:12}}><Text style={{color:colors.text}}>{mode==='deposit'?'Deposit':'Withdraw'}</Text></Pressable>)}<Pressable accessibilityRole="button" onPress={()=>setPayments(true)} style={{paddingVertical:12}}><Text style={{color:colors.text}}>Payment history</Text></Pressable></View>:<Text style={{color:colors.textMuted}}>Demo uses practice funds.</Text>}
+
         </View>
         <ScrollView contentContainerStyle={styles.tabs} horizontal showsHorizontalScrollIndicator={false}>
           {(['My info', 'Preferences', 'General'] as const).map((item) => (
@@ -119,8 +112,6 @@ export default function ProfileScreen() {
         <Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>Save changes</Text></Pressable>
       </BottomSheet>
 
-      <AddFundsSheet visible={funding!==null} mode={funding??'deposit'} onClose={()=>setFunding(null)}/>
-      <PaymentHistorySheet visible={payments&&accountMode==='real'} onClose={()=>setPayments(false)}/>
       <ChoiceSheet onClose={()=>setChoice(null)} onSelect={value=>updateSetting('appearance',value)} options={['Dark','Light','System'] as const} title="Theme" value={settings.appearance} visible={choice==='appearance'}/>
       <ChoiceSheet format={(value) => value === 'basic' ? 'Basic' : 'Advanced'} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('interfaceMode', value)} options={['basic', 'advanced'] as const} title="Trading interface" value={settings.interfaceMode} visible={choice === 'interface'} />
       <ChoiceSheet format={(value) => value === 'real' ? 'Real money' : 'Demo (practice funds)'} onClose={() => setChoice(null)} onSelect={(value) => {void setAccountMode(value).catch(e=>Alert.alert('Mode unchanged',e.message));}} options={['real', 'demo'] as const} title="Account mode" value={accountMode} visible={choice === 'accountMode'} />
@@ -199,3 +190,4 @@ const useStyles = createThemedStyles((colors) => ({
   save: { alignItems: 'center', backgroundColor: colors.text, borderRadius: radii.pill, height: 44, justifyContent: 'center', marginTop: spacing.lg },
   saveText: { color: colors.bg, fontFamily: typography.bold, fontSize: 13 },
 }));
+

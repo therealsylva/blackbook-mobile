@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { candleGeometry, type CandlePoint } from '@/lib/market-series';
 import { useTheme } from '@/theme/theme-context';
@@ -7,6 +7,7 @@ import { createThemedStyles } from '@/theme/use-themed-styles';
 
 interface MarketChartProps {
   series: number[];
+  loading?: boolean;
   candles?: CandlePoint[];
   positive: boolean;
   height?: number;
@@ -17,6 +18,7 @@ interface MarketChartProps {
 
 interface CandlestickChartProps {
   candles: CandlePoint[];
+  loading?: boolean;
   height?: number;
   showVolume?: boolean;
   mode?:'candles'|'bar';
@@ -36,7 +38,7 @@ function geometry(series: number[], height: number, bottom = 8) {
   return { clean, min, max, span, x, y, path };
 }
 
-export function MarketChart({ series, candles, positive, height = 190, grid = false, strokeWidth = 2, area = false }: MarketChartProps) {
+export function MarketChart({ series, candles, loading = false, positive, height = 190, grid = false, strokeWidth = 2, area = false }: MarketChartProps) {
   const { colors } = useTheme();
   const styles = useStyles();
   const chart = useMemo(() => {
@@ -46,7 +48,7 @@ export function MarketChart({ series, candles, positive, height = 190, grid = fa
     return {...base,x:timing.x,path:candles.map((c,i)=>`${i===0||c.breakBefore||(i>0&&c.time-candles[i-1]!.time>timing.step*1.5)?'M':'L'} ${timing.x(i).toFixed(2)} ${base.y(c.close).toFixed(2)}`).join(' ')};
   }, [height, series, candles]);
   const lineColor = positive ? colors.overviewPositive : colors.overviewNegative;
-  if (!series.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}><Text style={{color:colors.textMuted}}>No trading history yet</Text></View>;
+  if (!series.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}>{height <= 30 ? <Svg height="100%" width="100%" viewBox="0 0 360 20"><Line x1="8" x2="352" y1="10" y2="10" stroke={positive ? colors.overviewPositive : colors.overviewNegative} strokeWidth={1.7}/></Svg> : loading ? <ActivityIndicator accessibilityLabel="Loading chart" color={colors.textMuted}/> : <Text style={{color:colors.textMuted}}>Price history unavailable</Text>}</View>;
   const areaPath = `${chart.path} L ${chart.x(chart.clean.length - 1)} ${height} L ${chart.x(0)} ${height} Z`;
 
   return (
@@ -67,7 +69,7 @@ export function MarketChart({ series, candles, positive, height = 190, grid = fa
   );
 }
 
-export function CandlestickChart({ candles, height = 212, showVolume = true, mode='candles' }: CandlestickChartProps) {
+export function CandlestickChart({ candles, loading = false, height = 212, showVolume = true, mode='candles' }: CandlestickChartProps) {
   const { colors } = useTheme();
   const styles = useStyles();
   const chart = useMemo(() => {
@@ -82,7 +84,7 @@ export function CandlestickChart({ candles, height = 212, showVolume = true, mod
     const maxVolume = Math.max(...clean.map((item) => item.volume??0), 1);
     return { clean, priceHeight, xStep, y, maxVolume, x:timing.x };
   }, [candles, height, showVolume]);
-  if (!candles.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}><Text style={{color:colors.textMuted}}>No trading history yet</Text></View>;
+  if (!candles.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}>{loading ? <ActivityIndicator accessibilityLabel="Loading chart" color={colors.textMuted}/> : <Text style={{color:colors.textMuted}}>Price history unavailable</Text>}</View>;
 
   return (
     <View style={[styles.candleFrame, { height }]}>
@@ -120,4 +122,5 @@ const useStyles = createThemedStyles((colors) => ({
   frame: { overflow: 'hidden', width: '100%' },
   candleFrame: { backgroundColor: colors.chart, overflow: 'hidden', width: '100%' },
 }));
+
 

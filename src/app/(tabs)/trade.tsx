@@ -1,7 +1,7 @@
 import {useAuth} from '@/context/auth-context';
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { CandlestickChart, MarketChart } from '@/components/market/market-chart';
@@ -27,9 +27,10 @@ export default function TradeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
+  useFocusEffect(useCallback(()=>{const listener=BackHandler.addEventListener('hardwareBackPress',()=>{router.navigate('/(tabs)');return true;});return()=>listener.remove();},[router]));
   const {session,requestAuth}=useAuth();
   const {
-    activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor,
+    activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor,
     cashBalance, positions, orders, settings, updateSetting, placeOrder, isTradableFor, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error,
   } = useExchange();
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
@@ -106,13 +107,13 @@ export default function TradeScreen() {
                 <RangeRail onChange={changeRange} range={range} ranges={ADVANCED_RANGES} />
               </View>
               <View style={styles.advancedMarket}>
-                {panel === 'Chart' ? (settings.chartType==='line'?<MarketChart candles={candles} series={line} positive={change>=0} height={204} />:<CandlestickChart candles={candles} mode={settings.chartType} height={204} />) : <View style={styles.book}><OrderBook lowerBand={market.lowerBand} upperBand={market.upperBand} price={price} /></View>}
+                {panel === 'Chart' ? (settings.chartType==='line'?<MarketChart loading={historyLoadingFor(market.symbol)} candles={candles} series={line} positive={change>=0} height={204} />:<CandlestickChart loading={historyLoadingFor(market.symbol)} candles={candles} mode={settings.chartType} height={204} />) : <View style={styles.book}><OrderBook lowerBand={market.lowerBand} upperBand={market.upperBand} price={price} /></View>}
               </View>
             </>
           ) : (
             <>
               <View style={styles.basicChart}>
-                {settings.chartType==='line'?<MarketChart candles={candles} area height={170} positive={change >= 0} series={line} strokeWidth={2} />:<CandlestickChart candles={candles} mode={settings.chartType} height={170}/>}
+                {settings.chartType==='line'?<MarketChart loading={historyLoadingFor(market.symbol)} candles={candles} area height={170} positive={change >= 0} series={line} strokeWidth={2} />:<CandlestickChart loading={historyLoadingFor(market.symbol)} candles={candles} mode={settings.chartType} height={170}/>}
               </View>
               <View style={styles.basicRanges}><RangeRail onChange={changeRange} range={range} ranges={BASIC_RANGES} /></View>
             </>
@@ -303,5 +304,6 @@ const useStyles = createThemedStyles((colors) => ({
   activityDot: { color: colors.textFaint, fontFamily: typography.family },
   pressed: { opacity: 0.65 },
 }));
+
 
 

@@ -16,6 +16,7 @@
       "package": "com.modnight.blackbook",
       "versionCode": 4,
       "predictiveBackGestureEnabled": true,
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
@@ -71,3 +72,4 @@
     }
   }
 }
+

@@ -3,8 +3,7 @@ export function configureDisplay(nextLocale:string,nextTimeZone:string){locale=n
 export function formatTimestamp(timestamp:number){return new Intl.DateTimeFormat(locale,{timeZone,month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(timestamp));}
 export function formatPrice(value: number) {
   if (!Number.isFinite(value)) return '—';
-  if (value < 10) return value.toLocaleString(locale,{minimumFractionDigits:4,maximumFractionDigits:4});
-  return value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString(locale, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 }
 
 export function formatMoney(value: number, currency = 'USD') {
@@ -12,6 +11,8 @@ export function formatMoney(value: number, currency = 'USD') {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
 }
@@ -25,3 +26,4 @@ export function formatCompact(value: number) {
   if (!Number.isFinite(value)) return '—';
   return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 2 }).format(value);
 }
+
