@@ -7,7 +7,7 @@ import {useAuth} from '@/context/auth-context';
 import {api,uuid} from '@/lib/backend';
 import {formatMoney} from '@/lib/format';
 import {useTheme} from '@/theme/theme-context';
-import {BottomSheet} from '@/components/ui/bottom-sheet';
+import {BottomSheet,useSheetInputFocus} from '@/components/ui/bottom-sheet';
 type Rail={blockchain:string;tokenId:string;symbol:string;withdrawalsEnabled:boolean};
 type Attempt={fingerprint:string;body:Record<string,unknown>};
 export function AddFundsSheet({visible,onClose,mode='deposit'}:{visible:boolean;onClose:()=>void;mode?:'deposit'|'withdraw'}){
@@ -41,7 +41,7 @@ export function AddFundsSheet({visible,onClose,mode='deposit'}:{visible:boolean;
   {accountMode==='demo'?<Text style={muted}>Demo uses practice funds. Switch to Live in your account to deposit or withdraw.</Text>:<>
    <Text style={muted}>Live account · {formatMoney(cashBalance)} available to trade</Text>
    <View style={{flexDirection:'row',gap:8,flexWrap:'wrap',marginBottom:12}}>{rails.map((r,i)=><Pressable accessibilityRole="button" accessibilityState={{selected:selected===i,disabled:busy}} key={r.blockchain+':'+r.tokenId} disabled={busy} onPress={()=>{setSelected(i);change();}} style={{padding:10,borderRadius:10,backgroundColor:selected===i?colors.surfaceRaised:colors.control}}><Text style={{color:colors.text}}>{r.symbol} · {r.blockchain}</Text></Pressable>)}</View>
-   {mode==='withdraw'?<><Text style={muted}>Amount in USD</Text><TextInput editable={!busy} accessibilityLabel="Withdrawal amount" keyboardType="decimal-pad" value={amount} onChangeText={value=>{setAmount(value);change();}} style={input}/><Text style={muted}>Destination on {rails[selected]?.blockchain}</Text><TextInput editable={!busy} accessibilityLabel="Destination address" autoCapitalize="none" value={address} onChangeText={value=>{setAddress(value);change();}} style={input}/></>:<Text style={muted}>Send only the selected token on the displayed network. Credit appears after the transfer is confirmed.</Text>}
+   {mode==='withdraw'?<><Text style={muted}>Amount in USD</Text><FundingInput editable={!busy} accessibilityLabel="Withdrawal amount" keyboardType="decimal-pad" value={amount} onChangeText={value=>{setAmount(value);change();}} style={input}/><Text style={muted}>Destination on {rails[selected]?.blockchain}</Text><FundingInput editable={!busy} accessibilityLabel="Destination address" autoCapitalize="none" value={address} onChangeText={value=>{setAddress(value);change();}} style={input}/></>:<Text style={muted}>Send only the selected token on the displayed network. Credit appears after the transfer is confirmed.</Text>}
    {review?<View accessibilityRole="summary"><Text style={{color:colors.text,marginBottom:12}}>Review withdrawal · {formatMoney(Number(amount))} · {rails[selected]?.symbol} on {rails[selected]?.blockchain}</Text><Text selectable style={muted}>{address.trim()}</Text><Text style={muted}>Submitting creates a withdrawal request. Payment history shows approval and transfer status. A network fee quote is not available here.</Text><Pressable accessibilityRole="button" onPress={()=>setReview(false)}><Text style={muted}>Back to details</Text></Pressable></View>:null}
    {result?<><Text style={{color:colors.text,marginBottom:12}}>{mode==='deposit'?'Polygon deposit address':'Status: '+String(result.state??'pending')}</Text>{result.address?<Text selectable style={{color:colors.text,marginBottom:12}}>{String(result.address)}</Text>:null}{result.address?<Pressable accessibilityRole="button" accessibilityLabel="Copy deposit address" onPress={()=>{void Clipboard.setStringAsync(String(result.address));}}><Text style={{color:colors.text,marginBottom:16}}>Copy address</Text></Pressable>:null}{mode==='withdraw'?<Text style={muted}>Request {String(result.id)}. Follow its progress in Payment history.</Text>:null}</>:null}
    {!rails.length&&!error?<Text style={muted}>Loading Polygon funding options…</Text>:null}
@@ -51,3 +51,5 @@ export function AddFundsSheet({visible,onClose,mode='deposit'}:{visible:boolean;
  </BottomSheet>;
 }
 
+
+function FundingInput(props:React.ComponentProps<typeof TextInput>){const onFocus=useSheetInputFocus();return <TextInput {...props} onFocus={onFocus}/>;}
