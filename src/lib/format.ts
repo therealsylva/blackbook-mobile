@@ -28,3 +28,8 @@ export function formatCompact(value: number) {
   return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 2 }).format(value);
 }
 
+
+export function formatLeverage(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return '—';
+  return `${new Intl.NumberFormat(locale, {maximumFractionDigits: 2}).format(value)}x`;
+}

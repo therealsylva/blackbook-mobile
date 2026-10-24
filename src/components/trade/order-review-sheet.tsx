@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import type { OrderType, Side } from '@/types/exchange';
-import { formatMoney, formatPrice } from '@/lib/format';
+import { formatLeverage, formatMoney, formatPrice } from '@/lib/format';
 import { typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -35,7 +35,7 @@ export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, ty
       <View style={styles.rows}>
         <ReviewRow label="Margin" value={formatMoney(amount, currency)} />
         <ReviewRow label="Exposure" value={formatMoney(exposure, currency)} />
-        <ReviewRow label="Leverage" value={String(leverage) + 'x'} />
+        <ReviewRow label="Leverage" value={formatLeverage(leverage)} />
         <ReviewRow label="Execution" value={execution} />
         <ReviewRow label="Estimated fee" value={formatMoney(fee, currency)} />
       </View>
@@ -65,3 +65,4 @@ const useStyles = createThemedStyles((colors) => ({
   buttonText: { color: colors.white, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 15 },
   pressed: { opacity: 0.72 },
 }));
+
