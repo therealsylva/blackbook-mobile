@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { Icon, type IconName } from '@/components/ui/icon';
@@ -19,12 +19,7 @@ const STORIES = [
   { kicker: 'Club indices', title: 'Bayern Munich: compare market price with reference R', symbol: 'BAY', meta: 'Index overview' },
   { kicker: 'Player indices', title: 'Haaland: explore the published index history', symbol: 'HLD', meta: 'Index overview' },
 ];
-const STRATEGIES: Array<{ icon: IconName; title: string; copy: string }> = [
-  { icon: 'chart', title: 'Reference & active band', copy: 'Verified sporting performance determines R. Bands persist until superseded.' },
-  { icon: 'positions', title: 'Market price vs reference', copy: 'Demand can move P above or below R within the permitted band.' },
-  { icon: 'trade', title: 'After-match recalibration', copy: 'Complete verified match data drives a new reference and asymmetric band.' },
-  { icon: 'swap', title: 'Pair comparison', copy: 'Compare both football indices using ticker pairs.' },
-];
+const STRATEGIES: Array<{ icon: IconName; title: string; copy: string }> = [{"icon": "chart", "title": "Index Range & Recalibration", "copy": "See the published upper and lower trading bands. Verified performance updates recalibrate the index and its range."}, {"icon": "positions", "title": "Perpetual Trading · No Funding Rate", "copy": "Go long or short without an expiry date or recurring funding payments. Close your position when you choose."}, {"icon": "swap", "title": "Relative-Value Pairs", "copy": "Trade one entity’s performance against another. BAR/RMD rises when Barcelona strengthens relative to Real Madrid."}, {"icon": "markets", "title": "Index Baskets", "copy": "Follow multiple clubs through one index. EPL-20 averages all 20 clubs; EPL-5 follows the season’s fixed top five."}];
 
 export default function FeedScreen() {
   const styles = useStyles();
@@ -33,9 +28,9 @@ export default function FeedScreen() {
   const [tab, setTab] = useState<FeedTab>('Highlights');
   const movers = useMemo(() => {
     const gains = [...markets].sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol));
-    const volume = [...markets].sort((a, b) => b.density - a.density);
-    const volatility = [...markets].sort((a, b) => ((b.high24h - b.low24h) / b.price) - ((a.high24h - a.low24h) / a.price));
-    return { gainers: gains.slice(0, 4), losers: gains.slice(-4).reverse(), volume: volume.slice(0, 4), volatility: volatility.slice(0, 4) };
+    const volume = [...markets].sort((a, b) => (b.volumeUsd24h??-1) - (a.volumeUsd24h??-1));
+    const volatility = [...markets].sort((a, b) => (b.volatility24h??-1) - (a.volatility24h??-1));
+    return { gainers: gains.slice(0, 4), losers: gains.slice(-4).reverse(), volume: volume.filter(m=>Number.isFinite(m.volumeUsd24h)).slice(0, 4), volatility: volatility.filter(m=>Number.isFinite(m.volatility24h)).slice(0, 4) };
   }, [changeFor, markets]);
   const openMarket = (symbol: string) => router.push({ pathname: '/market/[symbol]', params: { symbol } });
 
@@ -67,10 +62,8 @@ export default function FeedScreen() {
 
         {tab === 'Guides' ? (
           <>
-            <SectionTitle title="Football index guides" />
-            {STORIES.map((story) => <StoryRow key={story.title} onPress={openMarket} story={story} market={markets.find((market) => market.symbol === story.symbol)} />)}
-            <SectionTitle title="Available indices" />
-            {markets.slice().sort((a, b) => b.rank - a.rank).slice(0, 4).map((market) => <ListingRow key={market.symbol} market={market} onPress={openMarket} />)}
+            <SectionTitle title="Index tools & strategies" />
+            {STRATEGIES.map((strategy) => <StrategyRow key={strategy.title} strategy={strategy} />)}
           </>
         ) : null}
 
@@ -87,8 +80,8 @@ export default function FeedScreen() {
           <>
             <MoverSection changeFor={changeFor} markets={movers.gainers} onPress={openMarket} priceFor={priceFor} title="Index gainers" />
             <MoverSection changeFor={changeFor} markets={movers.losers} onPress={openMarket} priceFor={priceFor} title="Index losers" />
-            <MoverSection changeFor={changeFor} markets={movers.volume} onPress={openMarket} priceFor={priceFor} title="Highest density indices" />
-            <MoverSection changeFor={changeFor} markets={movers.volatility} onPress={openMarket} priceFor={priceFor} title="Widest active bands" />
+            <MoverSection changeFor={changeFor} markets={movers.volume} onPress={openMarket} priceFor={priceFor} title="Highest volume" />
+            <MoverSection changeFor={changeFor} markets={movers.volatility} onPress={openMarket} priceFor={priceFor} title="Most volatile" />
           </>
         ) : null}
       </ScrollView>
@@ -131,7 +124,7 @@ function StrategyRow({ strategy }: { strategy: typeof STRATEGIES[number] }) {
   const { colors } = useTheme();
   const styles = useStyles();
   return (
-    <Pressable style={({ pressed }) => [styles.strategyRow, pressed && styles.pressed]}>
+    <Pressable onPress={()=>void Linking.openURL('https://tradeblackbook.org/tools.html#methodology')} style={({ pressed }) => [styles.strategyRow, pressed && styles.pressed]}>
       <Icon name={strategy.icon} size={23} />
       <View style={styles.strategyCopy}><Text style={styles.strategyTitle}>{strategy.title}</Text><Text style={styles.strategyBody}>{strategy.copy}</Text></View>
       <Icon color={colors.textMuted} name="chevron" size={17} />
@@ -182,3 +175,4 @@ const useStyles = createThemedStyles((colors) => ({
   newPill: { backgroundColor: colors.surface, borderRadius: radii.pill, color: colors.text, fontFamily: typography.semibold, fontSize: 9, marginLeft: spacing.sm, overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5 },
   pressed: { backgroundColor: colors.section },
 }));
+

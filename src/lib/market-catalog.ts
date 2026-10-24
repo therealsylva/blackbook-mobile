@@ -1,6 +1,6 @@
 import type {MarketDefinition} from '../data/markets';
 import type {FeePolicy} from './trading-fees';
-export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
+export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};statistics?:{volumeMinor24h?:string;rangePct24h?:number;highPriceTicks24h?:string;lowPriceTicks24h?:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
 type Row=Record<string,unknown>;
 /** Join on stable entity identity; backend symbols may differ from app tickers. */
 export function normalizeMarketCatalog(trading:Row[],indices:Row[],known:MarketDefinition[]):RemoteMarket[]{
@@ -18,8 +18,9 @@ export function normalizeMarketCatalog(trading:Row[],indices:Row[],known:MarketD
    // inferred economics, stale seed values, or guessed fee/margin settings.
    terms:terms??previous?.terms??{priceDecimals:'6',quoteMinorPerIndexUnitPerLot:'0',minimumOrderLots:'0',feePolicyVersion:''},
    feePolicy:(row.feePolicy??previous?.feePolicy) as FeePolicy,
-   marginPolicy:(row.marginPolicy??previous?.marginPolicy??{initialMarginPpm:'1000000',maintenanceMarginPpm:'1000000'}) as RemoteMarket['marginPolicy'],tradable:tradable||Boolean(previous?.tradable),
+   marginPolicy:(row.marginPolicy??previous?.marginPolicy??{initialMarginPpm:'1000000',maintenanceMarginPpm:'1000000'}) as RemoteMarket['marginPolicy'],tradable:meta.symbol!=='OSI'&&(tradable||Boolean(previous?.tradable)),
   } as RemoteMarket);
  }
  return [...output.values()];
 }
+

@@ -8,7 +8,7 @@ const jwt=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
 const accessToken=jwt({alg:'HS256',typ:'JWT'})+'.'+jwt({sub:user.id,aud:'authenticated',role:'authenticated',exp:Math.floor(Date.now()/1000)+3600})+'.ui-fixture';
 const catalog=publication.indices.map(row=>({marketId:'fixture:'+row.symbol.toLowerCase(),entityId:row.snapshot.entityId,symbol:row.symbol,displayName:row.name,kind:row.snapshot.kind,referenceTicks:String(row.snapshot.referenceMicros),lowerTicks:String(row.snapshot.lowerMicros),upperTicks:String(row.snapshot.upperMicros)}));
 for(const pair of pairs){const x=catalog.find(m=>m.symbol===pair.left),y=catalog.find(m=>m.symbol===pair.right),reference=Math.round(Number(x.referenceTicks)/Number(y.referenceTicks)*1e9);catalog.push({marketId:'fixture:'+pair.id,entityId:pair.id,symbol:pair.title,displayName:pair.title,kind:'PAIR',referenceTicks:String(reference),lowerTicks:String(Math.floor(reference*.94)),upperTicks:String(Math.ceil(reference*1.06)),numeratorEntityId:x.entityId,denominatorEntityId:y.entityId});}
-for(const market of catalog)Object.assign(market,{marketVersion:'1',marketHash:'a'.repeat(64),terms:{priceDecimals:'6',quoteMinorPerIndexUnitPerLot:'100',minimumOrderLots:'1',feePolicyVersion:'2'},feePolicy:{policyVersion:'2',makerRatePpm:'200',takerRatePpm:'600',rounding:'ceil_per_fill'},marginPolicy:{initialMarginPpm:'20000',maintenanceMarginPpm:'10000'}});
+for(const market of catalog)Object.assign(market,{marketVersion:'1',marketHash:'a'.repeat(64),terms:{priceDecimals:'6',quoteMinorPerIndexUnitPerLot:'0.0001',minimumOrderLots:'1',feePolicyVersion:'2'},feePolicy:{policyVersion:'2',makerRatePpm:'200',takerRatePpm:'600',rounding:'ceil_per_order'},marginPolicy:{initialMarginPpm:'20000',maintenanceMarginPpm:'10000'}});
 export async function installConnectedFixture(context){
  const preferences={accountMode:'real',appearance:'Dark',defaultLeverage:5},accounts={real:[],demo:[]},fills={real:[],demo:[]},cash={real:1000000,demo:1000000},orders=[],requests=[],failures=[];
  const portfolio=mode=>{const used=accounts[mode].reduce((sum,p)=>sum+Number(p.heldMarginMinor),0);return {assetCode:'USD',minorUnit:2,cashBalanceMinor:String(cash[mode]),equityMinor:String(cash[mode]),unrealizedPnlMinor:'0',usedMarginMinor:String(used),reservedMarginMinor:'0',maintenanceMarginMinor:'0',availableToTradeMinor:String(cash[mode]-used)};};
@@ -27,15 +27,16 @@ export async function installConnectedFixture(context){
    if(path==='/v1/preferences'){if(body)Object.assign(preferences,body);json={preferences};}
    else if(path==='/v1/indices/catalog')json={items:[]};
    else if(path==='/v1/markets')json={items:catalog};
-   else if(path.endsWith('/snapshot')){const m=catalog.find(m=>path==='/v1/markets/'+encodeURIComponent(m.marketId)+'/snapshot');assert.ok(m);json={...m,status:'RUNNING',cursor:'1',observedAtMs:String(Date.now()),lastTradePriceTicks:m.referenceTicks,bids:[{priceTicks:String(Number(m.referenceTicks)-10000),quantityLots:'1000'}],asks:[{priceTicks:String(Number(m.referenceTicks)+10000),quantityLots:'1000'}]};}
+   else if(path.endsWith('/snapshot')){const m=catalog.find(m=>path==='/v1/markets/'+encodeURIComponent(m.marketId)+'/snapshot');assert.ok(m);json={...m,status:'RUNNING',cursor:'1',observedAtMs:String(Date.now()),lastTradePriceTicks:m.referenceTicks,bids:[{priceTicks:String(Number(m.referenceTicks)-10000),quantityLots:'1000000000'}],asks:[{priceTicks:String(Number(m.referenceTicks)+10000),quantityLots:'1000000000'}]};}
    else if(path.endsWith('/candles')){const m=catalog.find(m=>path==='/v1/markets/'+encodeURIComponent(m.marketId)+'/candles');assert.ok(m);const price=Number(m.referenceTicks)/1e6;json={candles:Array.from({length:1500},(_,i)=>({time:Date.now()-(1500-i)*60000,open:price*(.97+i/50000),high:price*(.975+i/50000),low:price*(.965+i/50000),close:price*(.973+i/50000),volume:10}))};}
    else if(path==='/v1/conditional-orders')json={items:[]};
    else if(/\/account\/(positions|portfolio|orders|fills)$/.test(path)){const mode=path.includes('/demo/')?'demo':'real',section=path.split('/').at(-1);json={section,items:section==='positions'?accounts[mode]:section==='portfolio'?[portfolio(mode)]:section==='fills'?fills[mode]:[],nextCursor:null};}
    else if(path==='/v1/orders'||path==='/v1/demo/orders'){
     const mode=path.includes('/demo/')?'demo':'real',m=catalog.find(m=>m.marketId===body.marketId);assert.ok(m);
+    assert.ok(Number(body.amountMinor)>=100,'user-selected dollar amount reaches the API');
     assert.ok(Number.isInteger(body.leverage)&&body.leverage>=1&&body.leverage<=50,'selected leverage must reach the API');
-    const lots=Number(body.quantityLots),price=Number(m.referenceTicks)+(body.side==='BID'?10000:-10000),notional=lots*price/10000;
-    const fee=Number((BigInt(body.quantityLots)*BigInt(price)*100n*600n+1000000000000n-1n)/1000000000000n);
+    const lots=Number(body.quantityLots),price=Number(m.referenceTicks)+(body.side==='BID'?10000:-10000),notional=lots*price/10000000000;
+    const fee=Number((BigInt(body.quantityLots)*BigInt(price)*600n+10000000000000000n-1n)/10000000000000000n);
     cash[mode]-=fee;
     fills[mode].push({fillId:body.orderId,orderId:body.orderId,marketId:m.marketId,side:body.side,quantityLots:body.quantityLots,priceTicks:String(price),leverage:body.leverage,feeMinor:String(fee),feeRatePpm:'600',feePolicyVersion:'2',liquidityRole:'taker',realizedPnlMinor:'0',createdAt:new Date().toISOString()});
     accounts[mode].push({marketId:m.marketId,positionLots:String(body.side==='BID'?lots:-lots),entryPriceTicks:String(price),markPriceTicks:String(price),lastTradeSequence:'1',leverage:body.leverage,heldMarginMinor:String(Math.ceil(notional/body.leverage)),unrealizedPnlMinor:'0',openedAt:new Date().toISOString()});
@@ -55,3 +56,4 @@ export async function signInFixture(page){
  await page.getByLabel('Email',{exact:true}).waitFor({state:'hidden'});
  await page.getByLabel('Open profile',{exact:true}).waitFor();
 }
+

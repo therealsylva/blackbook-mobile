@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, Text, TextInput, View, type ListRenderItem } from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View, type ListRenderItem } from 'react-native';
+import { SvgUri } from 'react-native-svg';
+import comingSoon from '@/data/coming-soon.json';
 import { useRouter } from 'expo-router';
 import { MarketRow } from '@/components/market/market-row';
 import { PairRow } from '@/components/market/pair-row';
@@ -13,13 +15,13 @@ import { layout, radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 
-type Category = 'All' | 'Pairs' | 'Clubs' | 'Athletes';
+type Category = 'All' | 'Pairs' | 'Clubs' | 'Athletes' | 'Coming soon';
 type SortMode = 'Rank' | 'Market change' | 'Index value';
 type DirectoryItem =
   | { kind: 'market'; market: MarketDefinition }
   | { kind: 'pair'; pair: MajorPair; left: MarketDefinition; right: MarketDefinition };
 
-const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Athletes'];
+const CATEGORIES: Category[] = ['All', 'Pairs', 'Clubs', 'Athletes', 'Coming soon'];
 const SORTS: SortMode[] = ['Rank', 'Market change', 'Index value'];
 
 function itemKey(item: DirectoryItem) {
@@ -31,6 +33,7 @@ export default function AllIndicesScreen() {
   const styles = useStyles();
   const router = useRouter();
   const { markets, priceFor, changeFor } = useExchange();
+  const [upcoming,setUpcoming]=useState<keyof typeof comingSoon>('NBA');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<Category>('All');
   const [sortMode, setSortMode] = useState<SortMode>('Rank');
@@ -38,7 +41,7 @@ export default function AllIndicesScreen() {
 
   const baseFiltered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (category === 'Pairs') return [];
+    if (category === 'Pairs'||category==='Coming soon') return [];
     const list = markets.filter((market) => (category === 'All' || market.category === category) && (!normalized || market.name.toLowerCase().includes(normalized) || market.symbol.toLowerCase().includes(normalized)));
     if (sortMode === 'Index value') list.sort((a, b) => b.reference - a.reference);
     if (sortMode === 'Rank') list.sort((a, b) => a.rank - b.rank);
@@ -71,7 +74,7 @@ export default function AllIndicesScreen() {
       <View style={styles.titleRow}>
         <View>
           <Text style={styles.title}>All indices</Text>
-          <Text style={styles.count}>{category === 'Pairs' ? `${MAJOR_PAIRS.length} pairs` : `${filtered.length} football indices`}</Text>
+          <Text style={styles.count}>{category==='Coming soon'?'Explore what’s next':category === 'Pairs' ? `${MAJOR_PAIRS.length} pairs` : `${filtered.length} football indices`}</Text>
         </View>
         <Pressable accessibilityLabel={`Sort indices by ${sortMode}`} onPress={() => setSortOpen(true)} style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}>
           <Icon name="filter" size={20} />
@@ -92,7 +95,7 @@ export default function AllIndicesScreen() {
         ))}
       </ScrollView>
 
-      {category !== 'Pairs' ? (
+      {category !== 'Pairs'&&category!=='Coming soon' ? (
         <View style={styles.tableHeader}>
           <Text style={styles.column}>Index</Text>
           <Text style={styles.column}>Price / Change</Text>
@@ -109,7 +112,7 @@ export default function AllIndicesScreen() {
         initialNumToRender={8}
         keyboardShouldPersistTaps="handled"
         keyExtractor={itemKey}
-        ListEmptyComponent={<Text style={styles.empty}>No matching indices.</Text>}
+        ListEmptyComponent={category==='Coming soon'?<View style={{paddingHorizontal:spacing.page}}><ScrollView horizontal showsHorizontalScrollIndicator={false}>{(Object.keys(comingSoon) as (keyof typeof comingSoon)[]).map(name=><Pressable key={name} onPress={()=>setUpcoming(name)} style={styles.category}><Text style={{color:upcoming===name?colors.text:colors.textMuted}}>{name}</Text></Pressable>)}</ScrollView>{comingSoon[upcoming].columns.flatMap(column=>column.items).filter(item=>!query||(`${item.name} ${item.symbol}`).toLowerCase().includes(query.toLowerCase())).map(item=><View key={item.symbol} style={{flexDirection:'row',alignItems:'center',paddingVertical:14,gap:12}}>{item.asset.src.endsWith('.svg')?<SvgUri uri={item.asset.src} width={42} height={42}/>:<Image source={{uri:item.asset.src}} style={{width:42,height:42,borderRadius:21}}/>}<View style={{flex:1}}><Text style={{color:colors.text,fontFamily:typography.semibold}}>{item.name}</Text><Text style={{color:colors.textMuted}}>{item.symbol}</Text></View><Text style={{color:colors.textMuted,fontSize:11}}>Coming soon</Text></View>)}</View>:<Text style={styles.empty}>No matching indices.</Text>}
         ListHeaderComponent={listHeader}
         maxToRenderPerBatch={8}
         removeClippedSubviews
@@ -141,3 +144,4 @@ const useStyles = createThemedStyles((colors) => ({
   empty: { color: colors.textMuted, fontFamily: typography.family, fontSize: 13, padding: spacing.xl, textAlign: 'center' },
   pressed: { opacity: 0.65 },
 }));
+
