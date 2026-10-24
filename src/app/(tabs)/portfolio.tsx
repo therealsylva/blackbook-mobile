@@ -8,7 +8,7 @@ import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { formatMoney, formatPercent, formatPrice } from '@/lib/format';
+import { formatLeverage, formatMoney, formatPercent, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -82,7 +82,7 @@ function PositionsList() {
           <MarketIdentityAvatar market={market} size={42} />
           <View style={styles.itemCopy}>
             <View style={styles.itemTitleLine}><Text numberOfLines={1} style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
-            <Text style={[styles.sideMeta, { color: position.side === 'long' ? colors.positive : colors.negative }]}>{position.side === 'long' ? 'Long' : 'Short'} · {position.leverage}x</Text>
+            <Text style={[styles.sideMeta, { color: position.side === 'long' ? colors.positive : colors.negative }]}>{position.side === 'long' ? 'Long' : 'Short'} · {formatLeverage(position.leverage)}</Text>
           </View>
           <View style={styles.itemQuote}>
             <Text style={[styles.pnl, { color: pnl >= 0 ? colors.positive : colors.negative }]}>{pnl >= 0 ? '+' : ''}{formatMoney(pnl, settings.currency)}</Text>
@@ -123,7 +123,7 @@ function OrdersList() {
           <MarketIdentityAvatar market={market} size={42} />
           <View style={styles.itemCopy}>
             <View style={styles.itemTitleLine}><Text numberOfLines={1} style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
-            <Text style={[styles.sideMeta, { color: order.side === 'long' ? colors.positive : colors.negative }]}>{order.side === 'long' ? 'Long' : 'Short'} · {order.type} · {order.leverage}x</Text>
+            <Text style={[styles.sideMeta, { color: order.side === 'long' ? colors.positive : colors.negative }]}>{order.side === 'long' ? 'Long' : 'Short'} · {order.type} · {formatLeverage(order.leverage)}</Text>
             <View style={styles.orderNumbers}>
               <Text style={styles.context}>Target <Text style={styles.contextValue}>{formatPrice(order.targetPrice)}</Text></Text>
               <Text style={styles.context}>Current <Text style={styles.contextValue}>{formatPrice(current)}</Text></Text>
@@ -162,7 +162,7 @@ function JournalList() {
               <Text numberOfLines={1} style={styles.journalTitle}>{journalTitle(record, market.name)}</Text>
               <Text style={styles.journalTicker}>{market.symbol}</Text>
             </View>
-            <Text style={styles.journalDetail}>{record.side === 'long' ? 'Long' : 'Short'} · {record.leverage}x · {formatMoney(record.size, settings.currency)}</Text>
+            <Text style={styles.journalDetail}>{record.side === 'long' ? 'Long' : 'Short'} · {formatLeverage(record.leverage)} · {formatMoney(record.size, settings.currency)}</Text>
             <Text style={styles.journalDetail}>{formatPrice(record.entryPrice)}{record.exitPrice ? ` → ${formatPrice(record.exitPrice)}` : ''} · fee {formatMoney(record.fee, settings.currency)}</Text>
           </View>
           {record.pnl !== undefined ? <Text style={[styles.journalPnl, { color: record.pnl >= 0 ? colors.positive : colors.negative }]}>{record.pnl >= 0 ? '+' : ''}{formatMoney(record.pnl, settings.currency)}</Text> : null}
@@ -261,3 +261,4 @@ const useStyles = createThemedStyles((colors) => ({
   emptyText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
   pressed: { opacity: 0.65 },
 }));
+

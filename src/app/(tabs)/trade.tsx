@@ -124,7 +124,6 @@ export default function TradeScreen() {
               <Text style={styles.available}>{formatMoney(cashBalance, settings.currency)} available</Text>
             </View>
 
-            {candles.some(c=>c.source==='history')?<Text style={{color:colors.textMuted,marginBottom:8}}>History uses hourly source candles; larger intervals aggregate them.</Text>:null}
             {!tradable?<Text style={{color:colors.textMuted,marginBottom:16}}>Trading is unavailable for this index. You can still browse its prices and history.</Text>:null}
             <View style={styles.sidePill}>
               {(['long', 'short'] as const).map((item) => (
