@@ -19,7 +19,7 @@ export function normalizeMarketCatalog(trading:Row[],indices:Row[],known:MarketD
    // inferred economics, stale seed values, or guessed fee/margin settings.
    terms:terms??previous?.terms??{priceDecimals:'6',quoteMinorPerIndexUnitPerLot:'0',minimumOrderLots:'0',feePolicyVersion:''},
    feePolicy:(row.feePolicy??previous?.feePolicy) as FeePolicy,
-   marginPolicy:(row.marginPolicy??previous?.marginPolicy??{initialMarginPpm:'1000000',maintenanceMarginPpm:'1000000'}) as RemoteMarket['marginPolicy'],tradable:meta.symbol!=='OSI'&&(tradable||Boolean(previous?.tradable)),
+   marginPolicy:(row.marginPolicy??previous?.marginPolicy??{initialMarginPpm:'1000000',maintenanceMarginPpm:'1000000'}) as RemoteMarket['marginPolicy'],tradable:meta.symbol!=='OSI'&&row.tradable!==false&&row.launchEligible!==false&&(tradable||Boolean(previous?.tradable)),
   } as RemoteMarket);
  }
  return [...output.values()];

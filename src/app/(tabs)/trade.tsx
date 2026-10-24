@@ -164,8 +164,8 @@ export default function TradeScreen() {
 
             <View style={styles.summaryLine}>
               <Summary label="Exposure" value={formatMoney(exposure, settings.currency)} />
-              <Summary label="Fee" value={formatMoney(0, settings.currency)} />
-              <Summary label="Est. liquidation" value={Number.isFinite(liquidation)?formatPrice(liquidation):'—'} />
+              <Summary label="Fee" value={formatMoney(estimate.fee, settings.currency)} />
+              <Summary label="Est. liquidation" value={liquidation===Infinity?'Below zero':formatPrice(liquidation)} />
             </View>
 
             {advanced ? (
