@@ -14,3 +14,10 @@ test('published runtime economics and identity override public display projectio
  const market={...index,marketId:'football:barcelona',marketVersion:'2',marketHash:'hash',referenceTicks:'1250000000',terms:{priceDecimals:'6',minimumOrderLots:'1',quoteMinorPerIndexUnitPerLot:'100',feePolicyVersion:'2'},marginPolicy:{initialMarginPpm:'200000',maintenanceMarginPpm:'100000'},feePolicy:{policyVersion:'2',makerRatePpm:'200',takerRatePpm:'600'}};
  const [row]=normalizeMarketCatalog([market],[index],known);assert.equal(row.tradable,true);assert.equal(row.terms,market.terms);assert.equal(row.marketHash,'hash');
 });
+
+
+test('BAR/RMD joins legacy FCB/RMD display but retains the backend entity ID for history',()=>{
+ const known=[{entityId:'fcb-rmd',symbol:'FCB/RMD',name:'FCB/RMD',category:'Pairs'}];
+ const [pair]=normalizeMarketCatalog([{entityId:'pair:bar-rmd',symbol:'BAR/RMD',marketId:'pair:live'}],[],known);
+ assert.equal(pair.symbol,'FCB/RMD');assert.equal(pair.entityId,'pair:bar-rmd');assert.equal(pair.marketId,'pair:live');
+});

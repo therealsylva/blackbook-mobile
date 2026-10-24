@@ -3,6 +3,7 @@ import {createClient, processLock} from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import * as Crypto from 'expo-crypto';
 import {Platform} from 'react-native';
+import {PublicRequestCache} from './public-request-cache';
 import connection from './public-connection.json';
 
 // Public client settings, never service-role credentials. Keep statically named
@@ -56,9 +57,11 @@ async function request<T>(path:string,body:unknown,method:string,token?:string):
  }catch(error){if(controller.signal.aborted)throw new Error('The connection timed out. Please try again.');throw error;}finally{clearTimeout(timer);}
 }
 /** Account requests must always use api(), including while browsing as a guest. */
-export function publicApi<T=Record<string,unknown>>(path:string):Promise<T>{
+const publicReads=new PublicRequestCache();
+export function publicApi<T=Record<string,unknown>>(path:string,{fresh=false}:{fresh?:boolean}={}):Promise<T>{
  if(!/^\/v1\/(?:markets(?:\?|\/|$)|indices(?:\?|\/|$))/.test(path))throw new Error('This endpoint requires sign-in.');
- return request<T>(path,undefined,'GET');
+ const ttl=path.includes('/snapshot')?750:path.includes('/candles')||path.includes('/history')?30000:path.startsWith('/v1/indices')?30000:2000;
+ return publicReads.get(path,ttl,()=>request<T>(path,undefined,'GET'),fresh);
 }
 export async function api<T=Record<string,unknown>>(path:string,body?:unknown,method=body===undefined?'GET':'POST'):Promise<T>{
  if(!supabase)throw new Error('BlackBook connection is not configured.');
@@ -67,3 +70,4 @@ export async function api<T=Record<string,unknown>>(path:string,body?:unknown,me
  return request<T>(path,body,method,data.session.access_token);
 }
 export const uuid=()=>Crypto.randomUUID();
+

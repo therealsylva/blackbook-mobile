@@ -25,6 +25,9 @@ export async function installConnectedFixture(context){
    if(!path.startsWith('/v1/markets')&&!path.startsWith('/v1/indices'))assert.equal(request.headers().authorization,'Bearer '+accessToken,'Private API request must carry the signed-in session');
    let json;
    if(path==='/v1/preferences'){if(body)Object.assign(preferences,body);json={preferences};}
+   else if(path==='/v1/funding-options')json={items:[{blockchain:'SOLANA',symbol:'USDC',tokenId:'sol',withdrawalsEnabled:false},{blockchain:'POLYGON',symbol:'USDC',tokenId:'pol',withdrawalsEnabled:true}]};
+   else if(path==='/v1/wallets'){assert.equal(body.blockchain,'POLYGON');json={id:'wallet',state:'active',blockchain:'POLYGON',address:'0x'+'1'.repeat(40)};}
+   else if(path==='/v1/withdrawals')json={id:'withdraw',state:'pending_review'};
    else if(path==='/v1/indices/catalog')json={items:[]};
    else if(path==='/v1/markets')json={items:catalog};
    else if(path.endsWith('/snapshot')){const m=catalog.find(m=>path==='/v1/markets/'+encodeURIComponent(m.marketId)+'/snapshot');assert.ok(m);json={...m,status:'RUNNING',cursor:'1',observedAtMs:String(Date.now()),lastTradePriceTicks:m.referenceTicks,bids:[{priceTicks:String(Number(m.referenceTicks)-10000),quantityLots:'1000000000'}],asks:[{priceTicks:String(Number(m.referenceTicks)+10000),quantityLots:'1000000000'}]};}

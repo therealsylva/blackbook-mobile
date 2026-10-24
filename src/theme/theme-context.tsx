@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance, useColorScheme } from 'react-native';
 import { darkColors, lightColors, type ThemeColors } from './tokens';
 
@@ -14,7 +15,10 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const [mode, setMode] = useState<ThemeMode>('Dark');
+  const [mode, updateMode] = useState<ThemeMode>('Dark');
+  const [loaded,setLoaded]=useState(false);
+  useEffect(()=>{let alive=true;void AsyncStorage.getItem('blackbook.device.appearance').then(value=>{if(alive&&['Dark','Light','System'].includes(value??''))updateMode(value as ThemeMode);}).catch(()=>{}).finally(()=>{if(alive)setLoaded(true);});return()=>{alive=false;};},[]);
+  const setMode=useCallback((value:ThemeMode)=>{updateMode(value);void AsyncStorage.setItem('blackbook.device.appearance',value).catch(()=>{});},[]);
   const system = useColorScheme();
   const isDark = mode === 'System' ? system !== 'light' : mode === 'Dark';
 
@@ -27,8 +31,9 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     isDark,
     mode,
     setMode,
-  }), [isDark, mode]);
+  }), [isDark, mode, setMode]);
 
+  if(!loaded)return null;
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
@@ -37,3 +42,4 @@ export function useTheme() {
   if (!context) throw new Error('useTheme must be used inside ThemeProvider');
   return context;
 }
+

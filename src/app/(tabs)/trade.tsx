@@ -1,7 +1,7 @@
 import {useAuth} from '@/context/auth-context';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import { MarketAvatar } from '@/components/market/market-avatar';
 import { CandlestickChart, MarketChart } from '@/components/market/market-chart';
@@ -27,7 +27,6 @@ export default function TradeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
-  useFocusEffect(useCallback(()=>{const listener=BackHandler.addEventListener('hardwareBackPress',()=>{if(router.canGoBack())router.back();else router.navigate('/(tabs)');return true;});return()=>listener.remove();},[router]));
   const {session,requestAuth}=useAuth();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor,
