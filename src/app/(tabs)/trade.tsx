@@ -164,8 +164,8 @@ export default function TradeScreen() {
 
             <View style={styles.summaryLine}>
               <Summary label="Exposure" value={formatMoney(exposure, settings.currency)} />
-              <Summary label="Fee" value={formatMoney(0, settings.currency)} />
-              <Summary label="Est. liquidation" value={Number.isFinite(liquidation)?formatPrice(liquidation):'—'} />
+              <Summary label="Fee" value={formatMoney(estimate.fee, settings.currency)} />
+              <Summary label="Est. liquidation" value={liquidation===Infinity?'Below zero':formatPrice(liquidation)} />
             </View>
 
             {advanced ? (
@@ -218,7 +218,7 @@ function Field({ label, value, onChangeText, unit, compact = false }: { label: s
     <View style={[styles.field, compact && styles.compactField]}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputRow}>
-        <TextInput keyboardType="decimal-pad" onChangeText={onChangeText} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={value} />
+        <TextInput accessibilityLabel={label} keyboardType="decimal-pad" onChangeText={onChangeText} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={value} />
         <Text style={styles.unit}>{unit}</Text>
       </View>
     </View>

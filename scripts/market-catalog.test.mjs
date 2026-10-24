@@ -21,3 +21,8 @@ test('BAR/RMD joins legacy FCB/RMD display but retains the backend entity ID for
  const [pair]=normalizeMarketCatalog([{entityId:'pair:bar-rmd',symbol:'BAR/RMD',marketId:'pair:live'}],[],known);
  assert.equal(pair.symbol,'FCB/RMD');assert.equal(pair.entityId,'pair:bar-rmd');assert.equal(pair.marketId,'pair:live');
 });
+
+test('runtime close-only flags cannot be overridden by a display projection',()=>{
+ const market={...index,marketId:'retired',launchEligible:false,tradable:false,terms:{priceDecimals:'6',minimumOrderLots:'1',quoteMinorPerIndexUnitPerLot:'0.0001',feePolicyVersion:'2'},feePolicy:{policyVersion:'2'},marginPolicy:{initialMarginPpm:'20000',maintenanceMarginPpm:'10000'}};
+ const [row]=normalizeMarketCatalog([market],[index],known);assert.equal(row.marketId,'retired');assert.equal(row.tradable,false);
+});
