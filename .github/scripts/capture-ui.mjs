@@ -48,10 +48,10 @@ for (const width of [360,390,430]) {
   await page.getByLabel('Open profile',{exact:true}).click();
   await page.getByText('Preferences',{exact:true}).click();
   await page.getByText('Theme',{exact:true}).click();
-  const savedTheme=page.waitForResponse(r=>r.url().endsWith('/v1/preferences')&&r.request().method()==='PUT');
   await page.getByText('Light',{exact:true}).click();
-  await savedTheme;
-  assert.equal(fixture.preferences.appearance,'Light');
+  await page.getByRole('dialog').waitFor({state:'hidden'});
+  assert.equal(fixture.preferences.appearance,'Dark');
+  assert.ok(fixture.requests.filter(r=>r.path==='/v1/preferences'&&r.body).every(r=>!('appearance' in r.body)));
   await page.reload({waitUntil:'networkidle'});
   await page.getByText('Preferences',{exact:true}).click();
   await page.getByText('Light',{exact:true}).waitFor();
@@ -84,4 +84,5 @@ for (const width of [360,390,430]) {
 }
 await browser.close();
 if(failures.length)throw Error(failures.join('\n'));
+
 

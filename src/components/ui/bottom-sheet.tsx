@@ -1,9 +1,12 @@
-import type { PropsWithChildren } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { createContext, useCallback, useContext, useEffect, useRef, type PropsWithChildren } from 'react';
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 import { Icon } from './icon';
+
+const SheetInputFocusContext=createContext<()=>void>(()=>{});
+export const useSheetInputFocus=()=>useContext(SheetInputFocusContext);
 
 interface BottomSheetProps extends PropsWithChildren {
   visible: boolean;
@@ -15,20 +18,23 @@ interface BottomSheetProps extends PropsWithChildren {
 export function BottomSheet({ visible, title, onClose, children, scroll = true }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
   const styles = useStyles();
-  const content = scroll ? <ScrollView showsVerticalScrollIndicator={false}>{children}</ScrollView> : children;
+  const scrollRef=useRef<ScrollView>(null);
+  const scrollFocused=useCallback(()=>{setTimeout(()=>{if(Platform.OS==='web'){document.activeElement?.scrollIntoView({block:'nearest'});return;}const input=TextInput.State.currentlyFocusedInput();if(input)scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(input,24,true);},100);},[]);
+  useEffect(()=>{if(!visible)return;const listener=Keyboard.addListener('keyboardDidShow',scrollFocused);return()=>listener.remove();},[visible,scrollFocused]);
+  const content = scroll ? <ScrollView ref={scrollRef} automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>{children}</ScrollView> : children;
   return (
     <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.root}>
-        <Pressable accessibilityLabel="Close sheet" onPress={onClose} style={styles.backdrop} />
+      <KeyboardAvoidingView behavior={Platform.OS==='ios'?'padding':'height'} style={styles.root}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Close sheet" onPress={onClose} style={styles.backdrop} />
         <View style={[styles.sheet, { paddingBottom: Math.max(spacing.md, insets.bottom) }]}>
           <View style={styles.handle} />
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <Pressable accessibilityLabel="Close" hitSlop={12} onPress={onClose}><Icon name="close" size={20} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={12} onPress={onClose}><Icon name="close" size={20} /></Pressable>
           </View>
-          {content}
+          <SheetInputFocusContext.Provider value={scrollFocused}>{content}</SheetInputFocusContext.Provider>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -41,3 +47,4 @@ const useStyles = createThemedStyles((colors) => ({
   header: { alignItems: 'center', borderBottomColor: colors.dividerSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md, paddingBottom: spacing.sm },
   title: { color: colors.text, fontFamily: typography.family, fontWeight: typography.weights.semibold, fontSize: 17 },
 }));
+

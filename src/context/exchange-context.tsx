@@ -39,7 +39,7 @@ const str=(v:unknown)=>String(v??'');
 const rangeMs:Record<ChartRange,number>={'1m':60000,'5m':300000,'15m':900000,'1H':3600000,'4H':14400000,'1D':86400000,'1W':604800000,'1M':2592000000,'6M':15552000000};
 async function pages(path:string):Promise<Row[]>{const items:Row[]=[];let cursor:string|null=null;do{const response: {items:Row[];nextCursor:string|null}=await api(path+(cursor?'?cursor='+encodeURIComponent(cursor):''));items.push(...response.items);cursor=response.nextCursor;}while(cursor);return items;}
 export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsWithChildren<{selectedSymbol:string;onSelectSymbol:(symbol:string)=>void}>){
- const {session,requestAuth}=useAuth(),{setMode}=useTheme();
+ const {session,requestAuth}=useAuth(),{setMode,mode:deviceAppearance}=useTheme();
  const userId=session?.user.id??'guest',key='blackbook.preferences.'+userId,pendingKey='blackbook.pending-command.'+userId;
  const [accountMode,setModeState]=useState<AccountMode>('real'),[hydrated,setHydrated]=useState(false);
  const [settings,setSettings]=useState(defaults),[profile,setProfile]=useState<UserProfile>({displayName:session?.user.user_metadata?.display_name??session?.user.email?.split('@')[0]??'Trader',uid:userId,email:session?.user.email??'',avatarUri:'void'});
@@ -52,11 +52,12 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const generation=useRef(0),inFlight=useRef(false),commandLock=useRef(false),pending=useRef<{fingerprint:string;path:string;body:Row}|null>(null),persistChain=useRef(Promise.resolve());
  const observedAt=useRef(0),ownerRef=useRef(userId);ownerRef.current=userId;
  const applyPreferences=useCallback((p:Row)=>{
-  const next={...defaults,...Object.fromEntries(Object.keys(defaults).filter(k=>k!=='language'&&k!=='currency'&&p[k]!==undefined).map(k=>[k,p[k]]))} as ExchangeSettings;
-  configureDisplay(next.locale,next.timeZone);setSettings(next);setMode(next.appearance);setFavorites(new Set(Array.isArray(p.favorites)?p.favorites.filter((v):v is string=>typeof v==='string'):[]));
+  const next={...defaults,...Object.fromEntries(Object.keys(defaults).filter(k=>k!=='appearance'&&k!=='language'&&k!=='currency'&&p[k]!==undefined).map(k=>[k,p[k]]))} as ExchangeSettings;
+  configureDisplay(next.locale,next.timeZone);setSettings(current=>({...next,appearance:current.appearance}));setFavorites(new Set(Array.isArray(p.favorites)?p.favorites.filter((v):v is string=>typeof v==='string'):[]));
   setProfile(current=>({...current,...(typeof p.displayName==='string'?{displayName:p.displayName}:{}),...(typeof p.avatar==='string'?{avatarUri:p.avatar}:{})}));
   setModeState(p.accountMode==='demo'?'demo':'real');
- },[setMode]);
+ },[]);
+ useEffect(()=>{setSettings(current=>({...current,appearance:deviceAppearance}));},[deviceAppearance]);
  useEffect(()=>{let alive=true;generation.current++;pending.current=null;setHydrated(false);
   if(!session){void AsyncStorage.getItem(key).then(saved=>{if(alive&&saved)applyPreferences(JSON.parse(saved));}).catch(()=>{}).finally(()=>{if(alive)setHydrated(true);});return()=>{alive=false;generation.current++;};}
   void (async()=>{try{const stored=await AsyncStorage.getItem(pendingKey);if(alive&&stored)pending.current=JSON.parse(stored);const saved=await api<{preferences:Row}>('/v1/preferences');if(alive){applyPreferences(saved.preferences);await AsyncStorage.setItem(key,JSON.stringify(saved.preferences));}}catch(e){if(alive){setError(message(e));const local=await AsyncStorage.getItem(key);if(local)try{applyPreferences(JSON.parse(local));}catch{}}}finally{if(alive)setHydrated(true);}})();
@@ -176,7 +177,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,orderEstimate,submit,settings.defaultTimeInForce]);
  const closePosition=useCallback(async(id:string)=>{
   const p=account.positions.find(p=>p.marketId===id),m=remote.find(m=>m.marketId===id);if(!p||!m)throw new Error('Position unavailable.');
-  const book=await publicApi<BookSnapshot>('/v1/markets/'+encodeURIComponent(id)+'/snapshot');
+  const book=await publicApi<BookSnapshot>('/v1/markets/'+encodeURIComponent(id)+'/snapshot',{fresh:true});
   const quantity=BigInt(String(p.positionLots));
   const result=await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',{commandId:uuid(),orderId:uuid(),marketId:id,side:quantity>0n?'ASK':'BID',type:'MARKET',quantityLots:(quantity<0n?-quantity:quantity).toString(),expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,reduceOnly:true,expectedPositionSequence:str(p.lastTradeSequence)},accountMode+'close'+id);
   if(BigInt(String(result.filledQuantityLots??'0'))===0n)throw new Error('Position remains open. No execution was confirmed; check available liquidity.');
@@ -186,7 +187,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const setAccountMode=useCallback(async(next:AccountMode)=>{if(commandLock.current||pending.current)throw new Error('Resolve the pending account action before switching modes.');if(next===accountMode)return;for(const kind of ['deposit','withdraw'])if(await AsyncStorage.getItem(`blackbook.funding.${userId}.${kind}`))throw new Error('Resolve the pending funding request before switching modes.');await persist({accountMode:next});generation.current++;setModeState(next);},[accountMode,persist,userId]);
  const toggleFavorite=useCallback((symbol:string)=>{const next=new Set(favorites);if(next.has(symbol))next.delete(symbol);else next.add(symbol);setFavorites(next);void persist({favorites:[...next]}).catch(()=>{});},[favorites,persist]);
  const updateProfile=useCallback((changes:Partial<UserProfile>)=>{setProfile(current=>({...current,...changes}));void persist({...('displayName'in changes?{displayName:changes.displayName}:{}),...('avatarUri'in changes?{avatar:changes.avatarUri}:{})}).catch(()=>{});},[persist]);
- const updateSetting=useCallback(<K extends keyof ExchangeSettings,>(k:K,v:ExchangeSettings[K])=>{const patch={ [k]:v,...(k==='oneClickTrading'&&v?{confirmOrders:false}:{}),...(k==='confirmOrders'&&v?{oneClickTrading:false}:{}) };if(k==='appearance')setMode(v as ThemeMode);setSettings(current=>({...current,...patch}));if(k==='locale'||k==='timeZone')configureDisplay(k==='locale'?String(v):settings.locale,k==='timeZone'?String(v):settings.timeZone);void persist(patch).catch(async()=>{try{const saved=await api<{preferences:Row}>('/v1/preferences');applyPreferences(saved.preferences);}catch{}});},[persist,setMode,settings.locale,settings.timeZone,applyPreferences]);
+ const updateSetting=useCallback(<K extends keyof ExchangeSettings,>(k:K,v:ExchangeSettings[K])=>{if(k==='appearance'){setMode(v as ThemeMode);return;}const patch={ [k]:v,...(k==='oneClickTrading'&&v?{confirmOrders:false}:{}),...(k==='confirmOrders'&&v?{oneClickTrading:false}:{}) };if(k==='appearance')setMode(v as ThemeMode);setSettings(current=>({...current,...patch}));if(k==='locale'||k==='timeZone')configureDisplay(k==='locale'?String(v):settings.locale,k==='timeZone'?String(v):settings.timeZone);void persist(patch).catch(async()=>{try{const saved=await api<{preferences:Row}>('/v1/preferences');applyPreferences(saved.preferences);}catch{}});},[persist,setMode,settings.locale,settings.timeZone,applyPreferences]);
  const liquidationEstimate=useCallback((input:PlaceOrderInput)=>{
   if(!ready||error||Date.now()-observedAt.current>15000)return NaN;
   const m=remote.find(m=>m.symbol===input.symbol),book=bookFor(input.symbol);if(!m||!book)return NaN;

@@ -8,6 +8,7 @@ export function formatPrice(value: number) {
 
 export function formatMoney(value: number, currency = 'USD') {
   if (!Number.isFinite(value)) return '—';
+  if (currency === 'USD') return `${value < 0 ? '-' : ''}$${new Intl.NumberFormat(locale, {minimumFractionDigits:2,maximumFractionDigits:2}).format(Math.abs(value))}`;
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
