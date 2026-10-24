@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 export const APP_VERSION = Constants.expoConfig?.version ?? '0.2.1';
 export interface AppUpdate { version: string; url: string }
-const DOWNLOAD_ROOT = 'https://raw.githubusercontent.com/therealsylva/blackbook-mobile/mobile-apk-downloads/';
+const DOWNLOAD_ROOT = 'https://tradeblackbook.org/downloads/';
 function compareVersions(a: string, b: string) {
   const left = a.split('.').map(Number); const right = b.split('.').map(Number);
   for (let index = 0; index < 3; index++) { const difference = (left[index] ?? 0) - (right[index] ?? 0); if (difference) return difference; }
@@ -20,3 +20,4 @@ export async function checkForUpdate(): Promise<AppUpdate | null> {
   } finally { clearTimeout(timeout); }
 }
 export async function downloadUpdate(update: AppUpdate) { await Linking.openURL(update.url); }
+

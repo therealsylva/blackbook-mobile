@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ALL_MARKETS} from '@/data/pair-markets';
 import type {MarketDefinition} from '@/data/markets';
 import {aggregateCandles,type CandlePoint} from '@/lib/market-series';
-import {configureDisplay} from '@/lib/format';
+import {formatCompact,configureDisplay} from '@/lib/format';
 import {useTradingNotifications} from '@/hooks/use-trading-notifications';
 import {api,publicApi,uuid} from '@/lib/backend';
 import {sizeDollarOrder} from '@/lib/dollar-order';
@@ -108,7 +108,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   let alive=true;
   const queue=[...remote].sort((a,b)=>Number(b.symbol===activeSymbol)-Number(a.symbol===activeSymbol));
   const load=async(m:RemoteMarket)=>{
-   setHistoryState(current=>({...current,[m.symbol]:'loading'}));
+   setHistoryState(current=>current[m.symbol]==='ready'?current:{...current,[m.symbol]:'loading'});
    try{
     let rows:CandlePoint[]=[];
     if(m.marketId){const result=await publicApi<{candles:CandlePoint[];intervalMs?:number}>('/v1/markets/'+encodeURIComponent(m.marketId)+'/candles?interval='+settings.candleInterval+'&limit='+(m.symbol===activeSymbol?'2000':'168'));rows=result.candles.map(row=>({...row,volume:row.volume??null,intervalMs:result.intervalMs}));}
@@ -117,12 +117,14 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
    }catch{if(alive)setHistoryState(current=>({...current,[m.symbol]:'error'}));}
   };
   const worker=async()=>{while(alive&&queue.length){const m=queue.shift();if(m)await load(m);}};
-  void Promise.all(Array.from({length:4},worker));
-  return()=>{alive=false;};
+  let cycleRunning=true;
+  void Promise.all(Array.from({length:4},worker)).finally(()=>{cycleRunning=false;});
+  const timer=setInterval(()=>{if(cycleRunning)return;cycleRunning=true;queue.push(...remote);void Promise.all(Array.from({length:4},worker)).finally(()=>{cycleRunning=false;});},60000);
+  return()=>{alive=false;clearInterval(timer);};
  },[historyKey,activeSymbol,settings.candleInterval]);
  const historyLoadingFor=useCallback((symbol:string)=>!historyState[symbol]||historyState[symbol]==='loading',[historyState]);
  const lookup=useMemo(()=>new Map(remote.map(r=>[r.symbol,r])),[remote]);
- const markets=useMemo(()=>remote.map((r,index)=>{const old=metadata.get(r.symbol),scale=10**Number(r.terms.priceDecimals),book=books[r.marketId],reference=Number(r.referenceTicks)/scale;return {...old,rank:index+1,symbol:r.symbol,name:r.displayName??old?.name??r.symbol,category:r.kind==='PAIR'?'Pairs':r.kind==='CLUB'?'Clubs':'Athletes',entityId:r.entityId,price:Number(book?.lastTradePriceTicks??r.referenceTicks)/scale,reference,lowerBand:Number(r.lowerTicks)/scale,upperBand:Number(r.upperTicks)/scale,change24h:r.indexChangePct??NaN,volume:'—',density:old?.density??0,high24h:NaN,low24h:NaN,assetKey:old?.assetKey??'',series:[],history:[],snapshotAsOf:r.asOf??''} as MarketDefinition;}),[books,remote]);
+ const markets=useMemo(()=>remote.map((r,index)=>{const old=metadata.get(r.symbol),scale=10**Number(r.terms.priceDecimals),book=books[r.marketId],reference=Number(r.referenceTicks)/scale;return {...old,rank:index+1,symbol:r.symbol,name:r.displayName??old?.name??r.symbol,category:r.kind==='PAIR'?'Pairs':r.kind==='CLUB'?'Clubs':'Athletes',entityId:r.entityId,price:book?.lastTradePriceTicks?Number(book.lastTradePriceTicks)/scale:marketCandles[r.symbol]?.at(-1)?.close??reference,reference,lowerBand:Number(r.lowerTicks)/scale,upperBand:Number(r.upperTicks)/scale,change24h:r.indexChangePct??NaN,volume:r.statistics?.volumeMinor24h==null?'—':formatCompact(Number(r.statistics.volumeMinor24h)/100),volumeUsd24h:r.statistics?.volumeMinor24h==null?NaN:Number(r.statistics.volumeMinor24h)/100,volatility24h:r.statistics?.rangePct24h??NaN,density:0,high24h:r.statistics?.highPriceTicks24h==null?NaN:Number(r.statistics.highPriceTicks24h)/scale,low24h:r.statistics?.lowPriceTicks24h==null?NaN:Number(r.statistics.lowPriceTicks24h)/scale,assetKey:old?.assetKey??'',series:[],history:[],snapshotAsOf:r.asOf??''} as MarketDefinition;}),[books,remote,marketCandles]);
  const marketFor=useCallback((symbol:string)=>markets.find(m=>m.symbol===symbol),[markets]);
  const priceFor=useCallback((symbol:string)=>marketFor(symbol)?.price??NaN,[marketFor]);
  const changeFor=useCallback((symbol:string)=>{const c=marketCandles[symbol]??[],cut=Date.now()-86400000,first=c.find(x=>x.time>=cut);return first&&c[0]!.time<=cut?(priceFor(symbol)/first.open-1)*100:lookup.get(symbol)?.indexChangePct??NaN;},[marketCandles,priceFor,lookup]);
@@ -172,7 +174,14 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   if(!['FILLED','PARTIALLY_FILLED','RESTING'].includes(String(result.status)))throw new Error('Order submitted. Check Orders for its execution status.');
   return {kind:result.status==='RESTING'?'order':'position',id:str(result.orderId)} as const;
  },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,orderEstimate,submit,settings.defaultTimeInForce]);
- const closePosition=useCallback(async(id:string)=>{const p=account.positions.find(p=>p.marketId===id),m=remote.find(m=>m.marketId===id),book=m&&bookFor(m.symbol);if(!p||!m||!book)throw new Error('Position unavailable.');await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',{commandId:uuid(),orderId:uuid(),marketId:id,side:Number(p.positionLots)>0?'ASK':'BID',type:'MARKET',quantityLots:String(Math.abs(Number(p.positionLots))),expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,reduceOnly:true,expectedPositionSequence:str(p.lastTradeSequence)},accountMode+'close'+id);},[account.positions,accountMode,bookFor,remote,submit]);
+ const closePosition=useCallback(async(id:string)=>{
+  const p=account.positions.find(p=>p.marketId===id),m=remote.find(m=>m.marketId===id);if(!p||!m)throw new Error('Position unavailable.');
+  const book=await publicApi<BookSnapshot>('/v1/markets/'+encodeURIComponent(id)+'/snapshot');
+  const quantity=BigInt(String(p.positionLots));
+  const result=await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',{commandId:uuid(),orderId:uuid(),marketId:id,side:quantity>0n?'ASK':'BID',type:'MARKET',quantityLots:(quantity<0n?-quantity:quantity).toString(),expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,reduceOnly:true,expectedPositionSequence:str(p.lastTradeSequence)},accountMode+'close'+id);
+  if(BigInt(String(result.filledQuantityLots??'0'))===0n)throw new Error('Position remains open. No execution was confirmed; check available liquidity.');
+ },[account.positions,accountMode,remote,submit]);
+
  const cancelOrder=useCallback(async(id:string)=>{await submit(accountMode==='demo'?'/v1/demo/orders/'+id+'/cancel':'/v1/orders/cancel',{commandId:uuid(),orderId:id},accountMode+'cancel'+id);if(settings.orderNotifications)Alert.alert('Cancellation submitted','Refresh Orders to check its status.');},[accountMode,submit,settings.orderNotifications]);
  const setAccountMode=useCallback(async(next:AccountMode)=>{if(commandLock.current||pending.current)throw new Error('Resolve the pending account action before switching modes.');if(next===accountMode)return;for(const kind of ['deposit','withdraw'])if(await AsyncStorage.getItem(`blackbook.funding.${userId}.${kind}`))throw new Error('Resolve the pending funding request before switching modes.');await persist({accountMode:next});generation.current++;setModeState(next);},[accountMode,persist,userId]);
  const toggleFavorite=useCallback((symbol:string)=>{const next=new Set(favorites);if(next.has(symbol))next.delete(symbol);else next.add(symbol);setFavorites(next);void persist({favorites:[...next]}).catch(()=>{});},[favorites,persist]);
@@ -188,7 +197,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   return estimateLiquidation({equity:totalEquity-orderEstimate(input).fee,maintenance:money(account.portfolio.maintenanceMarginMinor),existingUnits:p?Number(p.positionLots)*factor:0,existingMark:p?Number(p.markPriceTicks)/scale:0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
  },[account,bookFor,error,orderEstimate,ready,remote,totalEquity]);
  useTradingNotifications({scope:userId+':'+accountMode,settings,history,markets:markets.filter(m=>bookFor(m.symbol)?.lastTradePriceTicks),enabled:ready,updateSetting});
- const value:ExchangeContextValue={historyLoadingFor,markets:markets.filter(m=>m.category!=='Pairs'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,realizedPnl,usedMargin,positions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,isTradableFor,busy,ready};
+ const value:ExchangeContextValue={historyLoadingFor,markets:markets.filter(m=>m.category!=='Pairs'&&m.symbol!=='OSI'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,realizedPnl,usedMargin,positions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,isTradableFor,busy,ready};
  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useExchange(){const value=useContext(Context);if(!value)throw new Error('Exchange provider required');return value;}

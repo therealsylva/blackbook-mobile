@@ -1,0 +1,1040 @@
+{
+  "NBA": {
+    "columns": [
+      {
+        "title": "NBA teams",
+        "items": [
+          {
+            "name": "Los Angeles Lakers",
+            "symbol": "LAL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/lakers-thumb.webp",
+              "alt": "Los Angeles Lakers",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Boston Celtics",
+            "symbol": "BOS",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/celtics-thumb.webp",
+              "alt": "Boston Celtics",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Golden State Warriors",
+            "symbol": "GSW",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/warriors-thumb.webp",
+              "alt": "Golden State Warriors",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Chicago Bulls",
+            "symbol": "CHI",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/bulls-thumb.webp",
+              "alt": "Chicago Bulls",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Miami Heat",
+            "symbol": "MIA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/heat-thumb.webp",
+              "alt": "Miami Heat",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "New York Knicks",
+            "symbol": "NYK",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/knicks-thumb.webp",
+              "alt": "New York Knicks",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Dallas Mavericks",
+            "symbol": "DAL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/mavericks-thumb.webp",
+              "alt": "Dallas Mavericks",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Milwaukee Bucks",
+            "symbol": "MIL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/bucks-thumb.webp",
+              "alt": "Milwaukee Bucks",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Oklahoma City Thunder",
+            "symbol": "OKC",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/thunder-thumb.webp",
+              "alt": "Oklahoma City Thunder",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Denver Nuggets",
+            "symbol": "DEN",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nuggets-thumb.webp",
+              "alt": "Denver Nuggets",
+              "type": "logo"
+            }
+          }
+        ]
+      },
+      {
+        "title": "NBA players",
+        "items": [
+          {
+            "name": "LeBron James",
+            "symbol": "LBJ",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/lebron-james-thumb.webp",
+              "alt": "LeBron James",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Luka Dončić",
+            "symbol": "LUKA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/luka-doncic-thumb.webp",
+              "alt": "Luka Dončić",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Stephen Curry",
+            "symbol": "CUR",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/stephen-curry-thumb.webp",
+              "alt": "Stephen Curry",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Jayson Tatum",
+            "symbol": "JTM",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/jayson-tatum-thumb.webp",
+              "alt": "Jayson Tatum",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Giannis Antetokounmpo",
+            "symbol": "GNS",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/giannis-thumb.webp",
+              "alt": "Giannis Antetokounmpo",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Nikola Jokić",
+            "symbol": "JOK",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nikola-jokic-thumb.webp",
+              "alt": "Nikola Jokić",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Shai Gilgeous-Alexander",
+            "symbol": "SGA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/shai-thumb.webp",
+              "alt": "Shai Gilgeous-Alexander",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Kevin Durant",
+            "symbol": "KD",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/kevin-durant-thumb.webp",
+              "alt": "Kevin Durant",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Anthony Edwards",
+            "symbol": "ANT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/anthony-edwards-thumb.webp",
+              "alt": "Anthony Edwards",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Victor Wembanyama",
+            "symbol": "WMB",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/wembanyama-thumb.webp",
+              "alt": "Victor Wembanyama",
+              "type": "person"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "Artists": {
+    "columns": [
+      {
+        "title": "Artists",
+        "items": [
+          {
+            "name": "Eminem",
+            "symbol": "EMN",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/eminem-profile-thumb.webp",
+              "alt": "Eminem",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Kendrick Lamar",
+            "symbol": "KDOT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/kendrick-lamar-thumb.webp",
+              "alt": "Kendrick Lamar",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Drake",
+            "symbol": "DRK",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/drake-thumb.webp",
+              "alt": "Drake",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Taylor Swift",
+            "symbol": "TSWT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/taylor-swift-thumb.webp",
+              "alt": "Taylor Swift",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Beyoncé",
+            "symbol": "BNYC",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/beyonce-thumb.webp",
+              "alt": "Beyoncé",
+              "type": "person"
+            }
+          },
+          {
+            "name": "The Weeknd",
+            "symbol": "WKND",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/the-weeknd-thumb.webp",
+              "alt": "The Weeknd",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Bad Bunny",
+            "symbol": "BNNY",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/bad-bunny-thumb.webp",
+              "alt": "Bad Bunny",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Rihanna",
+            "symbol": "RIH",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/rihanna-thumb.webp",
+              "alt": "Rihanna",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Kanye West",
+            "symbol": "KWST",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/kanye-west-thumb.webp",
+              "alt": "Kanye West",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Travis Scott",
+            "symbol": "TRVS",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/travis-scott-thumb.webp",
+              "alt": "Travis Scott",
+              "type": "person"
+            }
+          }
+        ]
+      },
+      {
+        "title": "Artists",
+        "items": [
+          {
+            "name": "Adele",
+            "symbol": "ADL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/adele-thumb.webp",
+              "alt": "Adele",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Ariana Grande",
+            "symbol": "ARNA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ariana-grande-thumb.webp",
+              "alt": "Ariana Grande",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Billie Eilish",
+            "symbol": "BLLE",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/billie-eilish-thumb.webp",
+              "alt": "Billie Eilish",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Dua Lipa",
+            "symbol": "DUA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/dua-lipa-thumb.webp",
+              "alt": "Dua Lipa",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Justin Bieber",
+            "symbol": "JBI",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/justin-bieber.jpg",
+              "alt": "Justin Bieber",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Doja Cat",
+            "symbol": "DOJA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/doja-cat-thumb.webp",
+              "alt": "Doja Cat",
+              "type": "person"
+            }
+          },
+          {
+            "name": "SZA",
+            "symbol": "SZA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/sza-thumb.webp",
+              "alt": "SZA",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Future",
+            "symbol": "FTR",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/future-thumb.webp",
+              "alt": "Future",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Central Cee",
+            "symbol": "CEN",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/central-cee-thumb.webp",
+              "alt": "Central Cee",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Tyla",
+            "symbol": "TYLA",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/tyla-profile.png",
+              "alt": "Tyla",
+              "type": "person"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "NFL": {
+    "columns": [
+      {
+        "title": "NFL teams",
+        "items": [
+          {
+            "name": "Kansas City Chiefs",
+            "symbol": "KCC",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/chiefs-thumb.webp",
+              "alt": "Kansas City Chiefs",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Dallas Cowboys",
+            "symbol": "DAL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/cowboys-thumb.webp",
+              "alt": "Dallas Cowboys",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "San Francisco 49ers",
+            "symbol": "SF49",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/49ers-thumb.webp",
+              "alt": "San Francisco 49ers",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Philadelphia Eagles",
+            "symbol": "PHI",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/eagles-thumb.webp",
+              "alt": "Philadelphia Eagles",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Buffalo Bills",
+            "symbol": "BUF",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/bills-thumb.webp",
+              "alt": "Buffalo Bills",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Baltimore Ravens",
+            "symbol": "BAL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ravens-thumb.webp",
+              "alt": "Baltimore Ravens",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Green Bay Packers",
+            "symbol": "GB",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/packers-thumb.webp",
+              "alt": "Green Bay Packers",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Pittsburgh Steelers",
+            "symbol": "PIT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/steelers-thumb.webp",
+              "alt": "Pittsburgh Steelers",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Cincinnati Bengals",
+            "symbol": "CIN",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/bengals-thumb.webp",
+              "alt": "Cincinnati Bengals",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Detroit Lions",
+            "symbol": "DET",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/lions-thumb.webp",
+              "alt": "Detroit Lions",
+              "type": "logo"
+            }
+          }
+        ]
+      },
+      {
+        "title": "NFL players",
+        "items": [
+          {
+            "name": "Patrick Mahomes",
+            "symbol": "PMH",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/patrick-mahomes-thumb.webp",
+              "alt": "Patrick Mahomes",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Lamar Jackson",
+            "symbol": "LJK",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/lamar-jackson-thumb.webp",
+              "alt": "Lamar Jackson",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Josh Allen",
+            "symbol": "JAL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/josh-allen-thumb.webp",
+              "alt": "Josh Allen",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Joe Burrow",
+            "symbol": "JBR",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/joe-burrow-thumb.webp",
+              "alt": "Joe Burrow",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Jalen Hurts",
+            "symbol": "JHT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/jalen-hurts-thumb.webp",
+              "alt": "Jalen Hurts",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Justin Jefferson",
+            "symbol": "JJF",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/justin-jefferson-thumb.webp",
+              "alt": "Justin Jefferson",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Saquon Barkley",
+            "symbol": "SBK",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/saquon-barkley-thumb.webp",
+              "alt": "Saquon Barkley",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Derrick Henry",
+            "symbol": "DHN",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/derrick-henry-thumb.webp",
+              "alt": "Derrick Henry",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Travis Kelce",
+            "symbol": "TKL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/travis-kelce-thumb.webp",
+              "alt": "Travis Kelce",
+              "type": "person"
+            }
+          },
+          {
+            "name": "C. J. Stroud",
+            "symbol": "CJS",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/cj-stroud-thumb.webp",
+              "alt": "C. J. Stroud",
+              "type": "person"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "Cricket": {
+    "columns": [
+      {
+        "title": "Cricket clubs",
+        "items": [
+          {
+            "name": "Chennai Super Kings",
+            "symbol": "CSK",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/chennai-super-kings.svg",
+              "alt": "Chennai Super Kings",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Mumbai Indians",
+            "symbol": "MI",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/mumbai-indians.svg",
+              "alt": "Mumbai Indians",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Royal Challengers Bengaluru",
+            "symbol": "RCB",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/royal-challengers.svg",
+              "alt": "Royal Challengers Bengaluru",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Kolkata Knight Riders",
+            "symbol": "KKR",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/kolkata-knight-riders.svg",
+              "alt": "Kolkata Knight Riders",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Sunrisers Hyderabad",
+            "symbol": "SRH",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/sunrisers.svg",
+              "alt": "Sunrisers Hyderabad",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Delhi Capitals",
+            "symbol": "DC",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/delhi-capitals.svg",
+              "alt": "Delhi Capitals",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Punjab Kings",
+            "symbol": "PBKS",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/punjab-kings.svg",
+              "alt": "Punjab Kings",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Rajasthan Royals",
+            "symbol": "RR",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/rajasthan-royals.svg",
+              "alt": "Rajasthan Royals",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Gujarat Titans",
+            "symbol": "GT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/gujarat-titans.svg",
+              "alt": "Gujarat Titans",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Lucknow Super Giants",
+            "symbol": "LSG",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/lucknow-super-giants.svg",
+              "alt": "Lucknow Super Giants",
+              "type": "logo"
+            }
+          }
+        ]
+      },
+      {
+        "title": "Cricket players",
+        "items": [
+          {
+            "name": "Virat Kohli",
+            "symbol": "VKH",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/virat-kohli-thumb.webp",
+              "alt": "Virat Kohli",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Rohit Sharma",
+            "symbol": "RSH",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/rohit-sharma-thumb.webp",
+              "alt": "Rohit Sharma",
+              "type": "person"
+            }
+          },
+          {
+            "name": "MS Dhoni",
+            "symbol": "MSD",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ms-dhoni-thumb.webp",
+              "alt": "MS Dhoni",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Jasprit Bumrah",
+            "symbol": "JBR",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/jasprit-bumrah-thumb.webp",
+              "alt": "Jasprit Bumrah",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Shubman Gill",
+            "symbol": "SGL",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/shubman-gill-thumb.webp",
+              "alt": "Shubman Gill",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Rishabh Pant",
+            "symbol": "RPT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/rishabh-pant-thumb.webp",
+              "alt": "Rishabh Pant",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Jos Buttler",
+            "symbol": "JBT",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/jos-buttler-thumb.webp",
+              "alt": "Jos Buttler",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Hardik Pandya",
+            "symbol": "HPD",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/hardik-pandya-thumb.webp",
+              "alt": "Hardik Pandya",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Rashid Khan",
+            "symbol": "RKN",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/rashid-khan-thumb.webp",
+              "alt": "Rashid Khan",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Travis Head",
+            "symbol": "THD",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/travis-head-thumb.webp",
+              "alt": "Travis Head",
+              "type": "person"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "Leagues": {
+    "columns": [
+      {
+        "title": "League baskets",
+        "items": [
+          {
+            "name": "Premier League · all clubs",
+            "symbol": "EPL-20",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/premier-league-lion.svg",
+              "alt": "Premier League · all clubs",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Premier League · top five",
+            "symbol": "EPL-5",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/premier-league-lion.svg",
+              "alt": "Premier League · top five",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "La Liga · all clubs",
+            "symbol": "LLGA-20",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/laliga-thumb.webp",
+              "alt": "La Liga · all clubs",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "La Liga · top five",
+            "symbol": "LLGA-5",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/laliga-thumb.webp",
+              "alt": "La Liga · top five",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Bundesliga · all clubs",
+            "symbol": "BUND-18",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/bundesliga-thumb.webp",
+              "alt": "Bundesliga · all clubs",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Bundesliga · top five",
+            "symbol": "BUND-5",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/bundesliga-thumb.webp",
+              "alt": "Bundesliga · top five",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Serie A · all clubs",
+            "symbol": "SERA-20",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/serie-a.svg",
+              "alt": "Serie A · all clubs",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Serie A · top five",
+            "symbol": "SERA-5",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/serie-a.svg",
+              "alt": "Serie A · top five",
+              "type": "logo"
+            }
+          }
+        ]
+      },
+      {
+        "title": "League baskets",
+        "items": [
+          {
+            "name": "Ligue 1 · all clubs",
+            "symbol": "L1-18",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ligue-1-thumb.webp",
+              "alt": "Ligue 1 · all clubs",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "Ligue 1 · top five",
+            "symbol": "L1-5",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ligue-1-thumb.webp",
+              "alt": "Ligue 1 · top five",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "NBA · all teams",
+            "symbol": "NBA-30",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nba-thumb.webp",
+              "alt": "NBA · all teams",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "NBA · top 10",
+            "symbol": "NBA-10",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nba-thumb.webp",
+              "alt": "NBA · top 10",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "NBA · top 5",
+            "symbol": "NBA-5",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nba-thumb.webp",
+              "alt": "NBA · top 5",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "NFL · all teams",
+            "symbol": "NFL-32",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nfl-thumb.webp",
+              "alt": "NFL · all teams",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "NFL · top 10",
+            "symbol": "NFL-10",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nfl-thumb.webp",
+              "alt": "NFL · top 10",
+              "type": "logo"
+            }
+          },
+          {
+            "name": "NFL · top 5",
+            "symbol": "NFL-5",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/nfl-thumb.webp",
+              "alt": "NFL · top 5",
+              "type": "logo"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "Creators": {
+    "columns": [
+      {
+        "title": "Creators",
+        "items": [
+          {
+            "name": "Kai Cenat",
+            "symbol": "KAI",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/kai-cenat-thumb.webp",
+              "alt": "Kai Cenat",
+              "type": "person"
+            }
+          },
+          {
+            "name": "IShowSpeed",
+            "symbol": "SPD",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ishowspeed-thumb.webp",
+              "alt": "IShowSpeed",
+              "type": "person"
+            }
+          },
+          {
+            "name": "MrBeast",
+            "symbol": "BST",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/mrbeast-thumb.webp",
+              "alt": "MrBeast",
+              "type": "person"
+            }
+          },
+          {
+            "name": "xQc",
+            "symbol": "XQC",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/xqc-thumb.webp",
+              "alt": "xQc",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Adin Ross",
+            "symbol": "ADN",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/adin-ross-thumb.webp",
+              "alt": "Adin Ross",
+              "type": "person"
+            }
+          }
+        ]
+      },
+      {
+        "title": "Creators",
+        "items": [
+          {
+            "name": "Pokimane",
+            "symbol": "POKI",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/pokimane-thumb.webp",
+              "alt": "Pokimane",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Markiplier",
+            "symbol": "MRK",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/markiplier-thumb.webp",
+              "alt": "Markiplier",
+              "type": "person"
+            }
+          },
+          {
+            "name": "KSI",
+            "symbol": "KSI",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ksi-thumb.webp",
+              "alt": "KSI",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Logan Paul",
+            "symbol": "LGP",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/logan-paul-thumb.webp",
+              "alt": "Logan Paul",
+              "type": "person"
+            }
+          },
+          {
+            "name": "Ludwig",
+            "symbol": "LDW",
+            "asset": {
+              "src": "https://tradeblackbook.org/public/assets/indices/upcoming/ludwig-thumb.webp",
+              "alt": "Ludwig",
+              "type": "person"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

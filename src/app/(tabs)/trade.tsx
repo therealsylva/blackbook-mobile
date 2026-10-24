@@ -27,7 +27,7 @@ export default function TradeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
-  useFocusEffect(useCallback(()=>{const listener=BackHandler.addEventListener('hardwareBackPress',()=>{router.navigate('/(tabs)');return true;});return()=>listener.remove();},[router]));
+  useFocusEffect(useCallback(()=>{const listener=BackHandler.addEventListener('hardwareBackPress',()=>{if(router.canGoBack())router.back();else router.navigate('/(tabs)');return true;});return()=>listener.remove();},[router]));
   const {session,requestAuth}=useAuth();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor,
@@ -149,7 +149,7 @@ export default function TradeScreen() {
               <Field label={selectedType === 'stop' ? 'Trigger price' : 'Limit price'} value={targetPrice} onChangeText={setTargetPrice} unit="POINT" />
             ) : null}
             {settings.marginWarnings&&numericAmount>0&&estimate.requiredBalance>cashBalance*.8?<Text accessibilityRole="alert" style={{color:colors.negative,marginBottom:12}}>This order uses over 80% of your available trading balance.</Text>:null}
-            <Field label="Margin" value={amount} onChangeText={setAmount} unit={settings.currency} />
+            <Field label="Amount" value={amount} onChangeText={setAmount} unit="$" />
             <Text style={styles.available}>Estimated fee {formatMoney(estimate.fee, settings.currency)} · balance needed {formatMoney(estimate.requiredBalance, settings.currency)}</Text>
 
             <View style={styles.leverageLine}>

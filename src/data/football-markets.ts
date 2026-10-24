@@ -4,7 +4,7 @@ export interface ReferenceObservation { asOf: string; reference: number; previou
 export interface MarketDefinition {
   pairLegs?: [string, string]; description?: string; rank: number; symbol: string; name: string; category: MarketCategory;
   entityId: string; price: number; reference: number; lowerBand: number; upperBand: number;
-  change24h: number; volume: string; density: number; high24h: number; low24h: number;
+  change24h: number; volumeUsd24h?: number; volatility24h?: number; volume: string; density: number; high24h: number; low24h: number;
   assetKey: string; series: number[]; history: ReferenceObservation[]; snapshotAsOf: string;
 }
 export const SNAPSHOT_AS_OF = publication.pointer.asOf;
@@ -22,3 +22,4 @@ export const MARKETS: MarketDefinition[] = publication.indices.map((index, rank)
     assetKey: index.assetKey, snapshotAsOf: row.asOf, history,
     series: history.length ? [history[0]!.previousReference, ...history.map((point) => point.reference), reference] : [reference, reference] };
 });
+

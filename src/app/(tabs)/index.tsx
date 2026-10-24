@@ -66,7 +66,7 @@ export default function HomeScreen() {
             </Pressable>
             <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.balanceValue}>{balanceVisible ? formatMoney(totalEquity, settings.currency) : '••••••••'}</Text>
             <Text style={[styles.pnl, { color: unrealizedPnl >= 0 ? colors.positive : colors.negative }]}>
-              {balanceVisible ? `${unrealizedPnl >= 0 ? '+' : ''}${formatMoney(unrealizedPnl, settings.currency)} · ${formatPercent(pnlPercent)} today` : '••••'}
+              {balanceVisible ? `${unrealizedPnl >= 0 ? '+' : ''}${formatMoney(unrealizedPnl, settings.currency)} · ${formatPercent(pnlPercent)} unrealized` : '••••'}
             </Text>
           </View>
           <View style={styles.fundsRail}>
@@ -160,3 +160,4 @@ const useStyles = createThemedStyles((colors) => ({
   empty: { color: colors.textMuted, fontFamily: typography.family, fontSize: 13, lineHeight: 20, paddingVertical: spacing.xl },
   pressed: { opacity: 0.65 },
 }));
+

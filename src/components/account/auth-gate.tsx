@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState,type PropsWithChildren} from 'react';
-import {ActivityIndicator,Image,KeyboardAvoidingView,Modal,Platform,Pressable,ScrollView,Text,TextInput,View} from 'react-native';
+import {ActivityIndicator,Image,Keyboard,KeyboardAvoidingView,Modal,Platform,Pressable,ScrollView,Text,TextInput,View} from 'react-native';
 import {useRouter} from 'expo-router';
 import {Screen} from '@/components/ui/screen';
 import {Icon} from '@/components/ui/icon';
@@ -12,6 +12,7 @@ export function AuthGate({children}:PropsWithChildren){
  const auth=useAuth(),{colors}=useTheme(),styles=useStyles(),router=useRouter();
  const [mode,setMode]=useState<FormMode>('signin'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[showPassword,setShowPassword]=useState(false),[busy,setBusy]=useState(false),[feedback,setFeedback]=useState<{text:string;error:boolean}|null>(null);
  const scroll=useRef<ScrollView>(null),locked=useRef(false),passwordInput=useRef<TextInput>(null);
+ useEffect(()=>{const listener=Keyboard.addListener('keyboardDidShow',()=>{if(passwordInput.current?.isFocused())scroll.current?.scrollToEnd({animated:true});});return()=>listener.remove();},[]);
  useEffect(()=>{if(auth.view){setMode(auth.view);setPassword('');setShowPassword(false);setFeedback(null);}},[auth.view]);
  const changeMode=(next:FormMode)=>{if(locked.current)return;setMode(next);setPassword('');setShowPassword(false);setFeedback(null);};
  const dismiss=()=>{if(!locked.current){setPassword('');setFeedback(null);auth.dismissAuth();}};
