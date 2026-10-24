@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View, type ListRenderItem } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 import comingSoon from '@/data/coming-soon.json';
 import { useRouter } from 'expo-router';
 import { MarketRow } from '@/components/market/market-row';
@@ -111,7 +112,7 @@ export default function AllIndicesScreen() {
         initialNumToRender={8}
         keyboardShouldPersistTaps="handled"
         keyExtractor={itemKey}
-        ListEmptyComponent={category==='Coming soon'?<View style={{paddingHorizontal:spacing.page}}><ScrollView horizontal showsHorizontalScrollIndicator={false}>{(Object.keys(comingSoon) as (keyof typeof comingSoon)[]).map(name=><Pressable key={name} onPress={()=>setUpcoming(name)} style={styles.category}><Text style={{color:upcoming===name?colors.text:colors.textMuted}}>{name}</Text></Pressable>)}</ScrollView>{comingSoon[upcoming].columns.flatMap(column=>column.items).filter(item=>!query||(`${item.name} ${item.symbol}`).toLowerCase().includes(query.toLowerCase())).map(item=><View key={item.symbol} style={{flexDirection:'row',alignItems:'center',paddingVertical:14,gap:12}}><Image source={{uri:item.asset.src}} style={{width:42,height:42,borderRadius:21}}/><View style={{flex:1}}><Text style={{color:colors.text,fontFamily:typography.semibold}}>{item.name}</Text><Text style={{color:colors.textMuted}}>{item.symbol}</Text></View><Text style={{color:colors.textMuted,fontSize:11}}>Coming soon</Text></View>)}</View>:<Text style={styles.empty}>No matching indices.</Text>}
+        ListEmptyComponent={category==='Coming soon'?<View style={{paddingHorizontal:spacing.page}}><ScrollView horizontal showsHorizontalScrollIndicator={false}>{(Object.keys(comingSoon) as (keyof typeof comingSoon)[]).map(name=><Pressable key={name} onPress={()=>setUpcoming(name)} style={styles.category}><Text style={{color:upcoming===name?colors.text:colors.textMuted}}>{name}</Text></Pressable>)}</ScrollView>{comingSoon[upcoming].columns.flatMap(column=>column.items).filter(item=>!query||(`${item.name} ${item.symbol}`).toLowerCase().includes(query.toLowerCase())).map(item=><View key={item.symbol} style={{flexDirection:'row',alignItems:'center',paddingVertical:14,gap:12}}>{item.asset.src.endsWith('.svg')?<SvgUri uri={item.asset.src} width={42} height={42}/>:<Image source={{uri:item.asset.src}} style={{width:42,height:42,borderRadius:21}}/>}<View style={{flex:1}}><Text style={{color:colors.text,fontFamily:typography.semibold}}>{item.name}</Text><Text style={{color:colors.textMuted}}>{item.symbol}</Text></View><Text style={{color:colors.textMuted,fontSize:11}}>Coming soon</Text></View>)}</View>:<Text style={styles.empty}>No matching indices.</Text>}
         ListHeaderComponent={listHeader}
         maxToRenderPerBatch={8}
         removeClippedSubviews

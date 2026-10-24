@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';import {mkdir,readFile} from 'node:fs/promises';import {chromium} from 'playwright';import {installConnectedFixture,signInFixture} from './connected-fixture.mjs';
-const browser=await chromium.launch({args:['--no-sandbox']});await mkdir('ui-renders',{recursive:true});
+const browser=await chromium.launch({executablePath:process.env.BROWSER_BIN,args:['--no-sandbox']});await mkdir('ui-renders',{recursive:true});
 try{for(const width of [360,390,430]){
  const context=await browser.newContext({viewport:{width,height:844}});await installConnectedFixture(context);
  // New hosted thumbnails may not be deployed while reviewing this PR.

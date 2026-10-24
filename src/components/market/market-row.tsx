@@ -40,7 +40,7 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
             <Text style={styles.symbol}>{market.symbol}</Text>
             {showSparkline ? (
               <View style={styles.sparkline}>
-                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={seriesFor(market.symbol,'1D').slice(-16)} strokeWidth={1.7} />
+                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={seriesFor(market.symbol,'1H').slice(-24)} strokeWidth={1.7} />
               </View>
             ) : null}
             
@@ -76,3 +76,4 @@ const useStyles = createThemedStyles((colors) => ({
   changeColumn: { marginLeft: 8, marginTop: 0, textAlign: 'right', width: 54 },
   volume: { color: colors.textMuted, flexShrink: 1, fontFamily: typography.mono, fontSize: 9.5, marginLeft: spacing.sm },
 }));
+
