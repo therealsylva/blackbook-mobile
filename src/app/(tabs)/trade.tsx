@@ -218,7 +218,7 @@ function Field({ label, value, onChangeText, unit, compact = false }: { label: s
     <View style={[styles.field, compact && styles.compactField]}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputRow}>
-        <TextInput keyboardType="decimal-pad" onChangeText={onChangeText} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={value} />
+        <TextInput accessibilityLabel={label} keyboardType="decimal-pad" onChangeText={onChangeText} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={value} />
         <Text style={styles.unit}>{unit}</Text>
       </View>
     </View>

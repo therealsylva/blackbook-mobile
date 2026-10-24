@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Validate product boundary
-        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees && node --test scripts/market-history.test.mjs && node --experimental-strip-types --test scripts/dollar-review.test.mjs scripts/round-two.test.mjs
+        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees && node --test scripts/market-history.test.mjs && node --experimental-strip-types --test scripts/dollar-review.test.mjs scripts/round-two.test.mjs scripts/quote-estimate.test.mjs
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check
@@ -79,6 +79,7 @@ jobs:
           node .github/scripts/capture-ui.mjs
           node .github/scripts/capture-review.mjs
           node .github/scripts/capture-round-two.mjs
+          node .github/scripts/capture-estimates.mjs
       - name: Upload phone renders
         if: always()
         uses: actions/upload-artifact@v4
