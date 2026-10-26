@@ -38,7 +38,7 @@ export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSh
             <Pressable key={market.symbol} onPress={() => { onSelect(market.symbol); onClose(); }} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
               <MarketIdentityAvatar market={market} size={34} />
               <View style={styles.copy}><Text style={styles.symbol}>{market.symbol}</Text><Text numberOfLines={1} style={styles.name}>{market.name}</Text></View>
-              <View style={styles.quote}><Text style={styles.price}>{formatPrice(priceFor(market.symbol))}</Text><Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text></View>
+              <View style={styles.quote}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(priceFor(market.symbol))}</Text><Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text></View>
             </Pressable>
           );
         })}
