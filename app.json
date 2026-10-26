@@ -2,7 +2,7 @@
   "expo": {
     "name": "BlackBook",
     "slug": "blackbook-mobile",
-    "version": "0.2.6",
+    "version": "0.2.7",
     "icon": "./assets/icon.png",
     "orientation": "portrait",
     "scheme": "blackbook",
@@ -14,7 +14,7 @@
     },
     "android": {
       "package": "com.modnight.blackbook",
-      "versionCode": 8,
+      "versionCode": 9,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {

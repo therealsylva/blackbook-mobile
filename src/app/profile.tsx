@@ -1,3 +1,7 @@
+import * as ImagePicker from 'expo-image-picker';
+import {uploadAvatar} from '@/lib/avatar-upload';
+import {supabase} from '@/lib/backend';
+import {useSheetInputFocus} from '@/components/ui/bottom-sheet';
 import {AccountPrompt} from '@/components/account/account-prompt';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
@@ -27,15 +31,31 @@ export default function ProfileScreen() {
   const [editOpen, setEditOpen] = useState(false);
   const [choice, setChoice] = useState<Choice>(null);
   const [name, setName] = useState(profile.displayName);
+  const [photo,setPhoto]=useState<ImagePicker.ImagePickerAsset|null>(null);
+  const [saving,setSaving]=useState(false);
+  const [photoError,setPhotoError]=useState<string|null>(null);
   const [avatar, setAvatar] = useState(profile.avatarUri ?? 'void');
 
   if(!session)return <AccountPrompt title="Your account" description="Sign in to manage your profile, balance and account settings."/>;
 
-  const save = () => {
-    const displayName = name.trim();
-    if (!displayName) return;
-    updateProfile({ displayName, avatarUri: avatar });
-    setEditOpen(false);
+  const choosePhoto=async()=>{
+    try{
+      const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],allowsEditing:false,quality:1});
+      if(result.canceled||!result.assets[0])return;
+      const asset=result.assets[0];
+      if(asset.fileSize!==undefined&&asset.fileSize>5*1024*1024)throw new Error('Choose a photo no larger than 5 MB.');
+      setPhoto(asset);setAvatar(asset.uri);setPhotoError(null);
+    }catch(error){setPhotoError(error instanceof Error?error.message:'Photo library unavailable.');}
+  };
+  const save=async()=>{
+    const displayName=name.trim();if(!displayName||saving)return;
+    setSaving(true);setPhotoError(null);let uploaded:string|undefined;
+    try{
+      const next=photo?await uploadAvatar(session.user.id,photo):null;uploaded=next?.path;
+      await updateProfile({displayName,avatarUri:next?.url??avatar});
+      setPhoto(null);setEditOpen(false);notify({title:'Profile updated',message:'Your changes have been saved.',tone:'success'});
+    }catch(error){if(uploaded)await supabase?.storage.from('profile-avatars').remove([uploaded]);setPhotoError(error instanceof Error?error.message:'Unable to save profile.');}
+    finally{setSaving(false);}
   };
 
   return (
@@ -53,7 +73,7 @@ export default function ProfileScreen() {
             <View style={styles.camera}><Icon color={colors.bg} name="camera" size={13} /></View>
           </Pressable>
           <View style={styles.identityCopy}>
-            <View style={styles.nameLine}><Text style={styles.name}>{profile.displayName}</Text></View>
+            <View style={styles.nameLine}><Text numberOfLines={1} adjustsFontSizeToFit style={styles.name}>{profile.displayName}</Text></View>
             <Text style={styles.uid}>UID {profile.uid}</Text>
           </View>
           <Pressable accessibilityLabel="Edit profile" onPress={() => setEditOpen(true)} style={styles.edit}><Icon name="edit" size={19} /></Pressable>
@@ -103,14 +123,17 @@ export default function ProfileScreen() {
         <Text style={styles.sheetLabel}>Profile picture</Text>
         <View style={styles.avatarChoices}>
           {['void', 'light', 'signal'].map((item) => (
-            <Pressable key={item} onPress={() => setAvatar(item)} style={[styles.avatarChoice, avatar === item && styles.avatarChoiceActive]}>
+            <Pressable key={item} onPress={() => {setAvatar(item);setPhoto(null);}} style={[styles.avatarChoice, avatar === item && styles.avatarChoiceActive]}>
               <ProfileAvatar displayName={name || profile.displayName} size={52} variant={item} />
             </Pressable>
           ))}
         </View>
+        <Pressable disabled={saving} accessibilityRole="button" accessibilityLabel="Choose profile photo from gallery" onPress={()=>void choosePhoto()} style={styles.photoPicker}><Icon name="camera"/><View style={styles.photoPickerCopy}><Text style={styles.photoPickerTitle}>Choose from gallery</Text><Text style={styles.photoPickerMeta}>JPEG, PNG or WebP · up to 5 MB</Text></View></Pressable>
+        {photo?<View style={{alignItems:'center',marginBottom:16}}><ProfileAvatar displayName={name} variant={avatar}/></View>:null}
+        {photoError?<Text accessibilityRole="alert" style={{color:colors.negative,marginBottom:12}}>{photoError}</Text>:null}
         <Text style={styles.sheetLabel}>Display name</Text>
-        <View style={styles.nameInput}><TextInput autoCapitalize="words" onChangeText={setName} selectionColor={colors.text} style={styles.input} value={name} /></View>
-        <Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>Save changes</Text></Pressable>
+        <View style={styles.nameInput}><ProfileNameInput autoCapitalize="words" onChangeText={setName} selectionColor={colors.text} style={styles.input} value={name} /></View>
+        <Pressable disabled={saving} onPress={()=>void save()} style={styles.save}><Text style={styles.saveText}>{saving?'Saving…':'Save changes'}</Text></Pressable>
       </BottomSheet>
 
       <ChoiceSheet onClose={()=>setChoice(null)} onSelect={value=>updateSetting('appearance',value)} options={['Dark','Light','System'] as const} title="Theme" value={settings.appearance} visible={choice==='appearance'}/>
@@ -119,6 +142,8 @@ export default function ProfileScreen() {
     </Screen>
   );
 }
+
+function ProfileNameInput(props:React.ComponentProps<typeof TextInput>){const onFocus=useSheetInputFocus();return <TextInput {...props} onFocus={onFocus}/>;}
 
 function ProfileAvatar({ displayName, variant, size = 74 }: { displayName: string; variant: string; size?: number }) {
   const { colors } = useTheme();

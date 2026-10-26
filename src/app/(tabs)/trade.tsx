@@ -1,7 +1,10 @@
+import {createContext,useContext} from 'react';
+import {useKeyboardScroll} from '@/hooks/use-keyboard-scroll';
+import {LeverageControl} from '@/components/ui/leverage-control';
 import {useNotification} from '@/context/notification-context';
 import {useAuth} from '@/context/auth-context';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import { MarketAvatar } from '@/components/market/market-avatar';
@@ -22,11 +25,12 @@ type AdvancedPanel = 'Chart' | 'Book';
 const BASIC_RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
 const ADVANCED_RANGES: ChartRange[] = ['1m', '5m', '15m', '1H', '4H'];
 const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop'];
-const LEVERAGES = [1, 2, 5, 10, 20, 25, 50];
+const FocusContext=createContext<()=>void>(()=>{});
 
 export default function TradeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
+  const {scroll,scrollFocused}=useKeyboardScroll();
   const router = useRouter();
   const notify=useNotification();
   const {session,requestAuth}=useAuth();
@@ -79,8 +83,8 @@ export default function TradeScreen() {
 
   return (
     <Screen>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
+        <FocusContext.Provider value={scrollFocused}><ScrollView ref={scroll} automaticallyAdjustKeyboardInsets keyboardDismissMode="on-drag" contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Text style={{color:colors.textMuted,paddingHorizontal:spacing.page,paddingVertical:8}}>{!session?'Browsing markets':accountMode === 'demo' ? 'Demo · practice funds' : 'Live account'}{error ? ' · '+error : ''}</Text>
           <View style={styles.header}>
             <Pressable onPress={() => setPairOpen(true)} style={({ pressed }) => [styles.pair, pressed && styles.pressed]}>
@@ -91,7 +95,7 @@ export default function TradeScreen() {
               </View>
             </Pressable>
             <View style={styles.liveQuote}>
-              <Text style={styles.livePrice}>{formatPrice(price)}</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.livePrice}>{formatPrice(price)}</Text>
               <Text style={[styles.liveChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text>
             </View>
           </View>
@@ -128,6 +132,7 @@ export default function TradeScreen() {
             </View>
 
             {!tradable?<Text style={{color:colors.textMuted,marginBottom:16}}>Trading is unavailable for this index. You can still browse its prices and history.</Text>:null}
+            <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:16}}><Text style={styles.label}>Advanced trading</Text><Switch trackColor={{false:colors.divider,true:colors.textMuted}} thumbColor={colors.text} ios_backgroundColor={colors.divider} accessibilityLabel="Advanced trading" value={advanced} onValueChange={value=>updateSetting('interfaceMode',value?'advanced':'basic')}/></View>
             <View style={styles.sidePill}>
               {(['long', 'short'] as const).map((item) => (
                 <Pressable key={item} onPress={() => setSide(item)} style={[styles.sideChoice, side === item && (item === 'long' ? styles.longChoice : styles.shortChoice)]}>
@@ -149,20 +154,11 @@ export default function TradeScreen() {
             {advanced && selectedType !== 'market' ? (
               <Field label={selectedType === 'stop' ? 'Trigger price' : 'Limit price'} value={targetPrice} onChangeText={setTargetPrice} unit="POINT" />
             ) : null}
-            {settings.marginWarnings&&numericAmount>0&&estimate.requiredBalance>cashBalance*.8?<Text accessibilityRole="alert" style={{color:colors.negative,marginBottom:12}}>This order uses over 80% of your available trading balance.</Text>:null}
+            {settings.marginWarnings&&numericAmount>0&&estimate.requiredBalance>cashBalance*settings.balanceWarningPercent/100?<Text accessibilityRole="alert" style={{color:colors.negative,marginBottom:12}}>This order uses over {settings.balanceWarningPercent}% of your available trading balance.</Text>:null}
             <Field label="Amount" value={amount} onChangeText={setAmount} unit="$" />
             <Text style={styles.available}>Estimated fee {formatMoney(estimate.fee, settings.currency)} · balance needed {formatMoney(estimate.requiredBalance, settings.currency)}</Text>
 
-            <View style={styles.leverageLine}>
-              <Text style={styles.label}>Leverage</Text>
-              <View style={styles.leverageRail}>
-                {LEVERAGES.filter(value => value <= maxLeverageFor(market.symbol)).map((value) => (
-                  <Pressable key={value} accessibilityRole="button" accessibilityLabel={`Select ${value}x leverage`} onPress={() => setLeverage(value)} style={[styles.leveragePill, effectiveLeverage === value && styles.leverageActive]}>
-                    <Text style={[styles.leverageText, effectiveLeverage === value && styles.leverageTextActive]}>{value}x</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
+            <View style={{marginBottom:16}}><LeverageControl value={effectiveLeverage} max={maxLeverageFor(market.symbol)} onChange={setLeverage} onFocus={scrollFocused}/></View>
 
             <View style={styles.summaryLine}>
               <Summary label="Exposure" value={formatMoney(exposure, settings.currency)} />
@@ -195,7 +191,7 @@ export default function TradeScreen() {
               <Text style={styles.activityText}>Orders {orders.length}</Text>
             </Pressable>
           </View>
-        </ScrollView>
+        </ScrollView></FocusContext.Provider>
       </KeyboardAvoidingView>
 
       <PairSelectorSheet onClose={() => setPairOpen(false)} onSelect={setActiveSymbol} visible={pairOpen} />
@@ -216,11 +212,12 @@ function RangeRail({ ranges, range, onChange }: { ranges: ChartRange[]; range: C
 function Field({ label, value, onChangeText, unit, compact = false }: { label: string; value: string; onChangeText: (value: string) => void; unit: string; compact?: boolean }) {
   const { colors } = useTheme();
   const styles = useStyles();
+  const onFocus=useContext(FocusContext);
   return (
     <View style={[styles.field, compact && styles.compactField]}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputRow}>
-        <TextInput accessibilityLabel={label} keyboardType="decimal-pad" onChangeText={onChangeText} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={value} />
+        <TextInput onFocus={onFocus} accessibilityLabel={label} keyboardType="decimal-pad" onChangeText={onChangeText} placeholder="0.00" placeholderTextColor={colors.textFaint} selectionColor={colors.text} style={styles.input} value={value} />
         <Text style={styles.unit}>{unit}</Text>
       </View>
     </View>
@@ -229,7 +226,7 @@ function Field({ label, value, onChangeText, unit, compact = false }: { label: s
 
 function Summary({ label, value }: { label: string; value: string }) {
   const styles = useStyles();
-  return <View style={styles.summary}><Text style={styles.summaryLabel}>{label}</Text><Text style={styles.summaryValue}>{value}</Text></View>;
+  return <View style={styles.summary}><Text style={styles.summaryLabel}>{label}</Text><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.summaryValue}>{value}</Text></View>;
 }
 
 const useStyles = createThemedStyles((colors) => ({
@@ -241,7 +238,7 @@ const useStyles = createThemedStyles((colors) => ({
   symbolLine: { alignItems: 'center', flexDirection: 'row' },
   symbol: { color: colors.text, fontFamily: typography.monoBold, fontSize: 15 },
   marketName: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10, marginTop: 3 },
-  liveQuote: { alignItems: 'flex-end' },
+  liveQuote: { maxWidth:'48%', minWidth:0, alignItems: 'flex-end' },
   livePrice: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 13 },
   liveChange: { fontFamily: typography.monoSemibold, fontSize: 10, marginTop: 3 },
   toolbar: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 42, paddingHorizontal: spacing.page },
@@ -278,7 +275,7 @@ const useStyles = createThemedStyles((colors) => ({
   compactField: { flex: 1 },
   label: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 11, marginBottom: 7 },
   inputRow: { alignItems: 'center', backgroundColor: colors.control, borderRadius: radii.md, flexDirection: 'row', height: 46, paddingHorizontal: spacing.sm },
-  input: { color: colors.text, flex: 1, fontFamily: typography.monoSemibold, fontSize: 15, padding: 0 },
+  input: { color: colors.text, flex: 1,minWidth:0, fontFamily: typography.monoSemibold, fontSize: 15, padding: 0 },
   unit: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 9 },
   leverageLine: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
   leverageRail: { flexDirection: 'row', gap: spacing.xs },
@@ -286,8 +283,8 @@ const useStyles = createThemedStyles((colors) => ({
   leverageActive: { backgroundColor: colors.text },
   leverageText: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 10 },
   leverageTextActive: { color: colors.bg },
-  summaryLine: { flexDirection: 'row', gap: spacing.xl, marginBottom: spacing.sm },
-  summary: { flex: 1 },
+  summaryLine: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  summary: { flex: 1,minWidth:0 },
   summaryLabel: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 10 },
   summaryValue: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 11, marginTop: 4 },
   optionRow: { alignItems: 'center', flexDirection: 'row', minHeight: 40 },

@@ -28,7 +28,7 @@ export function PairRow({ change, price, left, right, title, onPress }: PairRowP
         
       </View>
       <View style={styles.quote}>
-        <Text style={styles.price}>{formatPrice(price)}</Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(price)}</Text>
         <Text style={[styles.change, change >= 0 ? styles.positive : styles.negative]}>{formatPercent(change)}</Text>
       </View>
       <Icon name="chevron" size={17} />
@@ -44,7 +44,7 @@ const useStyles = createThemedStyles((colors) => ({
   copy: { flex: 1, minWidth: 0 },
   title: { color: colors.text, fontFamily: typography.bold, fontSize: 15, letterSpacing: -0.3 },
   symbols: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 10, marginTop: 4 },
-  quote: { alignItems: 'flex-end', marginRight: spacing.xs },
+  quote: { width:112,flexShrink:0, alignItems: 'flex-end', marginRight: spacing.xs },
   price: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 13.5 },
   change: { fontFamily: typography.monoSemibold, fontSize: 11, marginTop: 4 },
   positive: { color: colors.positive },
