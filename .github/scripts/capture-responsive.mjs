@@ -53,6 +53,10 @@ try{
    await page.reload({waitUntil:'networkidle'});
    await page.getByLabel('Edit profile picture',{exact:true}).waitFor();
    console.log('Gallery: >5 MB rejected before upload; valid PNG uploaded and remote profile preference saved');
+   await page.goto('http://127.0.0.1:4173/trade',{waitUntil:'networkidle'});await page.setViewportSize({width:320,height:390});
+   await page.getByLabel('Amount',{exact:true}).fill('123');await page.waitForTimeout(350);
+   const field=await page.getByLabel('Amount',{exact:true}).boundingBox();assert.ok(field.y>=0&&field.y+field.height<=390,JSON.stringify(field));
+   console.log('Order amount remains visible in a reduced keyboard viewport');
   }
   assert.deepEqual(fixture.failures,[]);assert.deepEqual(errors,[]);
   await context.close();console.log(`${width}px: no horizontal overflow, integer leverage input and limits, advanced switch, gallery action passed`);
