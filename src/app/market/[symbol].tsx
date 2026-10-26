@@ -56,7 +56,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
 
         <View style={styles.quote}>
           <View style={styles.priceLine}>
-            <Text style={styles.price}>{formatPrice(price)}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(price)}</Text>
           </View>
           <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text>
         </View>
