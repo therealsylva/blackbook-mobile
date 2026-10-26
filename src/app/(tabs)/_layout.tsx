@@ -1,3 +1,4 @@
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { Icon, type IconName } from '@/components/ui/icon';
@@ -16,6 +17,7 @@ const ICONS: Record<string, IconName> = {
 export default function TabsLayout() {
   const { colors } = useTheme();
   const styles = useStyles();
+  const insets=useSafeAreaInsets();
   return (
     <Tabs
       backBehavior="history"
@@ -30,7 +32,7 @@ export default function TabsLayout() {
         tabBarHideOnKeyboard: true,
         tabBarItemStyle: styles.item,
         tabBarLabelStyle: styles.label,
-        tabBarStyle: styles.bar,
+        tabBarStyle: [styles.bar,{height:layout.nav+insets.bottom,paddingBottom:4+insets.bottom}],
         tabBarIcon: ({ color }) => <Icon color={color} name={ICONS[route.name] ?? 'home'} size={21} />,
       })}
     >
