@@ -59,6 +59,7 @@ export interface ExchangeSettings {
   defaultTimeInForce:'GTC'|'IOC'|'FOK';
   oneClickTrading:boolean;
   marginWarnings:boolean;
+  balanceWarningPercent:number;
   stopLossPercent:number;
   takeProfitPercent:number;
   maxPositionUsd:number;
