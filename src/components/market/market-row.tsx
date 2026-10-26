@@ -49,7 +49,7 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
       </View>
 
       <View style={[styles.priceColumn, compact && styles.compactPrice]}>
-        <Text style={styles.price}>{formatPrice(price)}</Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(price)}</Text>
         {(compact || directory) ? <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text> : null}
       </View>
       {!compact && !directory ? <Text style={[styles.change, styles.changeColumn, { color: direction }]}>{formatPercent(change)}</Text> : null}
@@ -68,9 +68,9 @@ const useStyles = createThemedStyles((colors) => ({
   name: { color: colors.text, fontFamily: typography.bold, fontSize: 15.5, letterSpacing: -0.35 },
   metadata: { alignItems: 'center', flexDirection: 'row', minHeight: 22, marginTop: 2 },
   symbol: { color: colors.textMuted, fontFamily: typography.monoSemibold, fontSize: 10.5 },
-  sparkline: { flex: 1, height: 20, marginLeft: spacing.sm, maxWidth: 76, minWidth: 46 },
-  priceColumn: { alignItems: 'flex-end', marginLeft: spacing.sm, width: 96 },
-  compactPrice: { width: 92 },
+  sparkline: { flex: 1, height: 20, marginLeft: spacing.sm, maxWidth: 76, minWidth: 0 },
+  priceColumn: { alignItems: 'flex-end', marginLeft: spacing.sm, width: 112, flexShrink:0 },
+  compactPrice: { width: 112, flexShrink:0 },
   price: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 13.5, fontVariant: ['tabular-nums'], letterSpacing: -0.4 },
   change: { fontFamily: typography.monoSemibold, fontSize: 11.5, fontVariant: ['tabular-nums'], marginTop: 4 },
   changeColumn: { marginLeft: 8, marginTop: 0, textAlign: 'right', width: 54 },
