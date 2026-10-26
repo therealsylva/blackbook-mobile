@@ -1,6 +1,7 @@
+import {useNotification} from '@/context/notification-context';
 import {useAuth} from '@/context/auth-context';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import { MarketAvatar } from '@/components/market/market-avatar';
@@ -27,6 +28,7 @@ export default function TradeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
+  const notify=useNotification();
   const {session,requestAuth}=useAuth();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor,
@@ -68,8 +70,9 @@ export default function TradeScreen() {
   if (!market) return <Screen><View style={{padding:24}}><Text style={{color:colors.text}}>Loading market…</Text></View></Screen>;
 
   const execute = async () => {
+    if(busy)return;
     try { await placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage: effectiveLeverage, ...(riskControls && takeProfit.trim() ? {takeProfit:Number(takeProfit)} : {}), ...(riskControls && stopLoss.trim() ? {stopLoss:Number(stopLoss)} : {}), targetPrice: selectedType === 'market' ? undefined : numericTarget }); }
-    catch (error) { Alert.alert('Order unavailable', error instanceof Error ? error.message : 'Please try again.'); return; }
+    catch (error) { setReviewOpen(false); notify({title:'Order unavailable', message:error instanceof Error ? error.message : 'Please try again.',tone:'error'}); return; }
     setReviewOpen(false);
     setAmount('');
   };
@@ -196,7 +199,7 @@ export default function TradeScreen() {
       </KeyboardAvoidingView>
 
       <PairSelectorSheet onClose={() => setPairOpen(false)} onSelect={setActiveSymbol} visible={pairOpen} />
-      <OrderReviewSheet amount={numericAmount} fee={estimate.fee} exposure={exposure} currency={settings.currency} leverage={effectiveLeverage} onClose={() => setReviewOpen(false)} onConfirm={() => {void execute();}} price={price} side={side} symbol={market.symbol} targetPrice={numericTarget} type={selectedType} visible={reviewOpen} />
+      <OrderReviewSheet busy={busy} amount={numericAmount} fee={estimate.fee} exposure={exposure} currency={settings.currency} leverage={effectiveLeverage} onClose={() => setReviewOpen(false)} onConfirm={() => {void execute();}} price={price} side={side} symbol={market.symbol} targetPrice={numericTarget} type={selectedType} visible={reviewOpen} />
     </Screen>
   );
 }

@@ -8,6 +8,7 @@ import { BottomSheet } from '@/components/ui/bottom-sheet';
 
 interface OrderReviewSheetProps {
   visible: boolean;
+  busy?: boolean;
   onClose: () => void;
   onConfirm: () => void;
   symbol: string;
@@ -22,7 +23,7 @@ interface OrderReviewSheetProps {
   currency: string;
 }
 
-export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, type, amount, fee, exposure, leverage, price, targetPrice, currency }: OrderReviewSheetProps) {
+export function OrderReviewSheet({ visible, busy = false, onClose, onConfirm, symbol, side, type, amount, fee, exposure, leverage, price, targetPrice, currency }: OrderReviewSheetProps) {
   const { colors } = useTheme();
   const styles = useStyles();
   const execution = type === 'market' ? 'Best available' : formatPrice(targetPrice || price);
@@ -40,8 +41,8 @@ export function OrderReviewSheet({ visible, onClose, onConfirm, symbol, side, ty
         <ReviewRow label="Estimated fee" value={formatMoney(fee, currency)} />
       </View>
       <Text style={styles.risk}>Fee estimate uses the taker rate. Each fill is charged on exposure; maker fills use the lower maker rate. Fees also apply when closing.</Text>
-      <Pressable onPress={onConfirm} style={({ pressed }) => [styles.button, { backgroundColor: side === 'long' ? colors.positive : colors.negative }, pressed && styles.pressed]}>
-        <Text style={styles.buttonText}>Confirm {side === 'long' ? 'Long' : 'Short'}</Text>
+      <Pressable disabled={busy} accessibilityState={{disabled:busy, busy}} onPress={onConfirm} style={({ pressed }) => [styles.button, { backgroundColor: side === 'long' ? colors.positive : colors.negative }, pressed && styles.pressed]}>
+        <Text style={styles.buttonText}>{busy?'Processing…':`Confirm ${side === 'long' ? 'Long' : 'Short'}`}</Text>
       </Pressable>
     </BottomSheet>
   );

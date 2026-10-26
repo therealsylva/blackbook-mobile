@@ -1,7 +1,7 @@
 import {useAuth} from '@/context/auth-context';
 import {AccountPrompt} from '@/components/account/account-prompt';
 import {formatTimestamp} from '@/lib/format';
-import {Alert} from 'react-native';
+import {useNotification} from '@/context/notification-context';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
@@ -67,11 +67,13 @@ function BalanceMetric({ label, value }: { label: string; value: string }) {
 function PositionsList() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { positions, marketFor, priceFor, positionPnl, closePosition, settings } = useExchange();
+  const { positions, marketFor, priceFor, positionPnl, closePosition, settings, busy, ready, error } = useExchange();
+  const notify=useNotification();
+  const [closing,setClosing]=useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const toggle = (id: string) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
 
-  if (!positions.length) return <Empty title="No open positions" />;
+  if (!positions.length) return <Empty title={ready?"No open positions":error?"Positions temporarily unavailable":"Loading positions…"} />;
   return <>{positions.map((position) => {
     const market = marketFor(position.symbol); if (!market) return null;
     const pnl = positionPnl(position); const current = priceFor(position.symbol); const open = expanded.has(position.id);
@@ -100,7 +102,7 @@ function PositionsList() {
             <Detail label="Position size" value={formatMoney(position.size, settings.currency)} />
             <Detail label="Margin" value={formatMoney(position.margin, settings.currency)} />
             <Detail label="Opened" value={formatAge(position.openedAt)} />
-            <Pressable onPress={() => {void closePosition(position.id).catch(e=>Alert.alert('Close unavailable',e.message));}} style={styles.outlineButton}><Text style={styles.outlineButtonText}>Close position</Text></Pressable>
+            <Pressable disabled={busy||closing||!ready} accessibilityState={{disabled:busy||closing||!ready}} onPress={() => {setClosing(true);void closePosition(position.id).catch(e=>notify({title:'Close unavailable',message:e.message,tone:'error'})).finally(()=>setClosing(false));}} style={[styles.outlineButton,(busy||closing||!ready)&&{opacity:0.5}]}><Text style={styles.outlineButtonText}>{busy||closing?'Processing…':'Close position'}</Text></Pressable>
           </View>
         ) : null}
       </View>
@@ -111,8 +113,9 @@ function PositionsList() {
 function OrdersList() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { orders, marketFor, priceFor, cancelOrder, settings } = useExchange();
-  if (!orders.length) return <Empty title="No open orders" />;
+  const { orders, marketFor, priceFor, cancelOrder, settings, busy, ready, error } = useExchange();
+  const notify=useNotification();
+  if (!orders.length) return <Empty title={ready?"No open orders":error?"Orders temporarily unavailable":"Loading orders…"} />;
   return <>{orders.map((order: OpenOrder) => {
     const market = marketFor(order.symbol); if (!market) return null;
     const current = priceFor(order.symbol);
@@ -132,7 +135,7 @@ function OrdersList() {
           </View>
           <View style={styles.orderQuote}>
             <Text style={[styles.distance, { color: distance >= 0 ? colors.positive : colors.negative }]}>{distance >= 0 ? '+' : ''}{distance.toFixed(2)}%</Text>
-            <Pressable onPress={() => {void cancelOrder(order.id).catch(e=>Alert.alert('Cancel unavailable',e.message));}} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+            <Pressable disabled={busy||!ready} onPress={() => {void cancelOrder(order.id).catch(e=>notify({title:'Cancel unavailable',message:e.message,tone:'error'}));}} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
           </View>
         </View>
       </View>
@@ -143,8 +146,8 @@ function OrdersList() {
 function JournalList() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { history, marketFor, settings } = useExchange();
-  if (!history.length) return <Empty title="No journal entries" />;
+  const { history, marketFor, settings, ready, error } = useExchange();
+  if (!history.length) return <Empty title={ready?"No journal entries":error?"Journal temporarily unavailable":"Loading journal…"} />;
   return <>{history.map((record: TradeRecord, index) => {
     const market = marketFor(record.symbol); if (!market) return null;
     const prior = history[index - 1];

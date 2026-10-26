@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ExchangeProvider } from '@/context/exchange-context';
 import { ThemeProvider, useTheme } from '@/theme/theme-context';
 import {AuthProvider,useAuth} from '@/context/auth-context';
+import {NotificationProvider} from '@/context/notification-context';
 import {AuthGate} from '@/components/account/auth-gate';
 
 void SplashScreen.preventAutoHideAsync();
@@ -48,9 +49,9 @@ function RootNavigator() {
     <SafeAreaProvider>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <NavigationBar style={isDark ? 'light' : 'dark'} />
-      <AuthGate><ExchangeProvider key={loading?'restoring':session?.user.id??'guest'} selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol}>
+      <NotificationProvider><AuthGate><ExchangeProvider key={loading?'restoring':session?.user.id??'guest'} selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol}>
         <Stack screenOptions={{ animation: 'slide_from_right', contentStyle: { backgroundColor: colors.bg }, headerShown: false }} />
-      </ExchangeProvider></AuthGate>
+      </ExchangeProvider></AuthGate></NotificationProvider>
     </SafeAreaProvider>
   );
 }
