@@ -1,7 +1,7 @@
 import {AccountPrompt} from '@/components/account/account-prompt';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import {Alert} from 'react-native';
+import {useNotification} from '@/context/notification-context';
 import {useAuth} from '@/context/auth-context';
 import { useRouter } from 'expo-router';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
@@ -20,6 +20,7 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const router = useRouter();
+  const notify=useNotification();
   const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode } = useExchange();
   const {signOut,session}=useAuth();
   const [tab, setTab] = useState<ProfileTab>('My info');
@@ -92,7 +93,7 @@ export default function ProfileScreen() {
               <ProfileRow icon="help" label="Help center" onPress={() => router.push('/settings/about')} />
               <ProfileRow icon="document" label="Legal & risk" onPress={() => router.push('/settings/about')} />
               <ProfileRow icon="info" label="About BlackBook" onPress={() => router.push('/settings/about')} value="0.1.0" />
-              <ProfileRow icon="logout" label="Log out" onPress={() => {void signOut().catch(e=>Alert.alert('Sign out unavailable',e.message));}} />
+              <ProfileRow icon="logout" label="Log out" onPress={() => {void signOut().catch(e=>notify({title:'Sign out unavailable',message:e.message,tone:'error'}));}} />
             </>
           ) : null}
         </View>
@@ -114,7 +115,7 @@ export default function ProfileScreen() {
 
       <ChoiceSheet onClose={()=>setChoice(null)} onSelect={value=>updateSetting('appearance',value)} options={['Dark','Light','System'] as const} title="Theme" value={settings.appearance} visible={choice==='appearance'}/>
       <ChoiceSheet format={(value) => value === 'basic' ? 'Basic' : 'Advanced'} onClose={() => setChoice(null)} onSelect={(value) => updateSetting('interfaceMode', value)} options={['basic', 'advanced'] as const} title="Trading interface" value={settings.interfaceMode} visible={choice === 'interface'} />
-      <ChoiceSheet format={(value) => value === 'real' ? 'Real money' : 'Demo (practice funds)'} onClose={() => setChoice(null)} onSelect={(value) => {void setAccountMode(value).catch(e=>Alert.alert('Mode unchanged',e.message));}} options={['real', 'demo'] as const} title="Account mode" value={accountMode} visible={choice === 'accountMode'} />
+      <ChoiceSheet format={(value) => value === 'real' ? 'Real money' : 'Demo (practice funds)'} onClose={() => setChoice(null)} onSelect={(value) => {void setAccountMode(value).catch(e=>notify({title:'Mode unchanged',message:e.message}));}} options={['real', 'demo'] as const} title="Account mode" value={accountMode} visible={choice === 'accountMode'} />
     </Screen>
   );
 }
