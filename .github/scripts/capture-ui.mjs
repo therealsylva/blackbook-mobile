@@ -20,7 +20,7 @@ for (const width of [360,390,430]) {
    if(name==='pair') {
     await page.getByText('Trade FCB/RMD',{exact:true}).click();
     await page.getByText('Order ticket',{exact:true}).waitFor();
-    await page.getByRole('button',{name:'Select 20x leverage',exact:true}).click();
+    await page.getByLabel('Leverage',{exact:true}).fill('20');await page.getByLabel('Leverage',{exact:true}).blur();
     await page.screenshot({path:`ui-renders/pair-trade-${width}.png`,fullPage:true});
     await page.getByText(/^Review long order$/i).click();
     const feeText=await page.getByText('Estimated fee',{exact:true}).locator('..').innerText();
@@ -72,7 +72,7 @@ for (const width of [360,390,430]) {
    await demo.reload({waitUntil:'networkidle'});await demo.getByText('Preferences',{exact:true}).click();await demo.getByText('Demo',{exact:true}).waitFor();
    assert.equal(fixture.preferences.accountMode,'demo');assert.equal(fixture.accounts.demo.length,0);assert.equal(fixture.accounts.real.length,1);
    await demo.goto('http://127.0.0.1:4173/pair/fcb-rmd',{waitUntil:'networkidle'});await demo.getByText('Trade FCB/RMD',{exact:true}).click();
-   await demo.getByText('Demo · practice funds',{exact:true}).waitFor();await demo.getByRole('button',{name:'Select 20x leverage',exact:true}).click();
+   await demo.getByText('Demo · practice funds',{exact:true}).waitFor();await demo.getByLabel('Leverage',{exact:true}).fill('20');await demo.getByLabel('Leverage',{exact:true}).blur();
    await demo.getByText(/^Review long order$/i).click();await demo.getByText('Confirm Long',{exact:true}).click();await demo.waitForFunction(()=>!document.body.innerText.includes('Confirm order'));
    assert.equal(fixture.orders.at(-1).mode,'demo');assert.equal(fixture.orders.at(-1).body.leverage,20);assert.equal(fixture.accounts.demo.length,1);assert.equal(fixture.accounts.real.length,1);
    console.log('real/demo isolation and persisted preference: passed');
