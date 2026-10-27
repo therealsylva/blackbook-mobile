@@ -20,6 +20,7 @@ try {
  await page.getByText('Confirm Long',{exact:true}).click();
  for(let i=0;i<40&&fixture.orders.length<1;i++)await page.waitForTimeout(100);
  assert.equal(fixture.orders[0].body.type,'MARKET');assert.equal(fixture.orders[0].body.timeInForce,'FOK');
+ await page.waitForFunction(()=>document.querySelector('input[aria-label="Margin"]')?.value==='');
  await page.getByRole('switch',{name:'Advanced trading',exact:true}).click();
  await page.getByLabel('Execution preference',{exact:true}).click();
  await page.getByText('Fill available, cancel rest',{exact:true}).click();
@@ -28,6 +29,7 @@ try {
  await page.getByText('Confirm Long',{exact:true}).click();
  for(let i=0;i<40&&fixture.orders.length<2;i++)await page.waitForTimeout(100);
  assert.equal(fixture.orders[1].body.timeInForce,'IOC');
+ await page.waitForFunction(()=>document.querySelector('input[aria-label="Margin"]')?.value==='');
  assert.equal(fixture.preferences.defaultMarketExecution,'FOK');
  await page.goto('http://127.0.0.1:4173/settings/trading',{waitUntil:'networkidle'});
  await page.getByText('Default market execution',{exact:true}).click();
