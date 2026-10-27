@@ -11,7 +11,7 @@ export function useTradingNotifications({scope,settings,history,markets,enabled,
   const current=observed.current;
   if(!current||current.scope!==scope){observed.current={scope,fills:new Set(history.map(item=>item.id)),alerts:new Set()};return;}
   const fresh=history.filter(item=>!current.fills.has(item.id));current.fills=new Set(history.map(item=>item.id));
-  if(settings.orderNotifications&&fresh.length)notify({title:'Order filled',message:`${fresh.length} new fill${fresh.length===1?'':'s'} in your account.`,tone:'success'});
+  if(settings.orderNotifications&&fresh.length)notify({title:'Trade executed',message:`${fresh.length} new execution${fresh.length===1?'':'s'} in your account. Check Portfolio for filled size and margin.`,tone:'success'});
   if(!settings.priceAlerts)return;
   const triggered=settings.priceAlertRules.filter(rule=>{if(rule.fired||current.alerts.has(rule.id))return false;const price=markets.find(m=>m.symbol===rule.symbol)?.price;return price!==undefined&&Number.isFinite(price)&&(rule.direction==='above'?price>=rule.price:price<=rule.price);});
   if(triggered.length){for(const rule of triggered)current.alerts.add(rule.id);updateSetting('priceAlertRules',settings.priceAlertRules.map(rule=>triggered.some(item=>item.id===rule.id)?{...rule,fired:true}:rule));notify({title:'Price alert',message:triggered.map(rule=>`${rule.symbol} ${rule.direction==='above'?'≥':'≤'} ${rule.price}`).join('\n')});}

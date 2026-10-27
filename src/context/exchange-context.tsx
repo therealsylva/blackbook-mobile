@@ -1,3 +1,4 @@
+import {executionNotice} from '@/lib/execution-notice';
 import {useNotification} from '@/context/notification-context';
 import {resolveTradingCommand,closePositionCommand,isDefinitiveCommandError,type PendingCommand} from '@/lib/trading-command';
 import {createContext,useCallback,useContext,useEffect,useMemo,useRef,useState,type PropsWithChildren} from 'react';
@@ -79,12 +80,11 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
    const outcome=await resolveTradingCommand(request,(path,body)=>api<Row>(path,body));
    if(outcome.state==='complete'){
     await AsyncStorage.removeItem(pendingKey);pending.current=null;
-    const receipt=outcome.receipt,filled=Number(receipt.filledQuantityLots??0)>0;
-    notify({title:filled?(request.body.reduceOnly?'Position close executed':'Order filled'):receipt.status==='RESTING'?'Order placed':receipt.status==='REJECTED'?'Order rejected':'Order cancelled',message:filled?'Your account is updating.':receipt.status==='RESTING'?'Your order is open.':'Check Portfolio for the latest account state.',tone:receipt.status==='REJECTED'?'error':'success'});
+    notify(executionNotice(request.body,outcome.receipt,remote.find(m=>m.marketId===request.body.marketId)?.terms));
    }
   }catch(e){if(isDefinitiveCommandError(e)){await AsyncStorage.removeItem(pendingKey);pending.current=null;notify({title:'Request rejected',message:message(e),tone:'error'});}}
   finally{commandLock.current=false;setBusy(Boolean(pending.current));}
- },[hydrated,session?.user.id,pendingKey,notify]);
+ },[hydrated,session?.user.id,pendingKey,notify,remote]);
  useEffect(()=>{void recoverPending();const timer=setInterval(()=>{if(AppState.currentState==='active')void recoverPending();},3000);const event=AppState.addEventListener('change',state=>{if(state==='active')void recoverPending();});return()=>{clearInterval(timer);event.remove();};},[recoverPending]);
  const refresh=useCallback(async()=>{
   if(!hydrated||inFlight.current)return;inFlight.current=true;const version=generation.current;
@@ -199,10 +199,10 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   const result=await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',body,accountMode+JSON.stringify(input));
   if(result.status==='PENDING')return {kind:'pending',id:str(result.orderId)} as const;
   if(Number(result.filledQuantityLots??0)===0&&['CANCELLED','REJECTED'].includes(String(result.status)))throw new Error('Order cancelled without a fill. Check available liquidity.');
-  if(Number(result.filledQuantityLots??0)>0)return {kind:'position',id:str(result.orderId)} as const;
+  if(Number(result.filledQuantityLots??0)>0){if(settings.orderNotifications)notify(executionNotice(body,result,m.terms));return {kind:'position',id:str(result.orderId)} as const;}
   if(!['FILLED','PARTIALLY_FILLED','RESTING'].includes(String(result.status)))throw new Error('Order submitted. Check Orders for its execution status.');
   return {kind:result.status==='RESTING'?'order':'position',id:str(result.orderId)} as const;
- },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,orderEstimate,submit,settings.defaultTimeInForce]);
+ },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,orderEstimate,submit,settings.defaultTimeInForce,settings.orderNotifications,notify]);
  const closePosition=useCallback(async(id:string)=>{
   if(commandLock.current||pending.current)throw new Error('An account action is processing. BlackBook will confirm it automatically.');
   const prefix=accountMode==='demo'?'/v1/demo/account':'/v1/account';
