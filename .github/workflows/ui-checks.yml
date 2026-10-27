@@ -81,6 +81,7 @@ jobs:
           node .github/scripts/capture-round-two.mjs
           node .github/scripts/capture-estimates.mjs
           node .github/scripts/capture-responsive.mjs
+          node .github/scripts/capture-market-execution.mjs
       - name: Upload phone renders
         if: always()
         uses: actions/upload-artifact@v4

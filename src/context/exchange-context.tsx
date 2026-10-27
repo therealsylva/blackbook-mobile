@@ -1,3 +1,4 @@
+import {orderExecutionPlan,marketExecutionOptions,type MarketExecution} from '@/lib/market-execution';
 import {executionNotice} from '@/lib/execution-notice';
 import {useNotification} from '@/context/notification-context';
 import {resolveTradingCommand,closePositionCommand,isDefinitiveCommandError,type PendingCommand} from '@/lib/trading-command';
@@ -21,7 +22,7 @@ import type {ChartRange,ExchangeSettings,OpenOrder,OrderType,Position,Side,Trade
 type Row=Record<string,unknown>;
 export type BookSnapshot={marketId:string;status:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;lastTradePriceTicks?:string;bids:{priceTicks:string;quantityLots:string}[];asks:{priceTicks:string;quantityLots:string}[]};
 type AccountMode='real'|'demo';
-interface PlaceOrderInput {symbol:string;side:Side;type:OrderType;amount:number;leverage:number;targetPrice?:number;takeProfit?:number;stopLoss?:number}
+interface PlaceOrderInput {symbol:string;side:Side;type:OrderType;amount:number;leverage:number;targetPrice?:number;takeProfit?:number;stopLoss?:number;marketExecution?:MarketExecution}
 interface ExchangeContextValue {
  markets:MarketDefinition[];pairMarkets:MarketDefinition[];activeSymbol:string;setActiveSymbol:(symbol:string)=>void;favorites:Set<string>;toggleFavorite:(symbol:string)=>void;
  historyLoadingFor:(symbol:string)=>boolean;
@@ -32,7 +33,7 @@ interface ExchangeContextValue {
  profile:UserProfile;updateProfile:(changes:Partial<UserProfile>)=>Promise<void>;settings:ExchangeSettings;updateSetting:<K extends keyof ExchangeSettings>(key:K,value:ExchangeSettings[K])=>void;
  accountMode:AccountMode;setAccountMode:(mode:AccountMode)=>Promise<void>;loading:boolean;error:string|null;refresh:()=>Promise<void>;bookFor:(symbol:string)=>BookSnapshot|undefined;maxLeverageFor:(symbol:string)=>number;isTradableFor:(symbol:string)=>boolean;busy:boolean;ready:boolean;
 }
-const defaults:ExchangeSettings={locale:'en-GB',timeZone:'UTC',chartType:'candles',candleInterval:'1h',defaultMargin:1000,defaultTimeInForce:'GTC',oneClickTrading:false,marginWarnings:false,balanceWarningPercent:80,stopLossPercent:0,takeProfitPercent:0,maxPositionUsd:0,dailyLossUsd:0,orderNotifications:true,priceAlerts:true,priceAlertRules:[],interfaceMode:'basic',appearance:'Dark',language:'English',currency:'USD',colorPreference:'Green up / Red down',defaultOrderType:'market',defaultLeverage:5,confirmOrders:true,attachRiskControls:true,refreshRate:'Live'};
+const defaults:ExchangeSettings={locale:'en-GB',timeZone:'UTC',chartType:'candles',candleInterval:'1h',defaultMargin:1000,defaultTimeInForce:'GTC',defaultMarketExecution:'IOC',oneClickTrading:false,marginWarnings:false,balanceWarningPercent:80,stopLossPercent:0,takeProfitPercent:0,maxPositionUsd:0,dailyLossUsd:0,orderNotifications:true,priceAlerts:true,priceAlertRules:[],interfaceMode:'basic',appearance:'Dark',language:'English',currency:'USD',colorPreference:'Green up / Red down',defaultOrderType:'market',defaultLeverage:5,confirmOrders:true,attachRiskControls:true,refreshRate:'Live'};
 const Context=createContext<ExchangeContextValue|null>(null);
 const metadata=new Map(ALL_MARKETS.map(m=>[m.symbol,m]));
 const message=(e:unknown)=>e instanceof Error?e.message:'BlackBook is unavailable. Please try again.';
@@ -57,6 +58,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const observedAt=useRef(0),ownerRef=useRef(userId);ownerRef.current=userId;
  const applyPreferences=useCallback((p:Row)=>{
   const next={...defaults,...Object.fromEntries(Object.keys(defaults).filter(k=>k!=='appearance'&&k!=='language'&&k!=='currency'&&p[k]!==undefined).map(k=>[k,p[k]]))} as ExchangeSettings;
+  if(!marketExecutionOptions.includes(next.defaultMarketExecution))next.defaultMarketExecution='IOC';
   next.marginWarnings=typeof p.balanceWarningPercent==='number'&&p.marginWarnings===true;
   configureDisplay(next.locale,next.timeZone);setSettings(current=>({...next,appearance:current.appearance}));setFavorites(new Set(Array.isArray(p.favorites)?p.favorites.filter((v):v is string=>typeof v==='string'):[]));
   setProfile(current=>({...current,...(typeof p.displayName==='string'?{displayName:p.displayName}:{}),...(typeof p.avatar==='string'?{avatarUri:p.avatar}:{})}));
@@ -177,17 +179,19 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   const m=lookup.get(input.symbol),book=bookFor(input.symbol);
   const unavailable={fee:NaN,reservedFee:NaN,exposure:NaN,requiredBalance:NaN};
   if(!m?.tradable||!book||book.marketVersion!==m.marketVersion||book.marketHash!==m.marketHash||m.feePolicy?.policyVersion!==m.terms.feePolicyVersion)return unavailable;
-  const scale=10**Number(m.terms.priceDecimals),price=orderEntryPrice({...input,priceDecimals:m.terms.priceDecimals,referenceTicks:m.referenceTicks,book});
+  let plan:ReturnType<typeof orderExecutionPlan>;try{plan=orderExecutionPlan(input.type,input.marketExecution??settings.defaultMarketExecution,input.targetPrice,settings.defaultTimeInForce);}catch{return unavailable;}
+  const scale=10**Number(m.terms.priceDecimals),price=orderEntryPrice({...input,type:plan.type,targetPrice:plan.targetPrice,priceDecimals:m.terms.priceDecimals,referenceTicks:m.referenceTicks,book});
   const factor=Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,lots=sizeDollarOrder({amount:input.amount,leverage:input.leverage,priceTicks:String(Math.round(price*scale)),priceDecimals:m.terms.priceDecimals,quoteMinorPerIndexUnitPerLot:m.terms.quoteMinorPerIndexUnitPerLot});
   if(!(price>0)||!Number.isSafeInteger(lots)||lots<Number(m.terms.minimumOrderLots))return unavailable;
   const priceTicks=String(Math.round(price*scale));
   const fees=estimateTradingFees({policy:m.feePolicy,quantityLots:lots,priceTicks,upperTicks:m.upperTicks,quoteMinorPerIndexUnitPerLot:m.terms.quoteMinorPerIndexUnitPerLot,priceDecimals:m.terms.priceDecimals});
   return {...fees,exposure:lots*price*factor,requiredBalance:lots*price*factor/input.leverage+fees.reservedFee};
- },[bookFor,lookup]);
+ },[bookFor,lookup,settings.defaultMarketExecution,settings.defaultTimeInForce]);
  const placeOrder=useCallback(async(input:PlaceOrderInput)=>{
   const m=lookup.get(input.symbol),book=bookFor(input.symbol);if(!m?.tradable||!book||book.status!=='RUNNING')throw new Error('Market is unavailable.');
   if(!Number.isFinite(input.amount)||input.amount<=0||input.amount>cashBalance||!Number.isInteger(input.leverage)||input.leverage<1||input.leverage>maxLeverageFor(input.symbol))throw new Error('Check your dollar amount and leverage.');
-  const scale=10**Number(m.terms.priceDecimals),price=orderEntryPrice({...input,priceDecimals:m.terms.priceDecimals,referenceTicks:m.referenceTicks,book});
+  const plan=orderExecutionPlan(input.type,input.marketExecution??settings.defaultMarketExecution,input.targetPrice,settings.defaultTimeInForce);
+  const scale=10**Number(m.terms.priceDecimals),price=orderEntryPrice({...input,type:plan.type,targetPrice:plan.targetPrice,priceDecimals:m.terms.priceDecimals,referenceTicks:m.referenceTicks,book});
   if(!price||!Number.isFinite(price))throw new Error('Enter a valid price.');
   const lots=sizeDollarOrder({amount:input.amount,leverage:input.leverage,priceTicks:String(Math.round(price*scale)),priceDecimals:m.terms.priceDecimals,quoteMinorPerIndexUnitPerLot:m.terms.quoteMinorPerIndexUnitPerLot});if(!Number.isSafeInteger(lots)||lots<Number(m.terms.minimumOrderLots))throw new Error('Enter an amount of at least $1.');
   const estimate=orderEstimate(input);
@@ -195,14 +199,14 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   if(estimate.requiredBalance>cashBalance)throw new Error('Available balance must cover margin and trading fees.');
   const ticks=(v:number)=>{const value=Math.round(v*scale);if(!Number.isSafeInteger(value)||value<=0)throw new Error('Invalid price.');return String(value);};
   for(const [value,profit] of [[input.takeProfit,true],[input.stopLoss,false]] as const){if(value!==undefined&&(!(value>0)||((input.side==='long')===profit?value<=price:value>=price)))throw new Error('Check take-profit and stop-loss prices for the selected side.');}
-  const body:Row={commandId:uuid(),orderId:uuid(),marketId:m.marketId,amountMinor:String(Math.round(input.amount*100)),side:input.side==='long'?'BID':'ASK',type:input.type.toUpperCase(),quantityLots:String(lots),leverage:input.leverage,expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,timeInForce:input.type==='market'?'IOC':input.type==='stop'?'GTC':settings.defaultTimeInForce,...(input.type==='limit'?{priceTicks:ticks(price)}:{}),...(input.type==='stop'?{triggerTicks:ticks(price)}:{}),...(input.takeProfit===undefined?{}:{takeProfitTicks:ticks(input.takeProfit)}),...(input.stopLoss===undefined?{}:{stopLossTicks:ticks(input.stopLoss)})};
+  const body:Row={commandId:uuid(),orderId:uuid(),marketId:m.marketId,amountMinor:String(Math.round(input.amount*100)),side:input.side==='long'?'BID':'ASK',type:plan.type.toUpperCase(),quantityLots:String(lots),leverage:input.leverage,expectedMarketVersion:book.marketVersion,expectedMarketHash:book.marketHash,timeInForce:plan.timeInForce,...(plan.type==='limit'?{priceTicks:ticks(price)}:{}),...(input.type==='stop'?{triggerTicks:ticks(price)}:{}),...(input.takeProfit===undefined?{}:{takeProfitTicks:ticks(input.takeProfit)}),...(input.stopLoss===undefined?{}:{stopLossTicks:ticks(input.stopLoss)})};
   const result=await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',body,accountMode+JSON.stringify(input));
   if(result.status==='PENDING')return {kind:'pending',id:str(result.orderId)} as const;
   if(Number(result.filledQuantityLots??0)===0&&['CANCELLED','REJECTED'].includes(String(result.status)))throw new Error('Order cancelled without a fill. Check available liquidity.');
   if(Number(result.filledQuantityLots??0)>0){if(settings.orderNotifications)notify(executionNotice(body,result,m.terms));return {kind:'position',id:str(result.orderId)} as const;}
   if(!['FILLED','PARTIALLY_FILLED','RESTING'].includes(String(result.status)))throw new Error('Order submitted. Check Orders for its execution status.');
   return {kind:result.status==='RESTING'?'order':'position',id:str(result.orderId)} as const;
- },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,orderEstimate,submit,settings.defaultTimeInForce,settings.orderNotifications,notify]);
+ },[accountMode,bookFor,cashBalance,lookup,maxLeverageFor,orderEstimate,submit,settings.defaultTimeInForce,settings.defaultMarketExecution,settings.orderNotifications,notify]);
  const closePosition=useCallback(async(id:string)=>{
   if(commandLock.current||pending.current)throw new Error('An account action is processing. BlackBook will confirm it automatically.');
   const prefix=accountMode==='demo'?'/v1/demo/account':'/v1/account';
@@ -224,12 +228,13 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const liquidationEstimate=useCallback((input:PlaceOrderInput)=>{
   if(!ready||Date.now()-observedAt.current>15000)return NaN;
   const m=remote.find(m=>m.symbol===input.symbol),book=bookFor(input.symbol);if(!m||!book)return NaN;
-  const scale=10**Number(m.terms.priceDecimals),price=orderEntryPrice({...input,priceDecimals:m.terms.priceDecimals,referenceTicks:m.referenceTicks,book});
+  let plan:ReturnType<typeof orderExecutionPlan>;try{plan=orderExecutionPlan(input.type,input.marketExecution??settings.defaultMarketExecution,input.targetPrice,settings.defaultTimeInForce);}catch{return NaN;}
+  const scale=10**Number(m.terms.priceDecimals),price=orderEntryPrice({...input,type:plan.type,targetPrice:plan.targetPrice,priceDecimals:m.terms.priceDecimals,referenceTicks:m.referenceTicks,book});
   const factor=Number(m.terms.quoteMinorPerIndexUnitPerLot)/100;
   const lots=sizeDollarOrder({amount:input.amount,leverage:input.leverage,priceTicks:String(Math.round(price*scale)),priceDecimals:m.terms.priceDecimals,quoteMinorPerIndexUnitPerLot:m.terms.quoteMinorPerIndexUnitPerLot});if(!(lots>=Number(m.terms.minimumOrderLots)))return NaN;
   const p=account.positions.find(p=>p.marketId===m.marketId);
   return estimateLiquidation({margin:input.amount,existingUnits:p?Number(p.positionLots)*factor:0,existingEntry:p?Number(p.entryPriceTicks)/scale:0,existingMargin:p?money(p.heldMarginMinor):0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
- },[account.positions,bookFor,ready,remote]);
+ },[account.positions,bookFor,ready,remote,settings.defaultMarketExecution,settings.defaultTimeInForce]);
  useTradingNotifications({scope:userId+':'+accountMode,settings,history,markets:markets.filter(m=>bookFor(m.symbol)?.lastTradePriceTicks),enabled:ready,updateSetting});
  const value:ExchangeContextValue={historyLoadingFor,markets:markets.filter(m=>m.category!=='Pairs'&&m.symbol!=='OSI'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,realizedPnl,usedMargin,positions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,isTradableFor,busy,ready};
  return <Context.Provider value={value}>{children}</Context.Provider>;
