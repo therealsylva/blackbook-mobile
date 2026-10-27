@@ -69,7 +69,7 @@ function PositionsList() {
   const styles = useStyles();
   const { positions, marketFor, priceFor, positionPnl, closePosition, settings, busy, ready, error } = useExchange();
   const notify=useNotification();
-  const [closing,setClosing]=useState(false);
+  const [closing,setClosing]=useState<string|null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const toggle = (id: string) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
 
@@ -102,7 +102,8 @@ function PositionsList() {
             <Detail label="Position size" value={formatMoney(position.size, settings.currency)} />
             <Detail label="Margin" value={formatMoney(position.margin, settings.currency)} />
             <Detail label="Opened" value={formatAge(position.openedAt)} />
-            <Pressable disabled={busy||closing||!ready} accessibilityState={{disabled:busy||closing||!ready}} onPress={() => {setClosing(true);void closePosition(position.id).catch(e=>notify({title:'Close unavailable',message:e.message,tone:'error'})).finally(()=>setClosing(false));}} style={[styles.outlineButton,(busy||closing||!ready)&&{opacity:0.5}]}><Text style={styles.outlineButtonText}>{busy||closing?'Processing…':'Close position'}</Text></Pressable>
+            <Pressable disabled={busy||closing!==null||!ready} accessibilityState={{disabled:busy||closing!==null||!ready}} onPress={() => {setClosing(position.id);void closePosition(position.id).catch(e=>notify({title:'Close unavailable',message:e.message,tone:'error'})).finally(()=>setClosing(null));}} style={[styles.outlineButton,(busy||closing!==null||!ready)&&{opacity:0.5}]}><Text style={styles.outlineButtonText}>{closing===position.id?'Closing…':busy?'Awaiting confirmation':'Close position'}</Text></Pressable>
+            {busy ? <Text style={styles.context}>A previous account action is awaiting confirmation. BlackBook is checking it automatically.</Text> : null}
           </View>
         ) : null}
       </View>
@@ -135,7 +136,7 @@ function OrdersList() {
           </View>
           <View style={styles.orderQuote}>
             <Text style={[styles.distance, { color: distance >= 0 ? colors.positive : colors.negative }]}>{distance >= 0 ? '+' : ''}{distance.toFixed(2)}%</Text>
-            <Pressable disabled={busy||!ready} onPress={() => {void cancelOrder(order.id).catch(e=>notify({title:'Cancel unavailable',message:e.message,tone:'error'}));}} style={styles.cancel}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+            <Pressable disabled={busy||!ready} accessibilityState={{disabled:busy||!ready}} onPress={() => {void cancelOrder(order.id).catch(e=>notify({title:'Cancel unavailable',message:e.message,tone:'error'}));}} style={[styles.cancel,(busy||!ready)&&{opacity:0.5}]}><Text style={styles.cancelText}>{busy?'Awaiting confirmation':!ready?'Connecting…':'Cancel'}</Text></Pressable>
           </View>
         </View>
       </View>

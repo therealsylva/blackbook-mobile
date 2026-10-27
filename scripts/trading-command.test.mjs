@@ -29,6 +29,29 @@ test('a cancelled IOC with a partial fill remains a completed financial command'
   const receipt={status:'CANCELLED',filledQuantityLots:'4',remainingQuantityLots:'0'};
   assert.deepEqual(await resolveTradingCommand(request,async()=>({order:receipt})),{state:'complete',receipt});
 });
+test('live PARTIAL receipts release recovery for both new orders and position closes',async()=>{
+  for(const reduceOnly of [false,true]){
+    const saved={...request,body:{...request.body,reduceOnly}};
+    const receipt={...filled,status:'PARTIAL',filledQuantityLots:'4',remainingQuantityLots:'6'};
+    for(const response of [receipt,{order:receipt}]){
+      assert.deepEqual(await resolveTradingCommand(saved,async()=>response),{
+        state:'complete',receipt:{...receipt,status:'PARTIALLY_FILLED'},
+      });
+      assert.equal(receipt.status,'PARTIAL');
+    }
+  }
+});
+test('a persisted partial-fill command recovers after a lost response using the same IDs',async()=>{
+  const saved=JSON.parse(JSON.stringify(request));
+  assert.deepEqual(await resolveTradingCommand(saved,async()=>{throw new Error('timeout');}),{state:'pending'});
+  let submitted;
+  const outcome=await resolveTradingCommand(JSON.parse(JSON.stringify(saved)),async(path,body)=>{
+    submitted={path,body};return {order:{...filled,status:'PARTIAL',filledQuantityLots:'4'}};
+  });
+  assert.deepEqual(submitted,{path:request.path,body:request.body});
+  assert.equal(outcome.state,'complete');
+  assert.equal(outcome.receipt.filledQuantityLots,'4');
+});
 test('close commands use the latest signed position size and sequence, with reduce-only IOC',()=>{
   for(const [lots,side] of [['12','ASK'],['-8','BID']]){
     const body=closePositionCommand({marketId:'rmd',positionLots:lots,lastTradeSequence:'109'},{marketVersion:'7',marketHash:'hash'},'command','order');

@@ -185,6 +185,8 @@ export default function TradeScreen() {
               <Text style={styles.submitText}>{!tradable?'Trading unavailable':session?`Review ${side} order`:'Sign in to trade'}</Text>
             </Pressable>
 
+            {session && !canSubmit ? <Text style={{color:colors.textMuted}}>{busy?'A previous account action is awaiting confirmation. BlackBook is checking it automatically.':!ready?'Waiting for your account connection.':numericAmount<=0?'Enter a trade amount.':!Number.isFinite(estimate.requiredBalance)?'Waiting for a current quote and fee estimate.':'Available balance must cover margin and trading fees.'}</Text> : null}
+
             <Pressable onPress={() => router.push('/(tabs)/portfolio')} style={styles.activityLink}>
               <Text style={styles.activityText}>Positions {positions.length}</Text>
               <Text style={styles.activityDot}>·</Text>

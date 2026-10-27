@@ -10,7 +10,11 @@ export function isDefinitiveCommandError(error: unknown): boolean {
 export async function resolveTradingCommand(request: PendingCommand, send: (path: string, body: Row) => Promise<Row>): Promise<CommandOutcome> {
   try {
     const response = await send(request.path, request.body);
-    const receipt = (response.order ?? response) as Row;
+    const rawReceipt = (response.order ?? response) as Row;
+    // The live engine calls a confirmed partial fill PARTIAL. Normalize it
+    // before deciding whether this durable command still needs recovery.
+    const receipt = rawReceipt?.status === 'PARTIAL'
+      ? {...rawReceipt, status: 'PARTIALLY_FILLED'} : rawReceipt;
     if (!receipt || !['FILLED', 'PARTIALLY_FILLED', 'RESTING', 'CANCELLED', 'REJECTED'].includes(String(receipt.status))) return {state: 'pending'};
     return {state: 'complete', receipt};
   } catch (error) {
