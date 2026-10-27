@@ -1,3 +1,5 @@
+import {ChoiceSheet} from '@/components/ui/choice-sheet';
+import {executionLabel,marketExecutionOptions,type MarketExecution} from '@/lib/market-execution';
 import {createContext,useContext} from 'react';
 import {useKeyboardScroll} from '@/hooks/use-keyboard-scroll';
 import {LeverageControl} from '@/components/ui/leverage-control';
@@ -47,6 +49,9 @@ export default function TradeScreen() {
   const [orderType, setOrderType] = useState<OrderType>(settings.defaultOrderType);
   const [amount, setAmount] = useState(String(settings.defaultMargin));
   const [targetPrice, setTargetPrice] = useState('');
+  const [marketLimit, setMarketLimit] = useState('');
+  const [execution, setExecution] = useState<MarketExecution>(settings.defaultMarketExecution);
+  const [executionOpen, setExecutionOpen] = useState(false);
   const [leverage, setLeverage] = useState(settings.defaultLeverage);
   const [riskControls, setRiskControls] = useState(settings.attachRiskControls);
   const [takeProfit, setTakeProfit] = useState('');
@@ -58,24 +63,29 @@ export default function TradeScreen() {
   const change = market ? changeFor(market.symbol) : 0;
   const selectedType = advanced ? orderType : 'market';
   const numericTarget = Number(targetPrice) || price;
+  const effectiveExecution = advanced ? execution : settings.defaultMarketExecution;
+  const marketTarget = (advanced || effectiveExecution === 'GTC') && marketLimit.trim() ? Number(marketLimit) : undefined;
+  const validMarketLimit = selectedType !== 'market' || ((marketTarget === undefined || Number.isFinite(marketTarget) && marketTarget > 0) && (effectiveExecution !== 'GTC' || marketTarget !== undefined));
+  const chosenTarget = selectedType === 'market' ? marketTarget : numericTarget;
   const effectiveLeverage = Math.min(leverage, market ? maxLeverageFor(market.symbol) : 1);
-  const estimate=orderEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,targetPrice:numericTarget});
+  const estimate=orderEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,marketExecution:effectiveExecution,targetPrice:chosenTarget});
   const exposure = estimate.exposure;
-  const liquidation=liquidationEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,targetPrice:numericTarget});
-  const canSubmit = ready && !busy && numericAmount > 0 && Number.isFinite(estimate.requiredBalance) && estimate.requiredBalance <= cashBalance;
+  const liquidation=liquidationEstimate({symbol:market?.symbol??'',side,type:selectedType,amount:numericAmount,leverage:effectiveLeverage,marketExecution:effectiveExecution,targetPrice:chosenTarget});
+  const canSubmit = ready && !busy && validMarketLimit && numericAmount > 0 && Number.isFinite(estimate.requiredBalance) && estimate.requiredBalance <= cashBalance;
   const tradable=market?isTradableFor(market.symbol):false;
   const priceReady=price>0;
   const changeRange=(value:ChartRange)=>{setRange(value);const interval=value.toLowerCase();if(['1m','5m','15m','1h','4h','1d','1w'].includes(interval))updateSetting('candleInterval',interval as typeof settings.candleInterval);};
   const line = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   const candles = useMemo(() => market ? candlesFor(market.symbol, range) : [], [candlesFor, market, range]);
 
+  useEffect(()=>setExecution(settings.defaultMarketExecution),[settings.defaultMarketExecution]);
   useEffect(()=>{setOrderType(settings.defaultOrderType);setLeverage(settings.defaultLeverage);setAmount(String(settings.defaultMargin));},[settings.defaultOrderType,settings.defaultLeverage,settings.defaultMargin]);
   useEffect(()=>{if(!(price>0))return;setTakeProfit(settings.takeProfitPercent>0?String(price*(1+(side==='long'?1:-1)*settings.takeProfitPercent/100)):'');setStopLoss(settings.stopLossPercent>0?String(price*(1+(side==='long'?-1:1)*settings.stopLossPercent/100)):'');},[activeSymbol,side,priceReady,settings.takeProfitPercent,settings.stopLossPercent]);
   if (!market) return <Screen><View style={{padding:24}}><Text style={{color:colors.text}}>Loading market…</Text></View></Screen>;
 
   const execute = async () => {
     if(busy)return;
-    try { await placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage: effectiveLeverage, ...(riskControls && takeProfit.trim() ? {takeProfit:Number(takeProfit)} : {}), ...(riskControls && stopLoss.trim() ? {stopLoss:Number(stopLoss)} : {}), targetPrice: selectedType === 'market' ? undefined : numericTarget }); }
+    try { await placeOrder({ symbol: market.symbol, side, type: selectedType, amount: numericAmount, leverage: effectiveLeverage, ...(riskControls && takeProfit.trim() ? {takeProfit:Number(takeProfit)} : {}), ...(riskControls && stopLoss.trim() ? {stopLoss:Number(stopLoss)} : {}), marketExecution:effectiveExecution, targetPrice:chosenTarget }); }
     catch (error) { setReviewOpen(false); notify({title:'Order unavailable', message:error instanceof Error ? error.message : 'Please try again.',tone:'error'}); return; }
     setReviewOpen(false);
     setAmount('');
@@ -151,6 +161,15 @@ export default function TradeScreen() {
               </View>
             ) : null}
 
+            {advanced && selectedType === 'market' ? (
+              <Pressable accessibilityRole="button" accessibilityLabel="Execution preference" onPress={()=>setExecutionOpen(true)} style={{paddingVertical:12}}>
+                <Text style={styles.label}>Execution</Text><Text style={{color:colors.text}}>{executionLabel(effectiveExecution)} ▾</Text>
+              </Pressable>
+            ) : null}
+            {selectedType === 'market' && (advanced || effectiveExecution === 'GTC') ? (
+              <Field label={(side === 'long' ? 'Maximum buy price' : 'Minimum sell price')+(effectiveExecution === 'GTC' ? '' : ' (optional)')} value={marketLimit} onChangeText={setMarketLimit} unit="POINT" />
+            ) : null}
+
             {advanced && selectedType !== 'market' ? (
               <Field label={selectedType === 'stop' ? 'Trigger price' : 'Limit price'} value={targetPrice} onChangeText={setTargetPrice} unit="POINT" />
             ) : null}
@@ -185,7 +204,7 @@ export default function TradeScreen() {
               <Text style={styles.submitText}>{!tradable?'Trading unavailable':session?`Review ${side} order`:'Sign in to trade'}</Text>
             </Pressable>
 
-            {session && !canSubmit ? <Text style={{color:colors.textMuted}}>{busy?'A previous account action is awaiting confirmation. BlackBook is checking it automatically.':!ready?'Waiting for your account connection.':numericAmount<=0?'Enter a trade amount.':!Number.isFinite(estimate.requiredBalance)?'Waiting for a current quote and fee estimate.':'Available balance must cover margin and trading fees.'}</Text> : null}
+            {session && !canSubmit ? <Text style={{color:colors.textMuted}}>{busy?'A previous account action is awaiting confirmation. BlackBook is checking it automatically.':!ready?'Waiting for your account connection.':numericAmount<=0?'Enter a trade amount.':!validMarketLimit?'Enter a valid price limit for this order.':!Number.isFinite(estimate.requiredBalance)?'Waiting for a current quote and fee estimate.':'Available balance must cover margin and trading fees.'}</Text> : null}
 
             <Pressable onPress={() => router.push('/(tabs)/portfolio')} style={styles.activityLink}>
               <Text style={styles.activityText}>Positions {positions.length}</Text>
@@ -196,8 +215,9 @@ export default function TradeScreen() {
         </ScrollView></FocusContext.Provider>
       </KeyboardAvoidingView>
 
+      <ChoiceSheet visible={executionOpen} title="Execution" value={execution} options={marketExecutionOptions} format={executionLabel} onSelect={setExecution} onClose={()=>setExecutionOpen(false)} />
       <PairSelectorSheet onClose={() => setPairOpen(false)} onSelect={setActiveSymbol} visible={pairOpen} />
-      <OrderReviewSheet busy={busy} amount={numericAmount} fee={estimate.fee} exposure={exposure} currency={settings.currency} leverage={effectiveLeverage} onClose={() => setReviewOpen(false)} onConfirm={() => {void execute();}} price={price} side={side} symbol={market.symbol} targetPrice={numericTarget} type={selectedType} visible={reviewOpen} />
+      <OrderReviewSheet busy={busy} amount={numericAmount} fee={estimate.fee} exposure={exposure} currency={settings.currency} leverage={effectiveLeverage} onClose={() => setReviewOpen(false)} onConfirm={() => {void execute();}} price={price} marketExecution={effectiveExecution} side={side} symbol={market.symbol} targetPrice={chosenTarget} type={selectedType} visible={reviewOpen} />
     </Screen>
   );
 }
