@@ -40,7 +40,7 @@ export function OrderReviewSheet({ visible, busy = false, onClose, onConfirm, sy
         <ReviewRow label="Execution" value={execution} />
         <ReviewRow label="Estimated fee" value={formatMoney(fee, currency)} />
       </View>
-      <Text style={styles.risk}>Fee estimate uses the taker rate. Each fill is charged on exposure; maker fills use the lower maker rate. Fees also apply when closing.</Text>
+      <Text style={styles.risk}>{type==='market'?'Market orders fill against available liquidity. Any unfilled remainder is cancelled. Only filled exposure uses margin and incurs fees. ':''}Fee estimate uses the taker rate. Each fill is charged on exposure; maker fills use the lower maker rate. Fees also apply when closing.</Text>
       <Pressable disabled={busy} accessibilityState={{disabled:busy, busy}} onPress={onConfirm} style={({ pressed }) => [styles.button, { backgroundColor: side === 'long' ? colors.positive : colors.negative }, pressed && styles.pressed]}>
         <Text style={styles.buttonText}>{busy?'Processing…':`Confirm ${side === 'long' ? 'Long' : 'Short'}`}</Text>
       </Pressable>

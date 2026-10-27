@@ -155,7 +155,7 @@ export default function TradeScreen() {
               <Field label={selectedType === 'stop' ? 'Trigger price' : 'Limit price'} value={targetPrice} onChangeText={setTargetPrice} unit="POINT" />
             ) : null}
             {settings.marginWarnings&&numericAmount>0&&estimate.requiredBalance>cashBalance*settings.balanceWarningPercent/100?<Text accessibilityRole="alert" style={{color:colors.negative,marginBottom:12}}>This order uses over {settings.balanceWarningPercent}% of your available trading balance.</Text>:null}
-            <Field label="Amount" value={amount} onChangeText={setAmount} unit="$" />
+            <Field label="Margin" value={amount} onChangeText={setAmount} unit="$" />
             <Text style={styles.available}>Estimated fee {formatMoney(estimate.fee, settings.currency)} · balance needed {formatMoney(estimate.requiredBalance, settings.currency)}</Text>
 
             <View style={{marginBottom:16}}><LeverageControl value={effectiveLeverage} max={maxLeverageFor(market.symbol)} onChange={setLeverage} onFocus={scrollFocused}/></View>

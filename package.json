@@ -21,7 +21,7 @@
     "check:demo": "node scripts/check-demo-markets.cjs",
     "check:connection": "node scripts/check-connection.mjs",
     "test:catalog": "node --experimental-strip-types --test scripts/market-catalog.test.mjs",
-    "test:commands": "node --experimental-strip-types --test scripts/trading-command.test.mjs",
+    "test:commands": "node --experimental-strip-types --test scripts/trading-command.test.mjs scripts/execution-notice.test.mjs",
     "test:avatar": "node --experimental-strip-types --test scripts/avatar-policy.test.mjs"
   },
   "dependencies": {
