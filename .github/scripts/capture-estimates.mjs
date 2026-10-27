@@ -12,7 +12,7 @@ try{
  }
  const fixture=await installConnectedFixture(context);const page=await context.newPage();page.setDefaultTimeout(20000);
  await signInFixture(page);await page.goto('http://127.0.0.1:4173/trade',{waitUntil:'networkidle'});
- const amount=page.getByLabel('Amount',{exact:true});await amount.fill('1000');
+ const amount=page.getByLabel('Margin',{exact:true});await amount.fill('1000');
  await page.getByLabel('Leverage',{exact:true}).fill('20');await page.getByLabel('Leverage',{exact:true}).blur();
  const fee=page.getByText('Fee',{exact:true}).locator('..');
  await assert.doesNotReject(async()=>{await page.waitForFunction(()=>{const t=document.body.innerText;return /Estimated fee \$12\.00/.test(t);});});
