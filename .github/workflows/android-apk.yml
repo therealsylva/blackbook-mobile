@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Validate native exchange
-        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees && npm run test:commands && npm run test:avatar
+        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees && npm run test:commands && npm run test:avatar && node --experimental-strip-types --test scripts/quote-estimate.test.mjs scripts/isolated-liquidation.test.mjs
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check
@@ -84,4 +84,3 @@ jobs:
       - name: Publish downloadable demo APK
         if: github.event_name != 'pull_request' && github.repository == 'therealsylva/blackbook-mobile'
         run: bash .github/scripts/publish-apk.sh
-

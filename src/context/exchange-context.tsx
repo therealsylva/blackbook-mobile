@@ -228,13 +228,10 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   const factor=Number(m.terms.quoteMinorPerIndexUnitPerLot)/100;
   const lots=sizeDollarOrder({amount:input.amount,leverage:input.leverage,priceTicks:String(Math.round(price*scale)),priceDecimals:m.terms.priceDecimals,quoteMinorPerIndexUnitPerLot:m.terms.quoteMinorPerIndexUnitPerLot});if(!(lots>=Number(m.terms.minimumOrderLots)))return NaN;
   const p=account.positions.find(p=>p.marketId===m.marketId);
-  return estimateLiquidation({equity:totalEquity-orderEstimate(input).fee,maintenance:account.positions.length===0?0:money(account.portfolio.maintenanceMarginMinor),existingUnits:p?Number(p.positionLots)*factor:0,existingMark:p?Number(p.markPriceTicks)/scale:0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
- },[account,bookFor,orderEstimate,ready,remote,totalEquity]);
+  return estimateLiquidation({margin:input.amount,existingUnits:p?Number(p.positionLots)*factor:0,existingEntry:p?Number(p.entryPriceTicks)/scale:0,existingMargin:p?money(p.heldMarginMinor):0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
+ },[account.positions,bookFor,ready,remote]);
  useTradingNotifications({scope:userId+':'+accountMode,settings,history,markets:markets.filter(m=>bookFor(m.symbol)?.lastTradePriceTicks),enabled:ready,updateSetting});
  const value:ExchangeContextValue={historyLoadingFor,markets:markets.filter(m=>m.category!=='Pairs'&&m.symbol!=='OSI'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,realizedPnl,usedMargin,positions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,isTradableFor,busy,ready};
  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useExchange(){const value=useContext(Context);if(!value)throw new Error('Exchange provider required');return value;}
-
-
-
