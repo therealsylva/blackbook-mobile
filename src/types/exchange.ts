@@ -51,6 +51,7 @@ export interface UserProfile {
 }
 
 export interface ExchangeSettings {
+  bandDisplay: 'Index' | 'Percentage';
   interfaceMode: InterfaceMode;
   appearance: 'Dark' | 'Light' | 'System';
   locale:'en-GB'|'en-US'|'de-DE'|'fr-FR';

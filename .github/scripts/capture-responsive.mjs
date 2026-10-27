@@ -27,6 +27,7 @@ try{
   await page.getByText('Limit',{exact:true}).waitFor();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.ok(await page.getByLabel('Leverage',{exact:true}).evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}));
+  for(const label of ['Increase leverage','Decrease leverage']) assert.ok(await page.getByRole('button',{name:label,exact:true}).evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.width>=44;}),`${label} is clipped at ${width}px`);
   await page.waitForTimeout(350);
   await page.screenshot({path:`ui-renders/responsive-trade-${width}.png`,fullPage:true});
   await page.goto('http://127.0.0.1:4173/profile',{waitUntil:'networkidle'});
@@ -35,6 +36,16 @@ try{
   await page.waitForTimeout(400);
   await page.screenshot({path:`ui-renders/responsive-profile-${width}.png`,fullPage:true});
   if(width===320){
+   await page.goto('http://127.0.0.1:4173/settings/trading',{waitUntil:'networkidle'});
+   await page.getByRole('button',{name:/Band display/}).click();
+   await page.getByText('Percentage',{exact:true}).click();
+   await page.goto('http://127.0.0.1:4173/trade',{waitUntil:'networkidle'});
+   await page.getByText(/Lower band .*%/).waitFor();
+   await page.getByText(/Upper band .*%/).waitFor();
+   await page.reload({waitUntil:'networkidle'});
+   await page.getByText(/Lower band .*%/).waitFor();
+   await page.goto('http://127.0.0.1:4173/profile',{waitUntil:'networkidle'});
+   await page.getByLabel('Edit profile picture',{exact:true}).click();
    const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=','base64');
    let uploads=0;
    await context.route('https://auth.blackbook.test/storage/v1/**',async route=>{
