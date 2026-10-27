@@ -17,7 +17,7 @@ try{
  const fee=page.getByText('Fee',{exact:true}).locator('..');
  await assert.doesNotReject(async()=>{await page.waitForFunction(()=>{const t=document.body.innerText;return /Estimated fee \$12\.00/.test(t);});});
  assert.match(await fee.innerText(),/\$12\.00/);
- const liq=page.getByText('Est. liquidation',{exact:true}).locator('..');assert.doesNotMatch(await liq.innerText(),/—|Below zero/);
+ const liq=page.getByText('Est. isolated liq.',{exact:true}).locator('..');assert.doesNotMatch(await liq.innerText(),/—|Below zero/);
  const longText=await liq.innerText();
  await page.getByText('Short',{exact:true}).click();await page.waitForTimeout(100);
  assert.notEqual(await liq.innerText(),longText);assert.doesNotMatch(await liq.innerText(),/—/);
