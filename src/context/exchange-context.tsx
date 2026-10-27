@@ -164,7 +164,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
    await AsyncStorage.setItem(pendingKey,JSON.stringify(request));
    const outcome=await resolveTradingCommand(request,(path,body)=>api<Row>(path,body));
    if(outcome.state==='pending'){
-    notify({title:request.body.reduceOnly?'Closing position':'Order processing',message:'BlackBook is checking execution automatically. Your account remains available.'});
+    notify({title:request.body.reduceOnly?'Closing position':'Order processing',message:'Waiting for execution confirmation. Trading actions are paused while BlackBook checks this request automatically.'});
     return {status:'PENDING',orderId:request.body.orderId} as Row;
    }
    await AsyncStorage.removeItem(pendingKey);pending.current=null;
