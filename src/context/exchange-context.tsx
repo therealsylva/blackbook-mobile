@@ -7,7 +7,7 @@ import {AppState} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ALL_MARKETS} from '@/data/pair-markets';
 import type {MarketDefinition} from '@/data/markets';
-import {aggregateCandles,type CandlePoint} from '@/lib/market-series';
+import {selectCandles,type CandlePoint} from '@/lib/market-series';
 import {formatCompact,configureDisplay} from '@/lib/format';
 import {useTradingNotifications} from '@/hooks/use-trading-notifications';
 import {api,publicApi,uuid} from '@/lib/backend';
@@ -33,7 +33,7 @@ interface ExchangeContextValue {
  profile:UserProfile;updateProfile:(changes:Partial<UserProfile>)=>Promise<void>;settings:ExchangeSettings;updateSetting:<K extends keyof ExchangeSettings>(key:K,value:ExchangeSettings[K])=>void;
  accountMode:AccountMode;setAccountMode:(mode:AccountMode)=>Promise<void>;loading:boolean;error:string|null;refresh:()=>Promise<void>;bookFor:(symbol:string)=>BookSnapshot|undefined;maxLeverageFor:(symbol:string)=>number;isTradableFor:(symbol:string)=>boolean;busy:boolean;ready:boolean;
 }
-const defaults:ExchangeSettings={bandDisplay:'Index',locale:'en-GB',timeZone:'UTC',chartType:'candles',candleInterval:'1h',defaultMargin:1000,defaultTimeInForce:'GTC',defaultMarketExecution:'IOC',oneClickTrading:false,marginWarnings:false,balanceWarningPercent:80,stopLossPercent:0,takeProfitPercent:0,maxPositionUsd:0,dailyLossUsd:0,orderNotifications:true,priceAlerts:true,priceAlertRules:[],interfaceMode:'basic',appearance:'Dark',language:'English',currency:'USD',colorPreference:'Green up / Red down',defaultOrderType:'market',defaultLeverage:5,confirmOrders:true,attachRiskControls:true,refreshRate:'Live'};
+const defaults:ExchangeSettings={bandDisplay:'Index',locale:'en-GB',timeZone:'UTC',chartType:'candles',candleInterval:'1m',defaultMargin:1000,defaultTimeInForce:'GTC',defaultMarketExecution:'IOC',oneClickTrading:false,marginWarnings:false,balanceWarningPercent:80,stopLossPercent:0,takeProfitPercent:0,maxPositionUsd:0,dailyLossUsd:0,orderNotifications:true,priceAlerts:true,priceAlertRules:[],interfaceMode:'basic',appearance:'Dark',language:'English',currency:'USD',colorPreference:'Green up / Red down',defaultOrderType:'market',defaultLeverage:5,confirmOrders:true,attachRiskControls:true,refreshRate:'Live'};
 const Context=createContext<ExchangeContextValue|null>(null);
 const metadata=new Map(ALL_MARKETS.map(m=>[m.symbol,m]));
 const message=(e:unknown)=>e instanceof Error?e.message:'BlackBook is unavailable. Please try again.';
@@ -148,7 +148,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const marketFor=useCallback((symbol:string)=>markets.find(m=>m.symbol===symbol),[markets]);
  const priceFor=useCallback((symbol:string)=>marketFor(symbol)?.price??NaN,[marketFor]);
  const changeFor=useCallback((symbol:string)=>{const c=marketCandles[symbol]??[],cut=Date.now()-86400000,first=c.find(x=>x.time>=cut);return first&&c[0]!.time<=cut?(priceFor(symbol)/first.open-1)*100:lookup.get(symbol)?.indexChangePct??NaN;},[marketCandles,priceFor,lookup]);
- const candlesFor=useCallback((symbol:string,range:ChartRange='15m')=>aggregateCandles(marketCandles[symbol]??[],rangeMs[range]),[marketCandles]);
+ const candlesFor=useCallback((symbol:string,range:ChartRange='15m')=>selectCandles(marketCandles[symbol]??[],rangeMs[range],rangeMs[({'1h':'1H','4h':'4H','1d':'1D','1w':'1W'} as Record<string,ChartRange>)[settings.candleInterval]??settings.candleInterval as ChartRange]),[marketCandles,settings.candleInterval]);
  const seriesFor=useCallback((symbol:string,range:ChartRange='1D')=>candlesFor(symbol,range).map(x=>x.close),[candlesFor]);
  const bookFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?books[m.marketId]:undefined;},[books,lookup]);
  const isTradableFor=useCallback((symbol:string)=>Boolean(lookup.get(symbol)?.tradable),[lookup]);

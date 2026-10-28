@@ -27,3 +27,10 @@ export function candleGeometry(rows:CandlePoint[], width:number, padding=8){
  const span=Math.max(step,last-first+step),x=(index:number)=>padding+((rows[index]!.time-first+step/2)/span)*(width-padding*2);
  return {x,step,span};
 }
+
+/** Select a visible time window without changing the selected candle interval. */
+export function selectCandles(rows:CandlePoint[],windowMs:number,intervalMs:number):CandlePoint[]{
+ if(!rows.length)return [];
+ const latest=rows.at(-1)!.time;
+ return aggregateCandles(rows.filter(row=>row.time>=latest-windowMs),intervalMs);
+}
