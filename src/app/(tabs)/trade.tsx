@@ -17,7 +17,7 @@ import { OrderBook } from '@/components/trade/order-book';
 import { OrderReviewSheet } from '@/components/trade/order-review-sheet';
 import { PairSelectorSheet } from '@/components/trade/pair-selector-sheet';
 import { useExchange } from '@/context/exchange-context';
-import { formatMoney, formatPercent, formatPrice } from '@/lib/format';
+import { formatBand, formatMoney, formatPercent, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -135,6 +135,10 @@ export default function TradeScreen() {
             </>
           )}
 
+          <View style={{paddingHorizontal:spacing.page,paddingTop:12,flexDirection:'row',justifyContent:'space-between',gap:8}}>
+            <Text style={{color:colors.textMuted,fontFamily:typography.mono,fontSize:10}}>Lower band {formatBand(market.lowerBand,market.reference,settings.bandDisplay)}</Text>
+            <Text style={{color:colors.textMuted,fontFamily:typography.mono,fontSize:10}}>Upper band {formatBand(market.upperBand,market.reference,settings.bandDisplay)}</Text>
+          </View>
           <View style={styles.ticket}>
             <View style={styles.ticketHeading}>
               <Text style={styles.ticketTitle}>Order ticket</Text>

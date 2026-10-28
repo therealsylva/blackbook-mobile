@@ -23,6 +23,12 @@ export function formatPercent(value: number) {
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
+export function formatBand(value: number, reference: number, display: 'Index' | 'Percentage') {
+  if (display === 'Index') return formatPrice(value);
+  if (!Number.isFinite(value) || !Number.isFinite(reference) || reference <= 0) return '—';
+  return formatPercent((value / reference - 1) * 100);
+}
+
 export function formatCompact(value: number) {
   if (!Number.isFinite(value)) return '—';
   return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 2 }).format(value);

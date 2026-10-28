@@ -6,7 +6,7 @@ import { MarketChart } from '@/components/market/market-chart';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { formatPercent, formatPrice } from '@/lib/format';
+import { formatBand, formatPercent, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -22,7 +22,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
   const styles = useStyles();
   const router = useRouter();
   const params = useLocalSearchParams<{ symbol?: string }>();
-  const { marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor, favorites, toggleFavorite, setActiveSymbol } = useExchange();
+  const { marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor, favorites, toggleFavorite, setActiveSymbol, settings } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
   const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
   const [range, setRange] = useState<ChartRange>('1H');
@@ -74,8 +74,8 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
         </View>
 
         <View style={styles.metrics}>
-          <Metric label="Upper band" value={formatPrice(market.upperBand)} />
-          <Metric label="Lower band" value={formatPrice(market.lowerBand)} />
+          <Metric label="Upper band" value={formatBand(market.upperBand, market.reference, settings.bandDisplay)} />
+          <Metric label="Lower band" value={formatBand(market.lowerBand, market.reference, settings.bandDisplay)} />
           <Metric label="Index" value={formatPrice(market.reference)} />
           <Metric label="24h volume" value={market.volume} />
         </View>
