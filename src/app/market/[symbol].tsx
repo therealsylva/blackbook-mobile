@@ -6,7 +6,7 @@ import { MarketChart } from '@/components/market/market-chart';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { formatBand, formatPercent, formatPrice } from '@/lib/format';
+import { formatBand, formatMarketChange, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -58,7 +58,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
           <View style={styles.priceLine}>
             <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(price)}</Text>
           </View>
-          <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text>
+          <Text style={[styles.change, { color: direction }]}>{formatMarketChange(change,settings.changeDisplay)}</Text>
         </View>
 
         <View style={styles.chart}>

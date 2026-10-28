@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { MarketDefinition } from '@/data/markets';
-import { formatPercent, formatPrice } from '@/lib/format';
+import { formatMarketChange, formatPrice } from '@/lib/format';
 import {useExchange} from '@/context/exchange-context';
 import { layout, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
@@ -22,12 +22,12 @@ interface MarketRowProps {
 
 function MarketRowComponent({ market, price, change, onPress, compact = false, showSparkline = false, showVolume = false, directory = false }: MarketRowProps) {
   const { colors } = useTheme();
-  const {seriesFor}=useExchange();
+  const {seriesFor,settings}=useExchange();
   const styles = useStyles();
   const direction = change >= 0 ? colors.positive : colors.negative;
   return (
     <Pressable
-      accessibilityLabel={`${market.name}, ${formatPrice(price)}, ${formatPercent(change)}`}
+      accessibilityLabel={`${market.name}, ${formatPrice(price)}, ${formatMarketChange(change,settings.changeDisplay)}`}
       accessibilityRole="button"
       onPress={() => onPress(market.symbol)}
       style={({ pressed }) => [styles.row, compact && styles.compactRow, pressed && styles.pressed]}
@@ -50,9 +50,9 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
 
       <View style={[styles.priceColumn, compact && styles.compactPrice]}>
         <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(price)}</Text>
-        {(compact || directory) ? <Text style={[styles.change, { color: direction }]}>{formatPercent(change)}</Text> : null}
+        {(compact || directory) ? <Text style={[styles.change, { color: direction }]}>{formatMarketChange(change,settings.changeDisplay)}</Text> : null}
       </View>
-      {!compact && !directory ? <Text style={[styles.change, styles.changeColumn, { color: direction }]}>{formatPercent(change)}</Text> : null}
+      {!compact && !directory ? <Text style={[styles.change, styles.changeColumn, { color: direction }]}>{formatMarketChange(change,settings.changeDisplay)}</Text> : null}
     </Pressable>
   );
 }
@@ -73,7 +73,7 @@ const useStyles = createThemedStyles((colors) => ({
   compactPrice: { width: 112, flexShrink:0 },
   price: { color: colors.text, fontFamily: typography.monoSemibold, fontSize: 13.5, fontVariant: ['tabular-nums'], letterSpacing: -0.4 },
   change: { fontFamily: typography.monoSemibold, fontSize: 11.5, fontVariant: ['tabular-nums'], marginTop: 4 },
-  changeColumn: { marginLeft: 8, marginTop: 0, textAlign: 'right', width: 54 },
+  changeColumn: { marginLeft: 8, marginTop: 0, textAlign: 'right', width: 90 },
   volume: { color: colors.textMuted, flexShrink: 1, fontFamily: typography.mono, fontSize: 9.5, marginLeft: spacing.sm },
 }));
 

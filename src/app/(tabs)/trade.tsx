@@ -17,7 +17,7 @@ import { OrderBook } from '@/components/trade/order-book';
 import { OrderReviewSheet } from '@/components/trade/order-review-sheet';
 import { PairSelectorSheet } from '@/components/trade/pair-selector-sheet';
 import { useExchange } from '@/context/exchange-context';
-import { formatBand, formatMoney, formatPercent, formatPrice } from '@/lib/format';
+import { formatBand, formatMoney, formatMarketChange, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -44,7 +44,7 @@ export default function TradeScreen() {
   const advanced = settings.interfaceMode === 'advanced';
   const [pairOpen, setPairOpen] = useState(false);
   const [panel, setPanel] = useState<AdvancedPanel>('Chart');
-  const [range, setRange] = useState<ChartRange>(({ '1h':'1H','4h':'4H','1d':'1D','1w':'1W'} as Record<string,ChartRange>)[settings.candleInterval] || settings.candleInterval as ChartRange);
+  const [range, setRange] = useState<ChartRange>('1D');
   const [side, setSide] = useState<Side>('long');
   const [orderType, setOrderType] = useState<OrderType>(settings.defaultOrderType);
   const [amount, setAmount] = useState(String(settings.defaultMargin));
@@ -74,7 +74,7 @@ export default function TradeScreen() {
   const canSubmit = ready && !busy && validMarketLimit && numericAmount > 0 && Number.isFinite(estimate.requiredBalance) && estimate.requiredBalance <= cashBalance;
   const tradable=market?isTradableFor(market.symbol):false;
   const priceReady=price>0;
-  const changeRange=(value:ChartRange)=>{setRange(value);const interval=value.toLowerCase();if(['1m','5m','15m','1h','4h','1d','1w'].includes(interval))updateSetting('candleInterval',interval as typeof settings.candleInterval);};
+  const changeRange=(value:ChartRange)=>{setRange(value);};
   const line = useMemo(() => market ? seriesFor(market.symbol, range) : [], [market, range, seriesFor]);
   const candles = useMemo(() => market ? candlesFor(market.symbol, range) : [], [candlesFor, market, range]);
 
@@ -106,7 +106,7 @@ export default function TradeScreen() {
             </Pressable>
             <View style={styles.liveQuote}>
               <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.livePrice}>{formatPrice(price)}</Text>
-              <Text style={[styles.liveChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text>
+              <Text style={[styles.liveChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text>
             </View>
           </View>
 

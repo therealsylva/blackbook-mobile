@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useExchange } from '@/context/exchange-context';
-import { formatPercent, formatPrice } from '@/lib/format';
+import { formatMarketChange, formatPrice } from '@/lib/format';
 import { typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -19,7 +19,7 @@ interface PairSelectorSheetProps {
 export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSheetProps) {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { markets, pairMarkets, priceFor, changeFor } = useExchange();
+  const { markets, pairMarkets, priceFor, changeFor, settings } = useExchange();
   const [query, setQuery] = useState('');
   const matches = useMemo(() => {
     const normalized = query.toLowerCase().trim();
@@ -38,7 +38,7 @@ export function PairSelectorSheet({ visible, onClose, onSelect }: PairSelectorSh
             <Pressable key={market.symbol} onPress={() => { onSelect(market.symbol); onClose(); }} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
               <MarketIdentityAvatar market={market} size={34} />
               <View style={styles.copy}><Text style={styles.symbol}>{market.symbol}</Text><Text numberOfLines={1} style={styles.name}>{market.name}</Text></View>
-              <View style={styles.quote}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(priceFor(market.symbol))}</Text><Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text></View>
+              <View style={styles.quote}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(priceFor(market.symbol))}</Text><Text style={[styles.change, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text></View>
             </Pressable>
           );
         })}

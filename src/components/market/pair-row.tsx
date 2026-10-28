@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 import type { MarketDefinition } from '@/data/markets';
-import { formatPercent, formatPrice } from '@/lib/format';
+import { formatMarketChange, formatPrice } from '@/lib/format';
+import {useExchange} from '@/context/exchange-context';
 import { spacing, typography } from '@/theme/tokens';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 import { Icon } from '@/components/ui/icon';
@@ -17,8 +18,9 @@ interface PairRowProps {
 
 export function PairRow({ change, price, left, right, title, onPress }: PairRowProps) {
   const styles = useStyles();
+  const {settings}=useExchange();
   return (
-    <Pressable accessibilityLabel={`${title}, ${formatPrice(price)}, ${formatPercent(change)}`} onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel={`${title}, ${formatPrice(price)}, ${formatMarketChange(change,settings.changeDisplay)}`} onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={styles.marks}>
         <MarketAvatar assetKey={left.assetKey} size={42} symbol={left.symbol} />
         <View style={styles.overlap}><MarketAvatar assetKey={right.assetKey} size={42} symbol={right.symbol} /></View>
@@ -29,7 +31,7 @@ export function PairRow({ change, price, left, right, title, onPress }: PairRowP
       </View>
       <View style={styles.quote}>
         <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(price)}</Text>
-        <Text style={[styles.change, change >= 0 ? styles.positive : styles.negative]}>{formatPercent(change)}</Text>
+        <Text style={[styles.change, change >= 0 ? styles.positive : styles.negative]}>{formatMarketChange(change,settings.changeDisplay)}</Text>
       </View>
       <Icon name="chevron" size={17} />
     </Pressable>

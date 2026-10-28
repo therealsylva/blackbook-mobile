@@ -19,11 +19,11 @@ type PortfolioTab = 'Positions' | 'Orders' | 'Journal';
 export default function PortfolioScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { cashBalance, usedMargin, totalEquity, unrealizedPnl, positions, orders, history, settings } = useExchange();
+  const { cashBalance, usedMargin, totalEquity, unrealizedPnl, positions, unavailablePositions, orders, history, settings } = useExchange();
   const [tab, setTab] = useState<PortfolioTab>('Positions');
   const {session}=useAuth();
   if(!session)return <AccountPrompt title="Your portfolio" description="Sign in to see your positions, orders and trading history."/>;
-  const counts = { Positions: positions.length, Orders: orders.length, Journal: history.length };
+  const counts = { Positions: positions.length + unavailablePositions.length, Orders: orders.length, Journal: history.length };
 
   return (
     <Screen>
@@ -67,14 +67,14 @@ function BalanceMetric({ label, value }: { label: string; value: string }) {
 function PositionsList() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { positions, marketFor, priceFor, positionPnl, closePosition, settings, busy, ready, error } = useExchange();
+  const { positions, unavailablePositions, marketFor, priceFor, positionPnl, closePosition, settings, busy, ready, error } = useExchange();
   const notify=useNotification();
   const [closing,setClosing]=useState<string|null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const toggle = (id: string) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
 
-  if (!positions.length) return <Empty title={ready?"No open positions":error?"Positions temporarily unavailable":"Loading positions…"} />;
-  return <>{positions.map((position) => {
+  if (!positions.length && !unavailablePositions.length) return <Empty title={ready?"No open positions":error?"Positions temporarily unavailable":"Loading positions…"} />;
+  return <>{unavailablePositions.map((position) => <View key={position.marketId} style={styles.item}><View style={styles.itemMain}><View style={styles.itemCopy}><Text style={styles.itemTitle}>Market details unavailable</Text><Text style={styles.context}>Position {position.marketId}</Text><Text style={styles.context}>Lots: {position.positionLots}</Text><Text style={styles.context}>Market data is unavailable. Please retry shortly.</Text></View></View></View>)}{positions.map((position) => {
     const market = marketFor(position.symbol); if (!market) return null;
     const pnl = positionPnl(position); const current = priceFor(position.symbol); const open = expanded.has(position.id);
     const pnlPercent = (pnl / Math.max(position.margin, 1)) * 100;
