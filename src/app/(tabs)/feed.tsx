@@ -5,7 +5,7 @@ import { MarketAvatar } from '@/components/market/market-avatar';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
-import { formatPercent, formatPrice } from '@/lib/format';
+import { formatMarketChange, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -98,12 +98,13 @@ function SectionTitle({ title, action, onAction }: { title: string; action?: str
 
 function TrendRow({ market, price, change, onPress }: { market: Market; price: number; change: number; onPress: (symbol: string) => void }) {
   const { colors } = useTheme();
+  const {settings}=useExchange();
   const styles = useStyles();
   return (
     <Pressable onPress={() => onPress(market.symbol)} style={({ pressed }) => [styles.trendRow, pressed && styles.pressed]}>
       <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
       <View style={styles.trendCopy}><Text style={styles.trendName}>{market.name}</Text><Text style={styles.trendSymbol}>{market.symbol} · ${market.volume} vol</Text></View>
-      <View style={styles.trendQuote}><Text style={styles.trendPrice}>{formatPrice(price)}</Text><Text style={[styles.trendChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text></View>
+      <View style={styles.trendQuote}><Text style={styles.trendPrice}>{formatPrice(price)}</Text><Text style={[styles.trendChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text></View>
     </Pressable>
   );
 }

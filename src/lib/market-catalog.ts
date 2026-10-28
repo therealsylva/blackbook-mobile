@@ -1,6 +1,6 @@
 import type {MarketDefinition} from '../data/markets';
 import type {FeePolicy} from './trading-fees';
-export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};statistics?:{volumeMinor24h?:string;rangePct24h?:number;highPriceTicks24h?:string;lowPriceTicks24h?:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
+export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};statistics?:{changePct24h?:number|null;volumeMinor24h?:string;rangePct24h?:number;highPriceTicks24h?:string;lowPriceTicks24h?:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
 type Row=Record<string,unknown>;
 const canonicalSymbol=(value:unknown)=>String(value??'').split('/').map(s=>s==='FCB'?'BAR':s).join('/');
 /** Join on stable entity identity; backend symbols may differ from app tickers. */
@@ -25,3 +25,9 @@ export function normalizeMarketCatalog(trading:Row[],indices:Row[],known:MarketD
  return [...output.values()];
 }
 
+
+/** Keep index updates distinct from the 24-hour traded-price statistic. */
+export function selectedMarketChange(market:Pick<RemoteMarket,'indexChangePct'|'statistics'>|undefined,basis:'Index update'|'24h market'):number {
+ const value=basis==='24h market'?market?.statistics?.changePct24h:market?.indexChangePct;
+ return typeof value==='number'&&Number.isFinite(value)?value:NaN;
+}

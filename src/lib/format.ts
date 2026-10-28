@@ -39,3 +39,5 @@ export function formatLeverage(value: number) {
   if (!Number.isFinite(value) || value <= 0) return '—';
   return `${new Intl.NumberFormat(locale, {maximumFractionDigits: 2}).format(value)}x`;
 }
+
+export function formatMarketChange(value:number, basis:'Index update'|'24h market') { return `${formatPercent(value)} · ${basis==='Index update'?'Index':'24h'}`; }

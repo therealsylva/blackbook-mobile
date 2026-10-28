@@ -17,7 +17,7 @@ import { OrderBook } from '@/components/trade/order-book';
 import { OrderReviewSheet } from '@/components/trade/order-review-sheet';
 import { PairSelectorSheet } from '@/components/trade/pair-selector-sheet';
 import { useExchange } from '@/context/exchange-context';
-import { formatBand, formatMoney, formatPercent, formatPrice } from '@/lib/format';
+import { formatBand, formatMoney, formatMarketChange, formatPrice } from '@/lib/format';
 import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
@@ -106,7 +106,7 @@ export default function TradeScreen() {
             </Pressable>
             <View style={styles.liveQuote}>
               <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.livePrice}>{formatPrice(price)}</Text>
-              <Text style={[styles.liveChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatPercent(change)}</Text>
+              <Text style={[styles.liveChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text>
             </View>
           </View>
 
