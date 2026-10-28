@@ -31,6 +31,8 @@ test('index and market changes stay distinct and never silently fall back',()=>{
  const market={indexChangePct:-2.4,statistics:{changePct24h:0.3}};
  assert.equal(selectedMarketChange(market,'Index update'),-2.4);
  assert.equal(selectedMarketChange(market,'24h market'),0.3);
+ assert.equal(selectedMarketChange({statistics:{changePct24h:'0.3'}},'24h market'),0.3);
+ assert.ok(Number.isNaN(selectedMarketChange({statistics:{changePct24h:null}},'24h market')));
  assert.ok(Number.isNaN(selectedMarketChange({indexChangePct:-2.4},'24h market')));
  assert.ok(Number.isNaN(selectedMarketChange({statistics:{changePct24h:0.3}},'Index update')));
 });
