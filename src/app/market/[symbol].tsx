@@ -12,8 +12,9 @@ import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
 import type { ChartRange } from '@/types/exchange';
+import { MOBILE_CHART_RANGES } from '@/lib/market-series';
 
-const RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
+const RANGES: readonly ChartRange[] = MOBILE_CHART_RANGES;
 
 export function generateStaticParams() { return MARKETS.map(market => ({ symbol: market.symbol })); }
 
@@ -25,7 +26,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
   const { marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor, favorites, toggleFavorite, setActiveSymbol, settings } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
   const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
-  const [range, setRange] = useState<ChartRange>('1H');
+  const [range, setRange] = useState<ChartRange>('1D');
 
   useEffect(()=>{setActiveSymbol(selectedSymbol??symbol??'RMD');},[selectedSymbol,symbol,setActiveSymbol]);
   const candles=useMemo(()=>market?candlesFor(market.symbol,range):[],[market,range,candlesFor]);
