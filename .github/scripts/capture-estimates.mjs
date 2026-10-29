@@ -25,7 +25,7 @@ try{
  assert.doesNotMatch(await page.locator('body').innerText(),/History uses hourly source candles|larger intervals aggregate/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await mkdir('ui-renders',{recursive:true});await page.screenshot({path:`ui-renders/fee-liquidation-${width}.png`,fullPage:true});
- fixture.accounts.real.push({marketId:'fixture:rmd',positionLots:'100000',entryPriceTicks:'6234625700',markPriceTicks:'6234625700',leverage:4.999999999999991,heldMarginMinor:'10000',unrealizedPnlMinor:'0',openedAt:new Date().toISOString()});
+ fixture.accounts.real.push({positionId:'00000000-0000-4000-8000-000000000017',marketId:'fixture:rmd',positionLots:'100000',entryPriceTicks:'6234625700',markPriceTicks:'6234625700',leverage:4.999999999999991,heldMarginMinor:'10000',unrealizedPnlMinor:'0',openedAt:new Date().toISOString()});
  await page.goto('http://127.0.0.1:4173/portfolio',{waitUntil:'networkidle'});await page.getByText('Long · 5x',{exact:true}).waitFor();assert.doesNotMatch(await page.locator('body').innerText(),/4\.999999/);
  await page.goto('http://127.0.0.1:4173/indices',{waitUntil:'networkidle'});assert.doesNotMatch(await page.locator('body').innerText(),/Osimhen|\bOSI\b/);
  assert.deepEqual(fixture.failures,[]);console.log(`Passed ${width}px: nonzero fee summary, finite long/short liquidation, fully collateralized long label and OSI absent from discovery.`);
