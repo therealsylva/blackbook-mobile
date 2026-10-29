@@ -22,7 +22,7 @@ interface MarketRowProps {
 
 function MarketRowComponent({ market, price, change, onPress, compact = false, showSparkline = false, showVolume = false, directory = false }: MarketRowProps) {
   const { colors } = useTheme();
-  const {seriesFor,settings}=useExchange();
+  const {sparklineFor,settings}=useExchange();
   const styles = useStyles();
   const direction = change >= 0 ? colors.positive : colors.negative;
   return (
@@ -40,7 +40,7 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
             <Text style={styles.symbol}>{market.symbol}</Text>
             {showSparkline ? (
               <View style={styles.sparkline}>
-                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={seriesFor(market.symbol,'1H').slice(-24)} strokeWidth={1.7} />
+                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={sparklineFor(market.symbol)} strokeWidth={1.7} />
               </View>
             ) : null}
             
