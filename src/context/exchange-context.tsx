@@ -26,7 +26,7 @@ type AccountMode='real'|'demo';
 interface PlaceOrderInput {symbol:string;side:Side;type:OrderType;amount:number;leverage:number;targetPrice?:number;takeProfit?:number;stopLoss?:number;marketExecution?:MarketExecution}
 interface ExchangeContextValue {
  markets:MarketDefinition[];pairMarkets:MarketDefinition[];activeSymbol:string;setActiveSymbol:(symbol:string)=>void;favorites:Set<string>;toggleFavorite:(symbol:string)=>void;
- historyLoadingFor:(symbol:string)=>boolean;
+ historyLoadingFor:(symbol:string)=>boolean; sparklineFor:(symbol:string)=>number[];
  priceFor:(symbol:string)=>number;changeFor:(symbol:string)=>number;seriesFor:(symbol:string,range?:ChartRange)=>number[];candlesFor:(symbol:string,range?:ChartRange)=>CandlePoint[];marketFor:(symbol:string)=>MarketDefinition|undefined;
  cashBalance:number;usedMargin:number;totalEquity:number;unrealizedPnl:number;realizedPnl:number;positions:Position[];unavailablePositions:{marketId:string;positionLots:string}[];orders:OpenOrder[];history:TradeRecord[];liquidationEstimate:(input:PlaceOrderInput)=>number;
  orderEstimate:(input:PlaceOrderInput)=>{fee:number;reservedFee:number;exposure:number;requiredBalance:number};
@@ -52,6 +52,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const [favorites,setFavorites]=useState(new Set<string>());
  const activeSymbol=selectedSymbol,setActiveSymbol=onSelectSymbol;
  const [remote,setRemote]=useState<RemoteMarket[]>([]),[books,setBooks]=useState<Record<string,BookSnapshot>>({}),[marketCandles,setCandles]=useState<Record<string,CandlePoint[]>>({});
+ const [sparklines,setSparklines]=useState<Record<string,number[]>>({});
  const [historyState,setHistoryState]=useState<Record<string,'loading'|'ready'|'error'>>({});
  const [account,setAccount]=useState<{portfolio:Row;positions:Row[];orders:Row[];fills:Row[]}>({portfolio:{},positions:[],orders:[],fills:[]});
  const [loading,setLoading]=useState(true),[error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
@@ -130,6 +131,15 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   let alive=true;
   const queue=[...remote].sort((a,b)=>Number(b.symbol===activeSymbol)-Number(a.symbol===activeSymbol));
   const load=async(m:RemoteMarket)=>{
+   const loadSparkline=async()=>{
+    try {
+     let values:number[]=[];
+     if(m.marketId){const result=await publicApi<{candles:CandlePoint[]}>('/v1/markets/'+encodeURIComponent(m.marketId)+'/candles?interval=1h&limit=168');values=result.candles.map(c=>c.close).filter(Number.isFinite);}
+     if(values.length<2){const result=await publicApi<{points:{asOf:string;referenceMicros:number|string}[]}>('/v1/indices/'+encodeURIComponent(m.entityId)+'/history?limit=1000');values=result.points.map(p=>({time:Date.parse(p.asOf),value:Number(p.referenceMicros)/1e6})).filter(p=>Number.isFinite(p.time)&&p.value>0).sort((a,b)=>a.time-b.time).map(p=>p.value);}
+     if(alive)setSparklines(current=>({...current,[m.symbol]:values.slice(-24)}));
+    }catch{/* Keep the last successful sparkline. */}
+   };
+   void loadSparkline();
    setHistoryState(current=>current[m.symbol]==='ready'?current:{...current,[m.symbol]:'loading'});
    try{
     let rows:CandlePoint[]=[];
@@ -240,7 +250,8 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   return estimateLiquidation({margin:input.amount,existingUnits:p?Number(p.positionLots)*factor:0,existingEntry:p?Number(p.entryPriceTicks)/scale:0,existingMargin:p?money(p.heldMarginMinor):0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
  },[account.positions,bookFor,ready,remote,settings.defaultMarketExecution,settings.defaultTimeInForce]);
  useTradingNotifications({scope:userId+':'+accountMode,settings,history,markets:markets.filter(m=>bookFor(m.symbol)?.lastTradePriceTicks),enabled:ready,updateSetting});
- const value:ExchangeContextValue={historyLoadingFor,markets:markets.filter(m=>m.category!=='Pairs'&&m.symbol!=='OSI'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,realizedPnl,usedMargin,positions,unavailablePositions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,isTradableFor,busy,ready};
+ const sparklineFor=useCallback((symbol:string)=>sparklines[symbol]??[],[sparklines]);
+ const value:ExchangeContextValue={sparklineFor,historyLoadingFor,markets:markets.filter(m=>m.category!=='Pairs'&&m.symbol!=='OSI'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,realizedPnl,usedMargin,positions,unavailablePositions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,isTradableFor,busy,ready};
  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useExchange(){const value=useContext(Context);if(!value)throw new Error('Exchange provider required');return value;}
