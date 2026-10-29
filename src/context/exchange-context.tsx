@@ -150,8 +150,8 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const marketFor=useCallback((symbol:string)=>markets.find(m=>m.symbol===symbol),[markets]);
  const priceFor=useCallback((symbol:string)=>marketFor(symbol)?.price??NaN,[marketFor]);
  const changeFor=useCallback((symbol:string)=>selectedMarketChange(lookup.get(symbol),settings.changeDisplay),[lookup,settings.changeDisplay]);
- const candlesFor=useCallback((symbol:string,range:ChartRange='1D')=>isMobileChartRange(range)?selectMobileCandles(marketCandles[symbol]??[],range):selectCandles(marketCandles[symbol]??[],rangeMs[range],3600000),[marketCandles]);
- const seriesFor=useCallback((symbol:string,range:ChartRange='1D')=>candlesFor(symbol,range).map(x=>x.close),[candlesFor]);
+ const candlesFor=useCallback((symbol:string,range:ChartRange='7D')=>isMobileChartRange(range)?selectMobileCandles(marketCandles[symbol]??[],range):selectCandles(marketCandles[symbol]??[],rangeMs[range],3600000),[marketCandles]);
+ const seriesFor=useCallback((symbol:string,range:ChartRange='7D')=>candlesFor(symbol,range).map(x=>x.close),[candlesFor]);
  const bookFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?books[m.marketId]:undefined;},[books,lookup]);
  const isTradableFor=useCallback((symbol:string)=>Boolean(lookup.get(symbol)?.tradable),[lookup]);
  const maxLeverageFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?Math.min(30,Math.floor(1000000/Number(m.marginPolicy.initialMarginPpm))):1;},[lookup]);
