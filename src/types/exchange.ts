@@ -3,7 +3,7 @@ export type OrderType = 'market' | 'limit' | 'stop';
 export type {MarketExecution} from '@/lib/market-execution';
 import type {MarketExecution} from '@/lib/market-execution';
 export type InterfaceMode = 'basic' | 'advanced';
-export type ChartRange = '1m' | '5m' | '15m' | '1H' | '4H' | '1D' | '1W' | '1M' | '6M';
+export type ChartRange = '1m' | '5m' | '15m' | '1H' | '4H' | '1D' | '7D' | '1W' | '1M' | '6M';
 
 export interface Position {
   id: string;
