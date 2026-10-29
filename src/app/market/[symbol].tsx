@@ -26,7 +26,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
   const { marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor, favorites, toggleFavorite, setActiveSymbol, settings } = useExchange();
   const symbol = Array.isArray(params.symbol) ? params.symbol[0] : params.symbol;
   const market = marketFor(selectedSymbol ?? symbol ?? 'RMD');
-  const [range, setRange] = useState<ChartRange>('1D');
+  const [range, setRange] = useState<ChartRange>('7D');
 
   useEffect(()=>{setActiveSymbol(selectedSymbol??symbol??'RMD');},[selectedSymbol,symbol,setActiveSymbol]);
   const candles=useMemo(()=>market?candlesFor(market.symbol,range):[],[market,range,candlesFor]);
