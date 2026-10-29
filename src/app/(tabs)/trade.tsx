@@ -22,10 +22,11 @@ import { radii, spacing, typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 import type { ChartRange, OrderType, Side } from '@/types/exchange';
+import { MOBILE_CHART_RANGES } from '@/lib/market-series';
 
 type AdvancedPanel = 'Chart' | 'Book';
-const BASIC_RANGES: ChartRange[] = ['15m', '1H', '4H', '1D'];
-const ADVANCED_RANGES: ChartRange[] = ['1m', '5m', '15m', '1H', '4H'];
+const BASIC_RANGES: readonly ChartRange[] = MOBILE_CHART_RANGES;
+const ADVANCED_RANGES: readonly ChartRange[] = MOBILE_CHART_RANGES;
 const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop'];
 const FocusContext=createContext<()=>void>(()=>{});
 
@@ -44,7 +45,7 @@ export default function TradeScreen() {
   const advanced = settings.interfaceMode === 'advanced';
   const [pairOpen, setPairOpen] = useState(false);
   const [panel, setPanel] = useState<AdvancedPanel>('Chart');
-  const [range, setRange] = useState<ChartRange>('1D');
+  const [range, setRange] = useState<ChartRange>('7D');
   const [side, setSide] = useState<Side>('long');
   const [orderType, setOrderType] = useState<OrderType>(settings.defaultOrderType);
   const [amount, setAmount] = useState(String(settings.defaultMargin));
@@ -226,11 +227,11 @@ export default function TradeScreen() {
   );
 }
 
-function RangeRail({ ranges, range, onChange }: { ranges: ChartRange[]; range: ChartRange; onChange: (range: ChartRange) => void }) {
+function RangeRail({ ranges, range, onChange }: { ranges: readonly ChartRange[]; range: ChartRange; onChange: (range: ChartRange) => void }) {
   const styles = useStyles();
   return (
     <View style={styles.rangeRail}>{ranges.map((item) => (
-      <Pressable key={item} onPress={() => onChange(item)} style={[styles.rangeChoice, range === item && styles.rangeActive]}><Text style={[styles.rangeText, range === item && styles.rangeTextActive]}>{item}</Text></Pressable>
+      <Pressable accessibilityRole="tab" accessibilityState={{ selected: range === item }} key={item} onPress={() => onChange(item)} style={[styles.rangeChoice, range === item && styles.rangeActive]}><Text style={[styles.rangeText, range === item && styles.rangeTextActive]}>{item}</Text></Pressable>
     ))}</View>
   );
 }

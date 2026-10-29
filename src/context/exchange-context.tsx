@@ -8,7 +8,7 @@ import {AppState} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ALL_MARKETS} from '@/data/pair-markets';
 import type {MarketDefinition} from '@/data/markets';
-import {selectCandles,type CandlePoint} from '@/lib/market-series';
+import {selectCandles,selectMobileCandles,isMobileChartRange,MOBILE_HISTORY_INTERVAL,MOBILE_HISTORY_LIMIT,type CandlePoint} from '@/lib/market-series';
 import {formatCompact,configureDisplay} from '@/lib/format';
 import {useTradingNotifications} from '@/hooks/use-trading-notifications';
 import {api,publicApi,uuid} from '@/lib/backend';
@@ -34,14 +34,14 @@ interface ExchangeContextValue {
  profile:UserProfile;updateProfile:(changes:Partial<UserProfile>)=>Promise<void>;settings:ExchangeSettings;updateSetting:<K extends keyof ExchangeSettings>(key:K,value:ExchangeSettings[K])=>void;
  accountMode:AccountMode;setAccountMode:(mode:AccountMode)=>Promise<void>;loading:boolean;error:string|null;refresh:()=>Promise<void>;bookFor:(symbol:string)=>BookSnapshot|undefined;maxLeverageFor:(symbol:string)=>number;isTradableFor:(symbol:string)=>boolean;busy:boolean;ready:boolean;
 }
-const defaults:ExchangeSettings={changeDisplay:'Index update',bandDisplay:'Index',locale:'en-GB',timeZone:'UTC',chartType:'candles',candleInterval:'1m',defaultMargin:1000,defaultTimeInForce:'GTC',defaultMarketExecution:'IOC',oneClickTrading:false,marginWarnings:false,balanceWarningPercent:80,stopLossPercent:0,takeProfitPercent:0,maxPositionUsd:0,dailyLossUsd:0,orderNotifications:true,priceAlerts:true,priceAlertRules:[],interfaceMode:'basic',appearance:'Dark',language:'English',currency:'USD',colorPreference:'Green up / Red down',defaultOrderType:'market',defaultLeverage:5,confirmOrders:true,attachRiskControls:true,refreshRate:'Live'};
+const defaults:ExchangeSettings={changeDisplay:'Index update',bandDisplay:'Index',locale:'en-GB',timeZone:'UTC',chartType:'candles',candleInterval:'1h',defaultMargin:1000,defaultTimeInForce:'GTC',defaultMarketExecution:'IOC',oneClickTrading:false,marginWarnings:false,balanceWarningPercent:80,stopLossPercent:0,takeProfitPercent:0,maxPositionUsd:0,dailyLossUsd:0,orderNotifications:true,priceAlerts:true,priceAlertRules:[],interfaceMode:'basic',appearance:'Dark',language:'English',currency:'USD',colorPreference:'Green up / Red down',defaultOrderType:'market',defaultLeverage:5,confirmOrders:true,attachRiskControls:true,refreshRate:'Live'};
 const Context=createContext<ExchangeContextValue|null>(null);
 const metadata=new Map(ALL_MARKETS.map(m=>[m.symbol,m]));
 const message=(e:unknown)=>e instanceof Error?e.message:'BlackBook is unavailable. Please try again.';
 const time=(v:unknown)=>typeof v==='string'?Date.parse(v):0;
 const money=(v:unknown)=>v===null||v===undefined?NaN:Number(v)/100;
 const str=(v:unknown)=>String(v??'');
-const rangeMs:Record<ChartRange,number>={'1m':60000,'5m':300000,'15m':900000,'1H':3600000,'4H':14400000,'1D':86400000,'1W':604800000,'1M':2592000000,'6M':15552000000};
+const rangeMs:Record<ChartRange,number>={'1m':60000,'5m':300000,'15m':900000,'1H':3600000,'4H':14400000,'1D':86400000,'7D':604800000,'1W':604800000,'1M':2592000000,'6M':15552000000};
 async function pages(path:string):Promise<Row[]>{const items:Row[]=[];let cursor:string|null=null;do{const response: {items:Row[];nextCursor:string|null}=await api(path+(cursor?'?cursor='+encodeURIComponent(cursor):''));items.push(...response.items);cursor=response.nextCursor;}while(cursor);return items;}
 export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsWithChildren<{selectedSymbol:string;onSelectSymbol:(symbol:string)=>void}>){
  const notify=useNotification();
@@ -60,6 +60,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const applyPreferences=useCallback((p:Row)=>{
   const next={...defaults,...Object.fromEntries(Object.keys(defaults).filter(k=>k!=='appearance'&&k!=='language'&&k!=='currency'&&p[k]!==undefined).map(k=>[k,p[k]]))} as ExchangeSettings;
   if(!marketExecutionOptions.includes(next.defaultMarketExecution))next.defaultMarketExecution='IOC';
+  next.candleInterval=MOBILE_HISTORY_INTERVAL;
   next.marginWarnings=typeof p.balanceWarningPercent==='number'&&p.marginWarnings===true;
   configureDisplay(next.locale,next.timeZone);setSettings(current=>({...next,appearance:current.appearance,bandDisplay:current.bandDisplay,changeDisplay:current.changeDisplay}));setFavorites(new Set(Array.isArray(p.favorites)?p.favorites.filter((v):v is string=>typeof v==='string'):[]));
   setProfile(current=>({...current,...(typeof p.displayName==='string'?{displayName:p.displayName}:{}),...(typeof p.avatar==='string'?{avatarUri:p.avatar}:{})}));
@@ -124,7 +125,6 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
 
  useEffect(()=>{generation.current++;setAccount({portfolio:{},positions:[],orders:[],fills:[]});setReady(false);setLoading(true);},[accountMode]);
  useEffect(()=>{void refresh();const tick=setInterval(()=>{if(AppState.currentState==='active')void refresh();},settings.refreshRate==='Every 15 seconds'?15000:settings.refreshRate==='Every 5 seconds'?5000:2500);const event=AppState.addEventListener('change',s=>{if(s==='active')void refresh();});return()=>{clearInterval(tick);event.remove();};},[refresh,settings.refreshRate]);
- useEffect(()=>{generation.current++;setCandles({});setHistoryState({});},[settings.candleInterval]);
  const historyKey=remote.map(m=>m.symbol+':'+m.marketId).join('|');
  useEffect(()=>{
   let alive=true;
@@ -133,7 +133,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
    setHistoryState(current=>current[m.symbol]==='ready'?current:{...current,[m.symbol]:'loading'});
    try{
     let rows:CandlePoint[]=[];
-    if(m.marketId){const result=await publicApi<{candles:CandlePoint[];intervalMs?:number}>('/v1/markets/'+encodeURIComponent(m.marketId)+'/candles?interval='+settings.candleInterval+'&limit='+(m.symbol===activeSymbol?'2000':'168'));rows=result.candles.map(row=>({...row,volume:row.volume??null,intervalMs:result.intervalMs}));}
+    if(m.marketId){const result=await publicApi<{candles:CandlePoint[];intervalMs?:number}>('/v1/markets/'+encodeURIComponent(m.marketId)+'/candles?interval='+MOBILE_HISTORY_INTERVAL+'&limit='+MOBILE_HISTORY_LIMIT);rows=result.candles.map(row=>({...row,volume:row.volume??null,intervalMs:result.intervalMs}));}
     if(!rows.length){const result=await publicApi<{points:{asOf:string;referenceMicros:number|string}[]}>('/v1/indices/'+encodeURIComponent(m.entityId)+'/history?limit=1000');rows=result.points.map(point=>{const price=Number(point.referenceMicros)/1e6;return {time:Date.parse(point.asOf),open:price,high:price,low:price,close:price,volume:null};}).filter(point=>Number.isFinite(point.time)&&point.close>0).sort((a,b)=>a.time-b.time);}
     if(alive){setCandles(current=>({...current,[m.symbol]:rows}));setHistoryState(current=>({...current,[m.symbol]:'ready'}));}
    }catch{if(alive)setHistoryState(current=>({...current,[m.symbol]:'error'}));}
@@ -143,15 +143,15 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   void Promise.all(Array.from({length:4},worker)).finally(()=>{cycleRunning=false;});
   const timer=setInterval(()=>{if(cycleRunning)return;cycleRunning=true;queue.push(...remote);void Promise.all(Array.from({length:4},worker)).finally(()=>{cycleRunning=false;});},60000);
   return()=>{alive=false;clearInterval(timer);};
- },[historyKey,activeSymbol,settings.candleInterval]);
+ },[historyKey,activeSymbol]);
  const historyLoadingFor=useCallback((symbol:string)=>!historyState[symbol]||historyState[symbol]==='loading',[historyState]);
  const lookup=useMemo(()=>new Map(remote.map(r=>[r.symbol,r])),[remote]);
  const markets=useMemo(()=>remote.map((r,index)=>{const old=metadata.get(r.symbol),scale=10**Number(r.terms.priceDecimals),book=books[r.marketId],reference=Number(r.referenceTicks)/scale;return {...old,rank:index+1,symbol:r.symbol,name:r.displayName??old?.name??r.symbol,category:r.kind==='PAIR'?'Pairs':r.kind==='CLUB'?'Clubs':'Athletes',entityId:r.entityId,price:book?.lastTradePriceTicks?Number(book.lastTradePriceTicks)/scale:marketCandles[r.symbol]?.at(-1)?.close??reference,reference,lowerBand:Number(r.lowerTicks)/scale,upperBand:Number(r.upperTicks)/scale,change24h:r.indexChangePct??NaN,volume:r.statistics?.volumeMinor24h==null?'—':formatCompact(Number(r.statistics.volumeMinor24h)/100),volumeUsd24h:r.statistics?.volumeMinor24h==null?NaN:Number(r.statistics.volumeMinor24h)/100,volatility24h:r.statistics?.rangePct24h??NaN,density:0,high24h:r.statistics?.highPriceTicks24h==null?NaN:Number(r.statistics.highPriceTicks24h)/scale,low24h:r.statistics?.lowPriceTicks24h==null?NaN:Number(r.statistics.lowPriceTicks24h)/scale,assetKey:old?.assetKey??'',series:[],history:[],snapshotAsOf:r.asOf??''} as MarketDefinition;}),[books,remote,marketCandles]);
  const marketFor=useCallback((symbol:string)=>markets.find(m=>m.symbol===symbol),[markets]);
  const priceFor=useCallback((symbol:string)=>marketFor(symbol)?.price??NaN,[marketFor]);
  const changeFor=useCallback((symbol:string)=>selectedMarketChange(lookup.get(symbol),settings.changeDisplay),[lookup,settings.changeDisplay]);
- const candlesFor=useCallback((symbol:string,range:ChartRange='15m')=>selectCandles(marketCandles[symbol]??[],rangeMs[range],rangeMs[({'1h':'1H','4h':'4H','1d':'1D','1w':'1W'} as Record<string,ChartRange>)[settings.candleInterval]??settings.candleInterval as ChartRange]),[marketCandles,settings.candleInterval]);
- const seriesFor=useCallback((symbol:string,range:ChartRange='1D')=>candlesFor(symbol,range).map(x=>x.close),[candlesFor]);
+ const candlesFor=useCallback((symbol:string,range:ChartRange='7D')=>isMobileChartRange(range)?selectMobileCandles(marketCandles[symbol]??[],range):selectCandles(marketCandles[symbol]??[],rangeMs[range],3600000),[marketCandles]);
+ const seriesFor=useCallback((symbol:string,range:ChartRange='7D')=>candlesFor(symbol,range).map(x=>x.close),[candlesFor]);
  const bookFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?books[m.marketId]:undefined;},[books,lookup]);
  const isTradableFor=useCallback((symbol:string)=>Boolean(lookup.get(symbol)?.tradable),[lookup]);
  const maxLeverageFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?Math.min(30,Math.floor(1000000/Number(m.marginPolicy.initialMarginPpm))):1;},[lookup]);
