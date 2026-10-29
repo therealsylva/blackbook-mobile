@@ -34,3 +34,24 @@ export function selectCandles(rows:CandlePoint[],windowMs:number,intervalMs:numb
  const latest=rows.at(-1)!.time;
  return aggregateCandles(rows.filter(row=>row.time>=latest-windowMs),intervalMs);
 }
+
+/** Mobile controls are history windows; candle widths keep each window readable. */
+export const MOBILE_CHART_RANGES = ['1D', '7D', '1M'] as const;
+export type MobileChartRange = typeof MOBILE_CHART_RANGES[number];
+export const MOBILE_HISTORY_INTERVAL = '1h';
+export const MOBILE_HISTORY_LIMIT = 744; // 31 days, including a partial current hour.
+const HOUR_MS = 3_600_000;
+const MOBILE_CHART_WINDOWS: Record<MobileChartRange, { windowMs: number; intervalMs: number }> = {
+  '1D': { windowMs: 24 * HOUR_MS, intervalMs: HOUR_MS },
+  '7D': { windowMs: 7 * 24 * HOUR_MS, intervalMs: HOUR_MS },
+  '1M': { windowMs: 30 * 24 * HOUR_MS, intervalMs: 4 * HOUR_MS },
+};
+
+export function isMobileChartRange(range: string): range is MobileChartRange {
+  return range === '1D' || range === '7D' || range === '1M';
+}
+
+export function selectMobileCandles(rows: CandlePoint[], range: MobileChartRange): CandlePoint[] {
+  const { windowMs, intervalMs } = MOBILE_CHART_WINDOWS[range];
+  return selectCandles(rows, windowMs, intervalMs);
+}
