@@ -129,14 +129,14 @@ function OrdersList() {
             <View style={styles.itemTitleLine}><Text numberOfLines={1} style={styles.itemTitle}>{market.name}</Text><Text style={styles.ticker}>{market.symbol}</Text></View>
             <Text style={[styles.sideMeta, { color: order.side === 'long' ? colors.positive : colors.negative }]}>{order.side === 'long' ? 'Long' : 'Short'} · {order.type} · {formatLeverage(order.leverage)}</Text>
             <View style={styles.orderNumbers}>
-              <Text style={styles.context}>Target <Text style={styles.contextValue}>{formatPrice(order.targetPrice)}</Text></Text>
+              <Text style={styles.context}>{order.type==='market'?'Index at submission':'Target'} <Text style={styles.contextValue}>{formatPrice(order.targetPrice)}</Text></Text>
               <Text style={styles.context}>Current <Text style={styles.contextValue}>{formatPrice(current)}</Text></Text>
             </View>
             <Text style={styles.orderMeta}>{formatMoney(order.size, settings.currency)} · placed {formatAge(order.createdAt)}</Text>
           </View>
           <View style={styles.orderQuote}>
             <Text style={[styles.distance, { color: distance >= 0 ? colors.positive : colors.negative }]}>{distance >= 0 ? '+' : ''}{distance.toFixed(2)}%</Text>
-            <Pressable disabled={busy||!ready} accessibilityState={{disabled:busy||!ready}} onPress={() => {void cancelOrder(order.id).catch(e=>notify({title:'Cancel unavailable',message:e.message,tone:'error'}));}} style={[styles.cancel,(busy||!ready)&&{opacity:0.5}]}><Text style={styles.cancelText}>{busy?'Awaiting confirmation':!ready?'Connecting…':'Cancel'}</Text></Pressable>
+            <Pressable disabled={!ready} accessibilityState={{disabled:!ready}} onPress={() => {void cancelOrder(order.id).catch(e=>notify({title:'Cancel unavailable',message:e.message,tone:'error'}));}} style={[styles.cancel,(!ready)&&{opacity:0.5}]}><Text style={styles.cancelText}>{!ready?'Connecting…':busy?'Check & cancel':'Cancel'}</Text></Pressable>
           </View>
         </View>
       </View>

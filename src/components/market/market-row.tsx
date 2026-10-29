@@ -24,7 +24,7 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
   const { colors } = useTheme();
   const {seriesFor,settings}=useExchange();
   const styles = useStyles();
-  const direction = change >= 0 ? colors.positive : colors.negative;
+  const direction = !Number.isFinite(change) || change === 0 ? colors.textMuted : change > 0 ? colors.positive : colors.negative;
   return (
     <Pressable
       accessibilityLabel={`${market.name}, ${formatPrice(price)}, ${formatMarketChange(change,settings.changeDisplay)}`}
@@ -40,7 +40,7 @@ function MarketRowComponent({ market, price, change, onPress, compact = false, s
             <Text style={styles.symbol}>{market.symbol}</Text>
             {showSparkline ? (
               <View style={styles.sparkline}>
-                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={seriesFor(market.symbol,'1H').slice(-24)} strokeWidth={1.7} />
+                <MarketChart area={false} grid={false} height={20} positive={change >= 0} series={seriesFor(market.symbol,'1D').slice(-24)} strokeWidth={1.7} />
               </View>
             ) : null}
             
