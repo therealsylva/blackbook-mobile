@@ -45,7 +45,7 @@ export default function TradeScreen() {
   const advanced = settings.interfaceMode === 'advanced';
   const [pairOpen, setPairOpen] = useState(false);
   const [panel, setPanel] = useState<AdvancedPanel>('Chart');
-  const [range, setRange] = useState<ChartRange>('1D');
+  const [range, setRange] = useState<ChartRange>('7D');
   const [side, setSide] = useState<Side>('long');
   const [orderType, setOrderType] = useState<OrderType>(settings.defaultOrderType);
   const [amount, setAmount] = useState(String(settings.defaultMargin));
