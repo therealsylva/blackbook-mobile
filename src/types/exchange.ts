@@ -20,7 +20,7 @@ export interface OpenOrder {
   id: string;
   symbol: string;
   side: Side;
-  type: Exclude<OrderType, 'market'>;
+  type: OrderType;
   size: number;
   targetPrice: number;
   leverage: number;

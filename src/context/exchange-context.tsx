@@ -56,6 +56,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const [account,setAccount]=useState<{portfolio:Row;positions:Row[];orders:Row[];fills:Row[]}>({portfolio:{},positions:[],orders:[],fills:[]});
  const [loading,setLoading]=useState(true),[error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
  const generation=useRef(0),inFlight=useRef(false),commandLock=useRef(false),pending=useRef<PendingCommand|null>(null),persistChain=useRef(Promise.resolve());
+ const refreshRef=useRef<()=>Promise<void>>(async()=>{});
  const observedAt=useRef(0),ownerRef=useRef(userId),bandRevision=useRef(0),changeRevision=useRef(0);ownerRef.current=userId;
  const applyPreferences=useCallback((p:Row)=>{
   const next={...defaults,...Object.fromEntries(Object.keys(defaults).filter(k=>k!=='appearance'&&k!=='language'&&k!=='currency'&&p[k]!==undefined).map(k=>[k,p[k]]))} as ExchangeSettings;
@@ -87,6 +88,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
    if(outcome.state==='complete'){
     await AsyncStorage.removeItem(pendingKey);pending.current=null;
     notify(executionNotice(request.body,outcome.receipt,remote.find(m=>m.marketId===request.body.marketId)?.terms));
+    await refreshRef.current();
    }
   }catch(e){if(isDefinitiveCommandError(e)){await AsyncStorage.removeItem(pendingKey);pending.current=null;notify({title:'Request rejected',message:message(e),tone:'error'});}}
   finally{commandLock.current=false;setBusy(Boolean(pending.current));}
@@ -125,6 +127,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
 
  useEffect(()=>{generation.current++;setAccount({portfolio:{},positions:[],orders:[],fills:[]});setReady(false);setLoading(true);},[accountMode]);
  useEffect(()=>{void refresh();const tick=setInterval(()=>{if(AppState.currentState==='active')void refresh();},settings.refreshRate==='Every 15 seconds'?15000:settings.refreshRate==='Every 5 seconds'?5000:2500);const event=AppState.addEventListener('change',s=>{if(s==='active')void refresh();});return()=>{clearInterval(tick);event.remove();};},[refresh,settings.refreshRate]);
+ refreshRef.current=refresh;
  const historyKey=remote.map(m=>m.symbol+':'+m.marketId).join('|');
  useEffect(()=>{
   let alive=true;
@@ -157,7 +160,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const maxLeverageFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?Math.min(30,Math.floor(1000000/Number(m.marginPolicy.initialMarginPpm))):1;},[lookup]);
  const positions=useMemo(()=>account.positions.flatMap(p=>{const m=remote.find(m=>m.marketId===p.marketId);if(!m)return [];const lots=Number(p.positionLots),entry=Number(p.entryPriceTicks)/10**Number(m.terms.priceDecimals),size=Math.abs(lots)*entry*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,margin=p.heldMarginMinor===undefined?size*Number(m.marginPolicy.initialMarginPpm)/1000000:money(p.heldMarginMinor);return [{id:m.marketId,symbol:m.symbol,side:lots>0?'long':'short',size,entryPrice:entry,leverage:Number(p.leverage??size/Math.max(margin,0.01)),margin,openedAt:time(p.openedAt??p.updatedAt)} as Position];}),[account.positions,remote]);
  const unavailablePositions=useMemo(()=>findUnavailablePositions(account.positions,remote),[account.positions,remote]);
- const orders=useMemo(()=>account.orders.flatMap(o=>{const m=remote.find(m=>m.marketId===o.marketId);if(!m)return [];const target=Number(o.triggerTicks??o.priceTicks??m.referenceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(o.orderId),symbol:m.symbol,side:o.side==='BID'?'long':'short',type:o.type==='STOP'?'stop':'limit',size:Number(o.remainingQuantityLots??o.quantityLots)*target*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,targetPrice:target,leverage:Number(o.leverage??maxLeverageFor(m.symbol)),createdAt:time(o.createdAt)} as OpenOrder];}),[account.orders,maxLeverageFor,remote]);
+ const orders=useMemo(()=>account.orders.flatMap(o=>{const m=remote.find(m=>m.marketId===o.marketId);if(!m)return [];const target=Number(o.triggerTicks??o.priceTicks??m.referenceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(o.orderId),symbol:m.symbol,side:o.side==='BID'?'long':'short',type:o.type==='STOP'?'stop':o.type==='MARKET'?'market':'limit',size:Number(o.remainingQuantityLots??o.quantityLots)*target*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,targetPrice:target,leverage:Number(o.leverage??maxLeverageFor(m.symbol)),createdAt:time(o.createdAt)} as OpenOrder];}),[account.orders,maxLeverageFor,remote]);
  const history=useMemo(()=>account.fills.flatMap(f=>{const m=remote.find(m=>m.marketId===f.marketId);if(!m||!f.priceTicks)return [];const price=Number(f.priceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(f.fillId??f.id??f.tradeId),symbol:m.symbol,side:f.side==='BID'?'long':'short',event:'filled',orderType:'market',size:Number(f.quantityLots)*price*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,leverage:Number(f.leverage??1),entryPrice:price,fee:money(f.feeMinor??'0'),pnl:money(f.realizedPnlMinor??'0'),openedAt:time(f.createdAt),createdAt:time(f.createdAt)} as TradeRecord];}),[account.fills,remote]);
  const positionPnl=useCallback((p:Position)=>money(account.positions.find(x=>x.marketId===p.id)?.unrealizedPnlMinor),[account.positions]);
  const cashBalance=money(account.portfolio.availableToTradeMinor),totalEquity=money(account.portfolio.equityMinor),unrealizedPnl=money(account.portfolio.unrealizedPnlMinor),realizedPnl=money(account.portfolio.realizedPnlMinor),usedMargin=account.portfolio.usedMarginMinor===undefined?positions.reduce((sum,p)=>sum+p.margin,0)+money(account.portfolio.reservedMarginMinor??'0'):money(account.portfolio.usedMarginMinor)+money(account.portfolio.reservedMarginMinor??'0');
@@ -224,7 +227,7 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   if(settings.orderNotifications)notify({title:BigInt(String(result.filledQuantityLots))<BigInt(String(body.quantityLots))?'Position partly closed':'Position closed',message:'Check Portfolio for your updated balance.',tone:'success'});
  },[accountMode,submit,refresh,notify,settings.orderNotifications]);
 
- const cancelOrder=useCallback(async(id:string)=>{const result=await submit(accountMode==='demo'?'/v1/demo/orders/'+id+'/cancel':'/v1/orders/cancel',{commandId:uuid(),orderId:id},accountMode+'cancel'+id);if(settings.orderNotifications&&result.status!=='PENDING')notify({title:'Order cancelled',message:'Your orders have been updated.',tone:'success'});},[accountMode,submit,settings.orderNotifications,notify]);
+ const cancelOrder=useCallback(async(id:string)=>{if(pending.current){await recoverPending();if(pending.current)throw new Error('The previous request is still being confirmed. Its execution must be resolved before cancellation.');}const result=await submit(accountMode==='demo'?'/v1/demo/orders/'+id+'/cancel':'/v1/orders/cancel',{commandId:uuid(),orderId:id},accountMode+'cancel'+id);if(settings.orderNotifications&&result.status!=='PENDING')notify({title:'Order cancelled',message:'Your orders have been updated.',tone:'success'});},[accountMode,submit,settings.orderNotifications,notify,recoverPending]);
  const setAccountMode=useCallback(async(next:AccountMode)=>{if(commandLock.current||pending.current)throw new Error('Your account action is still processing. BlackBook is checking it automatically before switching modes.');if(next===accountMode)return;for(const kind of ['deposit','withdraw'])if(await AsyncStorage.getItem(`blackbook.funding.${userId}.${kind}`))throw new Error('Resolve the pending funding request before switching modes.');await persist({accountMode:next});generation.current++;setModeState(next);},[accountMode,persist,userId]);
  const toggleFavorite=useCallback((symbol:string)=>{const next=new Set(favorites);if(next.has(symbol))next.delete(symbol);else next.add(symbol);setFavorites(next);void persist({favorites:[...next]}).catch(()=>{});},[favorites,persist]);
  const updateProfile=useCallback(async(changes:Partial<UserProfile>)=>{await persist({...('displayName'in changes?{displayName:changes.displayName}:{}),...('avatarUri'in changes?{avatar:changes.avatarUri}:{})});setProfile(current=>({...current,...changes}));},[persist]);
