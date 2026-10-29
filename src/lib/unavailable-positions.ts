@@ -4,5 +4,6 @@ type PositionRow = Record<string, unknown>;
 export function unavailablePositions(positions: PositionRow[], markets: {marketId: string}[]) {
  const marketIds = new Set(markets.map(m => m.marketId));
  return positions.filter(p => !marketIds.has(String(p.marketId ?? '')))
-  .map(p => ({marketId: String(p.marketId ?? ''), positionLots: String(p.positionLots ?? '')}));
+  .map(p => ({positionId: String(p.positionId ?? p.marketId ?? ''), marketId: String(p.marketId ?? ''), positionLots: String(p.positionLots ?? '')}));
 }
+

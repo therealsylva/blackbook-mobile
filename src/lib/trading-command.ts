@@ -24,8 +24,10 @@ export async function resolveTradingCommand(request: PendingCommand, send: (path
 }
 
 export function closePositionCommand(position: Row, book: Row, commandId: string, orderId: string): Row {
+  if (typeof position.positionId !== 'string' || !/^[0-9a-f-]{36}$/i.test(position.positionId)) throw new Error('Refresh this position before closing.');
   const lots = BigInt(String(position.positionLots));
   if (lots === 0n) throw new Error('This position is already closed.');
   if (position.lastTradeSequence === undefined) throw new Error('Wait for the latest position before closing.');
-  return {commandId, orderId, marketId: position.marketId, side: lots > 0n ? 'ASK' : 'BID', type: 'MARKET', timeInForce: 'IOC', quantityLots: (lots < 0n ? -lots : lots).toString(), expectedMarketVersion: book.marketVersion, expectedMarketHash: book.marketHash, reduceOnly: true, expectedPositionSequence: String(position.lastTradeSequence)};
+  return {commandId, orderId, marketId: position.marketId, positionId: position.positionId, side: lots > 0n ? 'ASK' : 'BID', type: 'MARKET', timeInForce: 'IOC', quantityLots: (lots < 0n ? -lots : lots).toString(), expectedMarketVersion: book.marketVersion, expectedMarketHash: book.marketHash, reduceOnly: true, expectedPositionSequence: String(position.lastTradeSequence)};
 }
+

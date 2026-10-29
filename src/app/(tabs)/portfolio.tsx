@@ -74,7 +74,7 @@ function PositionsList() {
   const toggle = (id: string) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
 
   if (!positions.length && !unavailablePositions.length) return <Empty title={ready?"No open positions":error?"Positions temporarily unavailable":"Loading positions…"} />;
-  return <>{unavailablePositions.map((position) => <View key={position.marketId} style={styles.item}><View style={styles.itemMain}><View style={styles.itemCopy}><Text style={styles.itemTitle}>Market details unavailable</Text><Text style={styles.context}>Position {position.marketId}</Text><Text style={styles.context}>Lots: {position.positionLots}</Text><Text style={styles.context}>Market data is unavailable. Please retry shortly.</Text></View></View></View>)}{positions.map((position) => {
+  return <>{unavailablePositions.map((position) => <View key={position.positionId} style={styles.item}><View style={styles.itemMain}><View style={styles.itemCopy}><Text style={styles.itemTitle}>Market details unavailable</Text><Text style={styles.context}>Position {position.marketId}</Text><Text style={styles.context}>Lots: {position.positionLots}</Text><Text style={styles.context}>Market data is unavailable. Please retry shortly.</Text></View></View></View>)}{positions.map((position) => {
     const market = marketFor(position.symbol); if (!market) return null;
     const pnl = positionPnl(position); const current = priceFor(position.symbol); const open = expanded.has(position.id);
     const pnlPercent = (pnl / Math.max(position.margin, 1)) * 100;
@@ -265,4 +265,5 @@ const useStyles = createThemedStyles((colors) => ({
   emptyText: { color: colors.textMuted, fontFamily: typography.medium, fontSize: 13 },
   pressed: { opacity: 0.65 },
 }));
+
 
