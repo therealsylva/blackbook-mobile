@@ -1,3 +1,4 @@
+import {groupOrderFills} from '@/lib/group-order-fills';
 import {unavailablePositions as findUnavailablePositions} from '@/lib/unavailable-positions';
 import {orderExecutionPlan,marketExecutionOptions,type MarketExecution} from '@/lib/market-execution';
 import {executionNotice} from '@/lib/execution-notice';
@@ -28,7 +29,7 @@ interface ExchangeContextValue {
  markets:MarketDefinition[];pairMarkets:MarketDefinition[];activeSymbol:string;setActiveSymbol:(symbol:string)=>void;favorites:Set<string>;toggleFavorite:(symbol:string)=>void;
  historyLoadingFor:(symbol:string)=>boolean;
  priceFor:(symbol:string)=>number;changeFor:(symbol:string)=>number;seriesFor:(symbol:string,range?:ChartRange)=>number[];candlesFor:(symbol:string,range?:ChartRange)=>CandlePoint[];marketFor:(symbol:string)=>MarketDefinition|undefined;
- cashBalance:number;usedMargin:number;totalEquity:number;unrealizedPnl:number;realizedPnl:number;positions:Position[];unavailablePositions:{marketId:string;positionLots:string}[];orders:OpenOrder[];history:TradeRecord[];liquidationEstimate:(input:PlaceOrderInput)=>number;
+ cashBalance:number;usedMargin:number;totalEquity:number;unrealizedPnl:number;realizedPnl:number;positions:Position[];unavailablePositions:{positionId:string;marketId:string;positionLots:string}[];orders:OpenOrder[];history:TradeRecord[];liquidationEstimate:(input:PlaceOrderInput)=>number;
  orderEstimate:(input:PlaceOrderInput)=>{fee:number;reservedFee:number;exposure:number;requiredBalance:number};
  placeOrder:(input:PlaceOrderInput)=>Promise<{kind:'position'|'order'|'pending';id:string}>;closePosition:(id:string)=>Promise<void>;cancelOrder:(id:string)=>Promise<void>;positionPnl:(position:Position)=>number;
  profile:UserProfile;updateProfile:(changes:Partial<UserProfile>)=>Promise<void>;settings:ExchangeSettings;updateSetting:<K extends keyof ExchangeSettings>(key:K,value:ExchangeSettings[K])=>void;
@@ -158,11 +159,11 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const bookFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?books[m.marketId]:undefined;},[books,lookup]);
  const isTradableFor=useCallback((symbol:string)=>Boolean(lookup.get(symbol)?.tradable),[lookup]);
  const maxLeverageFor=useCallback((symbol:string)=>{const m=lookup.get(symbol);return m?Math.min(30,Math.floor(1000000/Number(m.marginPolicy.initialMarginPpm))):1;},[lookup]);
- const positions=useMemo(()=>account.positions.flatMap(p=>{const m=remote.find(m=>m.marketId===p.marketId);if(!m)return [];const lots=Number(p.positionLots),entry=Number(p.entryPriceTicks)/10**Number(m.terms.priceDecimals),size=Math.abs(lots)*entry*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,margin=p.heldMarginMinor===undefined?size*Number(m.marginPolicy.initialMarginPpm)/1000000:money(p.heldMarginMinor);return [{id:m.marketId,symbol:m.symbol,side:lots>0?'long':'short',size,entryPrice:entry,leverage:Number(p.leverage??size/Math.max(margin,0.01)),margin,openedAt:time(p.openedAt??p.updatedAt)} as Position];}),[account.positions,remote]);
+ const positions=useMemo(()=>account.positions.flatMap(p=>{const m=remote.find(m=>m.marketId===p.marketId);if(!m||!p.positionId)return [];const lots=Number(p.positionLots),entry=Number(p.entryPriceTicks)/10**Number(m.terms.priceDecimals),size=Math.abs(lots)*entry*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,margin=p.heldMarginMinor===undefined?size*Number(m.marginPolicy.initialMarginPpm)/1000000:money(p.heldMarginMinor);return [{id:str(p.positionId),symbol:m.symbol,side:lots>0?'long':'short',size,entryPrice:entry,leverage:Number(p.leverage??size/Math.max(margin,0.01)),margin,openedAt:time(p.openedAt??p.updatedAt)} as Position];}),[account.positions,remote]);
  const unavailablePositions=useMemo(()=>findUnavailablePositions(account.positions,remote),[account.positions,remote]);
  const orders=useMemo(()=>account.orders.flatMap(o=>{const m=remote.find(m=>m.marketId===o.marketId);if(!m)return [];const target=Number(o.triggerTicks??o.priceTicks??m.referenceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(o.orderId),symbol:m.symbol,side:o.side==='BID'?'long':'short',type:o.type==='STOP'?'stop':o.type==='MARKET'?'market':'limit',size:Number(o.remainingQuantityLots??o.quantityLots)*target*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,targetPrice:target,leverage:Number(o.leverage??maxLeverageFor(m.symbol)),createdAt:time(o.createdAt)} as OpenOrder];}),[account.orders,maxLeverageFor,remote]);
- const history=useMemo(()=>account.fills.flatMap(f=>{const m=remote.find(m=>m.marketId===f.marketId);if(!m||!f.priceTicks)return [];const price=Number(f.priceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(f.fillId??f.id??f.tradeId),symbol:m.symbol,side:f.side==='BID'?'long':'short',event:'filled',orderType:'market',size:Number(f.quantityLots)*price*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,leverage:Number(f.leverage??1),entryPrice:price,fee:money(f.feeMinor??'0'),pnl:money(f.realizedPnlMinor??'0'),openedAt:time(f.createdAt),createdAt:time(f.createdAt)} as TradeRecord];}),[account.fills,remote]);
- const positionPnl=useCallback((p:Position)=>money(account.positions.find(x=>x.marketId===p.id)?.unrealizedPnlMinor),[account.positions]);
+ const history=useMemo(()=>groupOrderFills(account.fills).flatMap(f=>{const m=remote.find(m=>m.marketId===f.marketId);if(!m||!f.priceTicks)return [];const price=Number(f.priceTicks)/10**Number(m.terms.priceDecimals);return [{id:str(f.orderId??f.fillId??f.id??f.tradeId),symbol:m.symbol,side:f.side==='BID'?'long':'short',event:'filled',orderType:'market',size:Number(f.quantityLots)*price*Number(m.terms.quoteMinorPerIndexUnitPerLot)/100,leverage:Number(f.leverage??1),entryPrice:price,fee:money(f.feeMinor??'0'),pnl:money(f.realizedPnlMinor??'0'),openedAt:time(f.createdAt),createdAt:time(f.createdAt)} as TradeRecord];}),[account.fills,remote]);
+ const positionPnl=useCallback((p:Position)=>money(account.positions.find(x=>x.positionId===p.id)?.unrealizedPnlMinor),[account.positions]);
  const cashBalance=money(account.portfolio.availableToTradeMinor),totalEquity=money(account.portfolio.equityMinor),unrealizedPnl=money(account.portfolio.unrealizedPnlMinor),realizedPnl=money(account.portfolio.realizedPnlMinor),usedMargin=account.portfolio.usedMarginMinor===undefined?positions.reduce((sum,p)=>sum+p.margin,0)+money(account.portfolio.reservedMarginMinor??'0'):money(account.portfolio.usedMarginMinor)+money(account.portfolio.reservedMarginMinor??'0');
  const submit=useCallback(async(path:string,body:Row,fingerprint:string)=>{
   if(!session){requestAuth();throw new Error('Sign in to continue.');}
@@ -217,9 +218,10 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
  const closePosition=useCallback(async(id:string)=>{
   if(commandLock.current||pending.current)throw new Error('An account action is processing. BlackBook will confirm it automatically.');
   const prefix=accountMode==='demo'?'/v1/demo/account':'/v1/account';
-  const [latest,book]=await Promise.all([pages(prefix+'/positions'),publicApi<BookSnapshot>('/v1/markets/'+encodeURIComponent(id)+'/snapshot',{fresh:true})]);
-  const position=latest.find(p=>p.marketId===id&&BigInt(String(p.positionLots))!==0n);
+  const latest=await pages(prefix+'/positions');
+  const position=latest.find(p=>p.positionId===id&&BigInt(String(p.positionLots))!==0n);
   if(!position){await refresh();notify({title:'Position already closed',message:'Your portfolio has been refreshed.'});return;}
+  const book=await publicApi<BookSnapshot>('/v1/markets/'+encodeURIComponent(String(position.marketId))+'/snapshot',{fresh:true});
   const body=closePositionCommand(position,book,uuid(),uuid());
   const result=await submit(accountMode==='demo'?'/v1/demo/orders':'/v1/orders',body,accountMode+'close'+id);
   if(result.status==='PENDING')return;
@@ -239,11 +241,11 @@ export function ExchangeProvider({children,selectedSymbol,onSelectSymbol}:PropsW
   const scale=10**Number(m.terms.priceDecimals),price=orderEntryPrice({...input,type:plan.type,targetPrice:plan.targetPrice,priceDecimals:m.terms.priceDecimals,referenceTicks:m.referenceTicks,book});
   const factor=Number(m.terms.quoteMinorPerIndexUnitPerLot)/100;
   const lots=sizeDollarOrder({amount:input.amount,leverage:input.leverage,priceTicks:String(Math.round(price*scale)),priceDecimals:m.terms.priceDecimals,quoteMinorPerIndexUnitPerLot:m.terms.quoteMinorPerIndexUnitPerLot});if(!(lots>=Number(m.terms.minimumOrderLots)))return NaN;
-  const p=account.positions.find(p=>p.marketId===m.marketId);
-  return estimateLiquidation({margin:input.amount,existingUnits:p?Number(p.positionLots)*factor:0,existingEntry:p?Number(p.entryPriceTicks)/scale:0,existingMargin:p?money(p.heldMarginMinor):0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
+  return estimateLiquidation({margin:input.amount,existingUnits:0,existingEntry:0,existingMargin:0,entry:price,addedUnits:(input.side==='long'?1:-1)*lots*factor,maintenanceRate:Number(m.marginPolicy.maintenanceMarginPpm)/1e6});
  },[account.positions,bookFor,ready,remote,settings.defaultMarketExecution,settings.defaultTimeInForce]);
  useTradingNotifications({scope:userId+':'+accountMode,settings,history,markets:markets.filter(m=>bookFor(m.symbol)?.lastTradePriceTicks),enabled:ready,updateSetting});
  const value:ExchangeContextValue={historyLoadingFor,markets:markets.filter(m=>m.category!=='Pairs'&&m.symbol!=='OSI'),pairMarkets:markets.filter(m=>m.category==='Pairs'),activeSymbol,setActiveSymbol,favorites,toggleFavorite,priceFor,changeFor,seriesFor,candlesFor,marketFor,cashBalance,totalEquity,unrealizedPnl,realizedPnl,usedMargin,positions,unavailablePositions,orders,history,placeOrder,closePosition,cancelOrder,positionPnl,liquidationEstimate,orderEstimate,profile,updateProfile,settings,updateSetting,accountMode,setAccountMode,loading,error,refresh,bookFor,maxLeverageFor,isTradableFor,busy,ready};
  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useExchange(){const value=useContext(Context);if(!value)throw new Error('Exchange provider required');return value;}
+

@@ -54,13 +54,14 @@ test('a persisted partial-fill command recovers after a lost response using the 
 });
 test('close commands use the latest signed position size and sequence, with reduce-only IOC',()=>{
   for(const [lots,side] of [['12','ASK'],['-8','BID']]){
-    const body=closePositionCommand({marketId:'rmd',positionLots:lots,lastTradeSequence:'109'},{marketVersion:'7',marketHash:'hash'},'command','order');
+    const body=closePositionCommand({marketId:'rmd',positionId:'00000000-0000-4000-8000-000000000001',positionLots:lots,lastTradeSequence:'109'},{marketVersion:'7',marketHash:'hash'},'command','order');
     assert.equal(body.side,side);assert.equal(body.quantityLots,lots.replace('-',''));
     assert.equal(body.expectedPositionSequence,'109');assert.equal(body.expectedMarketVersion,'7');
-    assert.equal(body.timeInForce,'IOC');assert.equal(body.reduceOnly,true);
+    assert.equal(body.positionId,'00000000-0000-4000-8000-000000000001');assert.equal(body.timeInForce,'IOC');assert.equal(body.reduceOnly,true);
   }
 });
 test('zero positions and missing sequence are not sent as close orders',()=>{
-  assert.throws(()=>closePositionCommand({positionLots:'0'},{},'c','o'),/already closed/);
-  assert.throws(()=>closePositionCommand({positionLots:'1'},{},'c','o'),/latest position/);
+  assert.throws(()=>closePositionCommand({positionId:'00000000-0000-4000-8000-000000000001',positionLots:'0'},{},'c','o'),/already closed/);
+  assert.throws(()=>closePositionCommand({positionId:'00000000-0000-4000-8000-000000000001',positionLots:'1'},{},'c','o'),/latest position/);
 });
+

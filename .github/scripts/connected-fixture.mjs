@@ -42,7 +42,7 @@ export async function installConnectedFixture(context){
     const fee=Number((BigInt(body.quantityLots)*BigInt(price)*600n+10000000000000000n-1n)/10000000000000000n);
     cash[mode]-=fee;
     fills[mode].push({fillId:body.orderId,orderId:body.orderId,marketId:m.marketId,side:body.side,quantityLots:body.quantityLots,priceTicks:String(price),leverage:body.leverage,feeMinor:String(fee),feeRatePpm:'600',feePolicyVersion:'2',liquidityRole:'taker',realizedPnlMinor:'0',createdAt:new Date().toISOString()});
-    accounts[mode].push({marketId:m.marketId,positionLots:String(body.side==='BID'?lots:-lots),entryPriceTicks:String(price),markPriceTicks:String(price),lastTradeSequence:'1',leverage:body.leverage,heldMarginMinor:String(Math.ceil(notional/body.leverage)),unrealizedPnlMinor:'0',openedAt:new Date().toISOString()});
+    accounts[mode].push({positionId:body.orderId,orderId:body.orderId,marketId:m.marketId,positionLots:String(body.side==='BID'?lots:-lots),entryPriceTicks:String(price),markPriceTicks:String(price),lastTradeSequence:'1',leverage:body.leverage,heldMarginMinor:String(Math.ceil(notional/body.leverage)),unrealizedPnlMinor:'0',openedAt:new Date().toISOString()});
     orders.push({mode,body});json={order:{orderId:body.orderId,commandId:body.commandId,status:'FILLED',filledQuantityLots:body.quantityLots}};
    }else throw Error('Unimplemented fixture endpoint: '+path);
    await route.fulfill({status:200,contentType:'application/json',json});
@@ -59,4 +59,5 @@ export async function signInFixture(page){
  await page.getByLabel('Email',{exact:true}).waitFor({state:'hidden'});
  await page.getByLabel('Open profile',{exact:true}).waitFor();
 }
+
 
