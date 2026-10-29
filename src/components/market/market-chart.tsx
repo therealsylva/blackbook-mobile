@@ -48,7 +48,7 @@ export function MarketChart({ series, candles, loading = false, positive, height
     return {...base,x:timing.x,path:candles.map((c,i)=>`${i===0||c.breakBefore||(i>0&&c.time-candles[i-1]!.time>timing.step*1.5)?'M':'L'} ${timing.x(i).toFixed(2)} ${base.y(c.close).toFixed(2)}`).join(' ')};
   }, [height, series, candles]);
   const lineColor = positive ? colors.overviewPositive : colors.overviewNegative;
-  if (!series.length) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}>{height <= 30 ? <Svg height="100%" width="100%" viewBox="0 0 360 20"><Line x1="8" x2="352" y1="10" y2="10" stroke={positive ? colors.overviewPositive : colors.overviewNegative} strokeWidth={1.7}/></Svg> : loading ? <ActivityIndicator accessibilityLabel="Loading chart" color={colors.textMuted}/> : <Text style={{color:colors.textMuted}}>Price history unavailable</Text>}</View>;
+  if (series.length < 2) return <View style={[styles.frame,{height,alignItems:'center',justifyContent:'center'}]}>{height <= 30 ? <Svg height="100%" width="100%" viewBox="0 0 360 20"><Line x1="8" x2="352" y1="10" y2="10" stroke={positive ? colors.overviewPositive : colors.overviewNegative} strokeWidth={1.7}/></Svg> : loading ? <ActivityIndicator accessibilityLabel="Loading chart" color={colors.textMuted}/> : <Text style={{color:colors.textMuted}}>Price history unavailable</Text>}</View>;
   const areaPath = `${chart.path} L ${chart.x(chart.clean.length - 1)} ${height} L ${chart.x(0)} ${height} Z`;
 
   return (
