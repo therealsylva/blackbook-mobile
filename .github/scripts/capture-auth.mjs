@@ -7,12 +7,15 @@ await mkdir('ui-renders',{recursive:true});
 for(const width of [360,390,430]){
  const context=await browser.newContext({viewport:{width,height:width===360?800:width===390?844:932}});
  const fixture=await installConnectedFixture(context),page=await context.newPage(),errors=[],authRequests=[];
+ page.setDefaultTimeout(15000);
  page.on('pageerror',error=>errors.push(error.message));
  let rejectLogin=false,failSignup=false;
  await context.route('https://auth.blackbook.test/**',async route=>{
   const request=route.request(),path=new URL(request.url()).pathname,body=request.postDataJSON();
   authRequests.push({path,body});
   if(path.endsWith('/signup'))return route.fulfill({status:failSignup?429:200,contentType:'application/json',json:failSignup?{msg:'Please wait before requesting another email.'}:{id:'00000000-0000-4000-8000-000000005001',email:body.email,identities:[]}});
+  if(path.endsWith('/verify')&&body.token!=='12345678')return route.fulfill({status:403,contentType:'application/json',json:{msg:'Code is invalid or has expired.'}});
+  if(path.endsWith('/otp')||path.endsWith('/resend'))return route.fulfill({status:failSignup?429:200,contentType:'application/json',json:failSignup?{msg:'Please wait before requesting another email.'}:{}});
   if(path.endsWith('/recover'))return route.fulfill({status:200,contentType:'application/json',json:{}});
   if(path.endsWith('/token')&&rejectLogin)return route.fulfill({status:400,contentType:'application/json',json:{error:'invalid_grant',error_description:'Invalid login credentials'}});
   return route.fallback();
@@ -39,12 +42,25 @@ for(const width of [360,390,430]){
  await page.getByLabel('Email',{exact:true}).fill('new@blackbook.test');await page.getByLabel('Password',{exact:true}).fill('new-password');
  await page.getByRole('button',{name:'Show password',exact:true}).click();assert.equal(await page.getByLabel('Password',{exact:true}).evaluate(element=>element.type),'text');
  await page.getByRole('button',{name:'Create account',exact:true}).last().click();
- await page.getByText('Check your email to confirm your account, then come back to sign in.',{exact:true}).waitFor();assert.equal(authRequests.at(-1).path,'/auth/v1/signup');assert.equal(authRequests.at(-1).body.email,'new@blackbook.test');
- failSignup=true;await page.getByLabel('Password',{exact:true}).fill('new-password');await page.getByRole('button',{name:'Create account',exact:true}).last().click();
+ await page.getByLabel('8-digit code',{exact:true}).waitFor();assert.equal(authRequests.at(-1).path,'/auth/v1/signup');assert.equal(authRequests.at(-1).body.email,'new@blackbook.test');
+ await page.getByLabel('8-digit code',{exact:true}).fill('1234');await page.getByRole('button',{name:'Verify code',exact:true}).click();
+ await page.getByText('Enter the 8-digit code from your email.',{exact:true}).waitFor();assert.equal(authRequests.at(-1).path,'/auth/v1/signup');
+ await page.getByLabel('8-digit code',{exact:true}).fill('00000000');await page.getByRole('button',{name:'Verify code',exact:true}).click();await page.getByText('Code is invalid or has expired.',{exact:true}).waitFor();
+ failSignup=true;await page.getByRole('button',{name:'Resend code',exact:true}).click();
  await page.getByText('Please wait before requesting another email.',{exact:true}).waitFor();
+ failSignup=false;await page.getByRole('button',{name:'Resend code',exact:true}).click();assert.equal(authRequests.at(-1).path,'/auth/v1/resend');assert.equal(authRequests.at(-1).body.type,'signup');
+ await page.getByLabel('8-digit code',{exact:true}).fill('12345678');await page.getByRole('button',{name:'Verify code',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});assert.equal(authRequests.findLast(r=>r.path.endsWith('/verify')).body.type,'signup');
+ // Clear the fixture session, then verify recovery and email login independently.
+ await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'networkidle'});
+ await page.getByRole('button',{name:'Sign in',exact:true}).last().click();await page.getByLabel('Email',{exact:true}).fill('ui@blackbook.test');
+ await page.getByRole('button',{name:'Forgot password?',exact:true}).click();await page.getByRole('button',{name:'Send code',exact:true}).click();
+ await page.getByLabel('8-digit code',{exact:true}).fill('12345678');await page.getByRole('button',{name:'Verify code',exact:true}).click();await page.getByRole('heading',{name:'Choose a new password',exact:true}).waitFor();assert.equal(authRequests.findLast(r=>r.path.endsWith('/verify')).body.type,'recovery');
+ await page.getByLabel('Password',{exact:true}).fill('updated-password');await page.getByRole('button',{name:'Save password',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
+ await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'networkidle'});
+ await page.getByRole('button',{name:'Sign in',exact:true}).last().click();await page.getByLabel('Email',{exact:true}).fill('ui@blackbook.test');await page.getByRole('button',{name:'Email me a sign-in code',exact:true}).click();await page.getByRole('button',{name:'Send code',exact:true}).click();assert.equal(authRequests.at(-1).path,'/auth/v1/otp');assert.equal(authRequests.at(-1).body.create_user,false);
+ await page.getByLabel('8-digit code',{exact:true}).fill('12345678');await page.getByRole('button',{name:'Verify code',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});assert.equal(authRequests.findLast(r=>r.path.endsWith('/verify')).body.type,'email');
+ await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'networkidle'});
  await page.getByRole('button',{name:'Sign in',exact:true}).last().click();
- await page.getByRole('button',{name:'Forgot password?',exact:true}).click();await page.getByRole('button',{name:'Send reset link',exact:true}).click();
- await page.getByText(/If an account exists for this email/).waitFor();assert.equal(authRequests.at(-1).path,'/auth/v1/recover');
  await page.getByRole('button',{name:'Browse markets first',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
  await page.getByText('Real Madrid C.F.',{exact:true}).last().waitFor();
  await page.getByRole('button',{name:'Sign in',exact:true}).last().click();await page.getByLabel('Email',{exact:true}).fill('ui@blackbook.test');await page.getByLabel('Password',{exact:true}).fill('wrong-password');rejectLogin=true;
@@ -60,3 +76,4 @@ for(const width of [360,390,430]){
  await context.close();
 }
 await browser.close();
+

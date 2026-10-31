@@ -19,7 +19,8 @@ async function acceptCallback(url:string){
  await exchanges.get(code);
 }
 export type AuthView='signin'|'signup';
-type AuthValue={session:Session|null;loading:boolean;recovery:boolean;view:AuthView|null;callbackError:string|null;requestAuth:(view?:AuthView)=>void;dismissAuth:()=>void;signIn:(email:string,password:string)=>Promise<void>;signUp:(email:string,password:string)=>Promise<{confirmationRequired:boolean}>;recover:(email:string)=>Promise<void>;changePassword:(password:string)=>Promise<void>;signOut:()=>Promise<void>};
+export type EmailCodePurpose='signup'|'email'|'recovery';
+type AuthValue={session:Session|null;loading:boolean;recovery:boolean;view:AuthView|null;callbackError:string|null;requestAuth:(view?:AuthView)=>void;dismissAuth:()=>void;signIn:(email:string,password:string)=>Promise<void>;signUp:(email:string,password:string)=>Promise<{confirmationRequired:boolean}>;recover:(email:string)=>Promise<void>;sendCode:(email:string,purpose:EmailCodePurpose)=>Promise<void>;verifyCode:(email:string,token:string,purpose:EmailCodePurpose)=>Promise<void>;changePassword:(password:string)=>Promise<void>;signOut:()=>Promise<void>};
 const Context=createContext<AuthValue|null>(null);
 export function AuthProvider({children}:PropsWithChildren){
  const [session,setSession]=useState<Session|null>(null),[loading,setLoading]=useState(true),[recovery,setRecovery]=useState(false),[view,setView]=useState<AuthView|null>(null),[callbackError,setCallbackError]=useState<string|null>(null);
@@ -38,8 +39,20 @@ export function AuthProvider({children}:PropsWithChildren){
  const signIn=async(email:string,password:string)=>{const {error}=await client().auth.signInWithPassword({email,password});if(error)throw error;setView(null);};
  const signUp=async(email:string,password:string)=>{const {data,error}=await client().auth.signUp({email,password,options:{emailRedirectTo:redirect}});if(error)throw error;if(data.session)setView(null);return {confirmationRequired:!data.session};};
  const recover=async(email:string)=>{const {error}=await client().auth.resetPasswordForEmail(email,{redirectTo:redirect});if(error)throw error;};
+ const sendCode=async(email:string,purpose:EmailCodePurpose)=>{
+  const auth=client().auth;
+  const result=purpose==='signup'?await auth.resend({type:'signup',email}):purpose==='recovery'?await auth.resetPasswordForEmail(email):await auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+  if(result.error)throw result.error;
+ };
+ const verifyCode=async(email:string,token:string,purpose:EmailCodePurpose)=>{
+  if(!/^\d{8}$/.test(token))throw new Error('Enter the 8-digit code from your email.');
+  const {data,error}=await client().auth.verifyOtp({email,token,type:purpose});
+  if(error)throw error;
+  if(!data.session)throw new Error('Unable to sign in. Request a new code and try again.');
+  if(purpose==='recovery'){setRecovery(true);setView('signin');}else setView(null);
+ };
  const changePassword=async(password:string)=>{const {error}=await client().auth.updateUser({password});if(error)throw error;setRecovery(false);setView(null);};
  const signOut=async()=>{const {error}=await client().auth.signOut();if(error)throw error;setRecovery(false);setView(null);};
- return <Context.Provider value={{session,loading,recovery,view,callbackError,requestAuth:(next='signin')=>{setCallbackError(null);setView(next);},dismissAuth:()=>{setView(null);setCallbackError(null);if(recovery){setRecovery(false);void signOut().catch(()=>{});}},signIn,signUp,recover,changePassword,signOut}}>{children}</Context.Provider>;
+ return <Context.Provider value={{session,loading,recovery,view,callbackError,requestAuth:(next='signin')=>{setCallbackError(null);setView(next);},dismissAuth:()=>{setView(null);setCallbackError(null);if(recovery){setRecovery(false);void signOut().catch(()=>{});}},signIn,signUp,recover,sendCode,verifyCode,changePassword,signOut}}>{children}</Context.Provider>;
 }
 export function useAuth(){const auth=useContext(Context);if(!auth)throw new Error('Auth provider required');return auth;}
