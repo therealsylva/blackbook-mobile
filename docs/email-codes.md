@@ -1,46 +1,17 @@
 # Activate in-app email codes
 
-The mobile auth UI uses Supabase-issued 8-digit codes for signup confirmation,
-optional passwordless sign-in, and password recovery. Password login remains
-available. No Google provider or app cooldown/attempt limit is added. Buttons
-only lock while the current request is in flight.
+Run `python3 scripts/configure-email-codes.py` on the VPS. Enter a Supabase personal access token at the hidden prompt, or use SUPABASE_ACCESS_TOKEN. This requires a Management API token, not a database key. `--dry-run` makes no changes.
 
-## Required hosted Auth configuration
+The script backs up affected values, sets mailer_otp_length to 8, adds {{ .Token }} to signup/login/recovery templates, fixes Site URL, preserves existing redirect URLs and allows the mobile callback. It rereads and verifies configuration. Existing email links remain during rollout to support the current web and older app clients. The new app enters the code without following those links.
 
-Before releasing this APK, update the project's Authentication settings:
+Sending and verification limits, SMTP, expiry and Google settings are unchanged. Provider limits still apply. The script reports whether custom SMTP is configured. It does not purchase capacity.
 
-- Email OTP length: **8**.
-- Keep email confirmation enabled; signup verification now happens in the app.
-- Replace **Confirm signup**, **Magic Link**, and **Reset Password** email bodies
-  with a code template using `{{ .Token }}` instead of a link. Example:
+The mobile flow includes signup verification, optional code login, password recovery, resend and email correction. Password login and guest browsing remain. There are no app cooldowns or attempt caps; buttons lock only during an in-flight request.
 
-```html
-<h2>Your BlackBook code</h2>
-<p>Enter this 8-digit code in BlackBook:</p>
-<p style="font-size:32px;letter-spacing:4px;font-weight:bold">{{ .Token }}</p>
-<p>If you did not request this code, ignore this email.</p>
-```
+Validation: type checking, foundation validation, web export and setup payload checks passed. The auth screen tests passed at 360/390/430 px with mocked Auth, covering short/invalid codes, signup, resend failures/retry, recovery, code login, password login and persistence. Live configuration and email delivery have not been verified.
 
-Use subjects “Confirm your BlackBook account”, “Your BlackBook sign-in code”,
-and “Reset your BlackBook password” respectively. Do not put tokens in subjects.
+Release the updated APK before describing the in-app code flow as live. Test a fresh signup with an actual eight-digit email code, restart persistence, code replay rejection, code login and password recovery.
 
-Set the Site URL to `https://tradeblackbook.org` and allow the existing mobile
-callback `blackbook://auth/callback` for previously issued links. New code-based
-emails require no browser redirect.
-
-Do not lower the project's sending or verification limits. Supabase and the SMTP
-provider still enforce their own limits; this change does not bypass them or
-purchase additional capacity. Check the existing sender/SMTP configuration before
-promising a throughput increase. Shared email templates affect web clients too:
-coordinate their OTP UI before enabling code-only templates for a shared project.
-
-## Release checks
-
-Use a fresh test address: sign up, copy/paste all eight digits (including a leading
-zero), verify, and confirm the signed-in session survives restart. Verify an
-invalid/expired code stays on the code screen, resend errors remain visible, and
-“Use a different email” returns to the form. Test code login with an existing
-account and password recovery through saving a new password. Confirm each email
-contains a code and no localhost link. Replay an already-used code and ensure it
-fails. The Playwright auth fixture covers these UI branches with mocked Auth;
-it does not prove live email delivery or hosted settings.
+References:
+https://supabase.com/docs/reference/api/v1-update-auth-service-config
+https://supabase.com/docs/guides/auth/auth-email-templates
