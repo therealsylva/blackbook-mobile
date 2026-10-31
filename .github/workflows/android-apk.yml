@@ -32,8 +32,8 @@ jobs:
     env:
       CI: "true"
       EXPO_PUBLIC_BLACKBOOK_API_URL: ${{ vars.EXPO_PUBLIC_BLACKBOOK_API_URL }}
-      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: https://ijlpqmfxiybpqvvxrnxf.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_HDO9-OdFtT91XSltK4v3Vw_cT77tYuW
     steps:
       - name: Check out source
         uses: actions/checkout@v5
