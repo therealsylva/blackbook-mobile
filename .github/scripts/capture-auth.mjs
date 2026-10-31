@@ -7,6 +7,7 @@ await mkdir('ui-renders',{recursive:true});
 for(const width of [360,390,430]){
  const context=await browser.newContext({viewport:{width,height:width===360?800:width===390?844:932}});
  const fixture=await installConnectedFixture(context),page=await context.newPage(),errors=[],authRequests=[];
+ page.setDefaultTimeout(15000);
  page.on('pageerror',error=>errors.push(error.message));
  let rejectLogin=false,failSignup=false;
  await context.route('https://auth.blackbook.test/**',async route=>{
@@ -75,3 +76,4 @@ for(const width of [360,390,430]){
  await context.close();
 }
 await browser.close();
+
