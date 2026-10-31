@@ -14,7 +14,7 @@ export async function installConnectedFixture(context){
  const portfolio=mode=>{const used=accounts[mode].reduce((sum,p)=>sum+Number(p.heldMarginMinor),0);return {assetCode:'USD',minorUnit:2,cashBalanceMinor:String(cash[mode]),equityMinor:String(cash[mode]),unrealizedPnlMinor:'0',usedMarginMinor:String(used),reservedMarginMinor:'0',maintenanceMarginMinor:'0',availableToTradeMinor:String(cash[mode]-used)};};
  await context.route('https://auth.blackbook.test/**',async route=>{
   const path=new URL(route.request().url()).pathname;
-  const json=path.endsWith('/token')?{access_token:accessToken,refresh_token:'ui-refresh',token_type:'bearer',expires_in:3600,user}:path.endsWith('/logout')?{}:user;
+  const json=(path.endsWith('/token')||path.endsWith('/verify'))?{access_token:accessToken,refresh_token:'ui-refresh',token_type:'bearer',expires_in:3600,user}:path.endsWith('/logout')?{}:user;
   if(path.endsWith('/token'))assert.equal(route.request().postDataJSON().email,user.email);
   await route.fulfill({status:200,contentType:'application/json',json});
  });

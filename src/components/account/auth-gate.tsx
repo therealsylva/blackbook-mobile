@@ -4,7 +4,7 @@ import {ActivityIndicator,Image,KeyboardAvoidingView,Modal,Platform,Pressable,Sc
 import {useRouter} from 'expo-router';
 import {Screen} from '@/components/ui/screen';
 import {Icon} from '@/components/ui/icon';
-import {useAuth} from '@/context/auth-context';
+import {useAuth,type EmailCodePurpose} from '@/context/auth-context';
 import {useTheme} from '@/theme/theme-context';
 import {typography} from '@/theme/tokens';
 import {createThemedStyles} from '@/theme/use-themed-styles';
@@ -12,44 +12,50 @@ type FormMode='signin'|'signup'|'reset';
 export function AuthGate({children}:PropsWithChildren){
  const auth=useAuth(),{colors}=useTheme(),styles=useStyles(),router=useRouter();
  const [mode,setMode]=useState<FormMode>('signin'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[showPassword,setShowPassword]=useState(false),[busy,setBusy]=useState(false),[feedback,setFeedback]=useState<{text:string;error:boolean}|null>(null);
+ const [pending,setPending]=useState<{email:string;purpose:EmailCodePurpose}|null>(null),[code,setCode]=useState(''),[codeLogin,setCodeLogin]=useState(false);
  const {scroll,scrollFocused}=useKeyboardScroll();
  const locked=useRef(false),passwordInput=useRef<TextInput>(null);
 
- useEffect(()=>{if(auth.view){setMode(auth.view);setPassword('');setShowPassword(false);setFeedback(null);}},[auth.view]);
- const changeMode=(next:FormMode)=>{if(locked.current)return;setMode(next);setPassword('');setShowPassword(false);setFeedback(null);};
- const dismiss=()=>{if(!locked.current){setPassword('');setFeedback(null);auth.dismissAuth();}};
+ useEffect(()=>{if(auth.view){setMode(auth.view);setPending(null);setCode('');setCodeLogin(false);setPassword('');setShowPassword(false);setFeedback(null);}},[auth.view]);
+ const changeMode=(next:FormMode)=>{if(locked.current)return;setMode(next);setPending(null);setCode('');setCodeLogin(false);setPassword('');setShowPassword(false);setFeedback(null);};
+ const dismiss=()=>{if(!locked.current){setPending(null);setCode('');setPassword('');setFeedback(null);auth.dismissAuth();}};
  const browse=()=>{if(!locked.current){dismiss();router.replace('/(tabs)');}};
  const submit=async()=>{
   if(locked.current)return;
   const address=email.trim();
   if(!auth.recovery&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)){setFeedback({text:'Enter a valid email address.',error:true});return;}
-  if((auth.recovery||mode!=='reset')&&(!password||((auth.recovery||mode==='signup')&&password.length<8))){setFeedback({text:auth.recovery||mode==='signup'?'Choose a password with at least 8 characters.':'Enter your password.',error:true});return;}
+  if(!pending&&(auth.recovery||(!codeLogin&&mode!=='reset'))&&(!password||((auth.recovery||mode==='signup')&&password.length<8))){setFeedback({text:auth.recovery||mode==='signup'?'Choose a password with at least 8 characters.':'Enter your password.',error:true});return;}
   locked.current=true;setBusy(true);setFeedback(null);
   try{
-   if(auth.recovery)await auth.changePassword(password);
+   if(pending){await auth.verifyCode(pending.email,code,pending.purpose);setPending(null);setCode('');}
+   else if(auth.recovery)await auth.changePassword(password);
+   else if(mode==='signin'&&codeLogin){await auth.sendCode(address,'email');setPending({email:address,purpose:'email'});}
    else if(mode==='signin'){await auth.signIn(address,password);setPassword('');}
    else if(mode==='signup'){
     const result=await auth.signUp(address,password);
-    if(result.confirmationRequired){setPassword('');setFeedback({text:'Check your email to confirm your account, then come back to sign in.',error:false});}
-   }else{await auth.recover(address);setFeedback({text:'If an account exists for this email, a password reset link will be sent. Check your inbox and spam folder.',error:false});}
+    if(result.confirmationRequired){setPassword('');setCode('');setPending({email:address,purpose:'signup'});}
+   }else{await auth.recover(address);setPending({email:address,purpose:'recovery'});setCode('');}
   }catch(error){setFeedback({text:error instanceof Error?(/abort|timed? ?out/i.test(error.message)?'The connection timed out. Please try again.':error.message):'Unable to connect. Please try again.',error:true});}
   finally{locked.current=false;setBusy(false);}
  };
+ const resend=async()=>{if(locked.current||!pending)return;locked.current=true;setBusy(true);setFeedback(null);try{await auth.sendCode(pending.email,pending.purpose);setCode('');setFeedback({text:'A new code has been sent. Check your inbox and spam folder.',error:false});}catch(error){setFeedback({text:error instanceof Error?error.message:'Unable to send a code. Please try again.',error:true});}finally{locked.current=false;setBusy(false);}};
  const signup=mode==='signup',reset=mode==='reset'&&!auth.recovery;
- const label=auth.recovery?'Save password':signup?'Create account':reset?'Send reset link':'Sign in';
+ const label=pending?'Verify code':auth.recovery?'Save password':signup?'Create account':reset||codeLogin?'Send code':'Sign in';
  return <><View style={styles.flex} aria-hidden={auth.view!==null||auth.recovery} importantForAccessibility={auth.view!==null||auth.recovery?'no-hide-descendants':'auto'}>{children}</View><Modal visible={auth.view!==null||auth.recovery} animationType="slide" onRequestClose={dismiss} presentationStyle="fullScreen">
   <Screen edges={['top','bottom']}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS==='ios'?'padding':'height'}><ScrollView ref={scroll} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
    <View style={styles.header}><Image accessibilityLabel="BlackBook" source={require('../../../assets/wordmark.png')} resizeMode="contain" style={[styles.logo,{tintColor:colors.text}]}/><Pressable accessibilityRole="button" accessibilityLabel="Browse markets without signing up" disabled={busy} onPress={dismiss} style={styles.iconButton}><Icon name="close" size={20}/></Pressable></View>
    <View style={styles.form}>
-    <Text accessibilityRole="header" style={styles.heading}>{auth.recovery?'Choose a new password':signup?'Create your account':reset?'Reset password':'Welcome back'}</Text>
-    <Text style={styles.intro}>{auth.recovery?'Set a new password for your account.':signup?'Your edge starts with what you know.':reset?'We’ll email you a link to choose a new password.':'Sign in to your BlackBook account.'}</Text>
-    {!auth.recovery?<><Pressable accessibilityRole="button" disabled={busy} onPress={browse} style={styles.browse}><Text style={styles.browseText}>Browse markets first</Text><Icon name="chevron" size={18}/></Pressable><View style={styles.separator}><View style={styles.line}/><Text style={styles.or}>or continue with email</Text><View style={styles.line}/></View></>:null}
-    {!auth.recovery?<View style={styles.field}><Text style={styles.label}>Email address</Text><TextInput onFocus={scrollFocused} accessibilityLabel="Email" editable={!busy} autoCapitalize="none" autoCorrect={false} autoComplete="email" keyboardType="email-address" returnKeyType={reset?'go':'next'} value={email} onChangeText={setEmail} onSubmitEditing={()=>reset?void submit():passwordInput.current?.focus()} placeholder="you@example.com" placeholderTextColor={colors.textFaint} style={styles.input}/></View>:null}
-    {!reset?<View style={styles.field}><Text style={styles.label}>Password</Text><View style={styles.password}><TextInput ref={passwordInput} onFocus={scrollFocused} accessibilityLabel="Password" editable={!busy} autoCapitalize="none" autoCorrect={false} autoComplete={signup||auth.recovery?'new-password':'current-password'} secureTextEntry={!showPassword} value={password} onChangeText={setPassword} returnKeyType="go" onSubmitEditing={()=>void submit()} placeholder={signup||auth.recovery?'Create a password':'Enter your password'} placeholderTextColor={colors.textFaint} style={[styles.input,styles.passwordInput]}/><Pressable accessibilityRole="button" accessibilityLabel={showPassword?'Hide password':'Show password'} onPress={()=>setShowPassword(value=>!value)} style={styles.eye}><Icon name={showPassword?'eye-off':'eye'} size={19} color={colors.textMuted}/></Pressable></View>{signup||auth.recovery?<Text style={styles.hint}>Use at least 8 characters.</Text>:null}</View>:null}
-    {!signup&&!reset&&!auth.recovery?<Pressable accessibilityRole="button" disabled={busy} onPress={()=>changeMode('reset')} style={styles.forgot}><Text style={styles.link}>Forgot password?</Text></Pressable>:null}
+    <Text accessibilityRole="header" style={styles.heading}>{pending?'Check your email':auth.recovery?'Choose a new password':signup?'Create your account':reset?'Reset password':'Welcome back'}</Text>
+    <Text style={styles.intro}>{pending?`Enter the 8-digit code sent to ${pending.email}.`:auth.recovery?'Set a new password for your account.':signup?'Your edge starts with what you know.':reset?'We’ll email you a code to reset your password here.':'Sign in to your BlackBook account.'}</Text>
+    {!auth.recovery&&!pending?<><Pressable accessibilityRole="button" disabled={busy} onPress={browse} style={styles.browse}><Text style={styles.browseText}>Browse markets first</Text><Icon name="chevron" size={18}/></Pressable><View style={styles.separator}><View style={styles.line}/><Text style={styles.or}>or continue with email</Text><View style={styles.line}/></View></>:null}
+    {!auth.recovery&&!pending?<View style={styles.field}><Text style={styles.label}>Email address</Text><TextInput onFocus={scrollFocused} accessibilityLabel="Email" editable={!busy} autoCapitalize="none" autoCorrect={false} autoComplete="email" keyboardType="email-address" returnKeyType={reset||codeLogin?'go':'next'} value={email} onChangeText={setEmail} onSubmitEditing={()=>reset||codeLogin?void submit():passwordInput.current?.focus()} placeholder="you@example.com" placeholderTextColor={colors.textFaint} style={styles.input}/></View>:null}
+    {!pending&&!reset&&(!codeLogin||auth.recovery)?<View style={styles.field}><Text style={styles.label}>Password</Text><View style={styles.password}><TextInput ref={passwordInput} onFocus={scrollFocused} accessibilityLabel="Password" editable={!busy} autoCapitalize="none" autoCorrect={false} autoComplete={signup||auth.recovery?'new-password':'current-password'} secureTextEntry={!showPassword} value={password} onChangeText={setPassword} returnKeyType="go" onSubmitEditing={()=>void submit()} placeholder={signup||auth.recovery?'Create a password':'Enter your password'} placeholderTextColor={colors.textFaint} style={[styles.input,styles.passwordInput]}/><Pressable accessibilityRole="button" accessibilityLabel={showPassword?'Hide password':'Show password'} onPress={()=>setShowPassword(value=>!value)} style={styles.eye}><Icon name={showPassword?'eye-off':'eye'} size={19} color={colors.textMuted}/></Pressable></View>{signup||auth.recovery?<Text style={styles.hint}>Use at least 8 characters.</Text>:null}</View>:null}
+    {pending?<View style={styles.field}><Text style={styles.label}>8-digit code</Text><TextInput onFocus={scrollFocused} accessibilityLabel="8-digit code" editable={!busy} autoFocus keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" maxLength={8} value={code} onChangeText={value=>setCode(value.replace(/\D/g,''))} onSubmitEditing={()=>void submit()} returnKeyType="go" style={styles.input}/><Pressable accessibilityRole="button" disabled={busy} onPress={()=>void resend()} style={styles.switchAction}><Text style={styles.link}>Resend code</Text></Pressable><Pressable accessibilityRole="button" disabled={busy} onPress={()=>{setPending(null);setCode('');setFeedback(null);}} style={styles.switchAction}><Text style={styles.link}>Use a different email</Text></Pressable></View>:null}
+    {!pending&&!signup&&!reset&&!auth.recovery?<Pressable accessibilityRole="button" disabled={busy} onPress={()=>{setCodeLogin(value=>!value);setPassword('');setFeedback(null);}} style={styles.switchAction}><Text style={styles.link}>{codeLogin?'Use password instead':'Email me a sign-in code'}</Text></Pressable>:null}
+    {!pending&&!signup&&!reset&&!auth.recovery&&!codeLogin?<Pressable accessibilityRole="button" disabled={busy} onPress={()=>changeMode('reset')} style={styles.forgot}><Text style={styles.link}>Forgot password?</Text></Pressable>:null}
     {feedback||auth.callbackError?<Text accessibilityRole={feedback?.error||auth.callbackError?'alert':undefined} accessibilityLiveRegion="polite" style={[styles.feedback,(feedback?.error||auth.callbackError)?styles.error:styles.success]}>{feedback?.text??auth.callbackError}</Text>:null}
     <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{busy,disabled:busy}} disabled={busy} onPress={()=>void submit()} style={[styles.primary,busy&&styles.disabled]}>{busy?<ActivityIndicator color={colors.bg}/>:<><Text style={styles.primaryText}>{label}</Text><Icon name="chevron" size={18} color={colors.bg}/></>}</Pressable>
-    {!auth.recovery?<View style={styles.switch}><Text style={styles.switchText}>{signup?'Already have an account?':reset?'Remember your password?':'New to BlackBook?'}</Text><Pressable accessibilityRole="button" disabled={busy} onPress={()=>changeMode(signup||reset?'signin':'signup')} style={styles.switchAction}><Text style={styles.link}>{signup||reset?'Sign in':'Create account'}</Text></Pressable></View>:null}
+    {!auth.recovery&&!pending?<View style={styles.switch}><Text style={styles.switchText}>{signup?'Already have an account?':reset?'Remember your password?':'New to BlackBook?'}</Text><Pressable accessibilityRole="button" disabled={busy} onPress={()=>changeMode(signup||reset?'signin':'signup')} style={styles.switchAction}><Text style={styles.link}>{signup||reset?'Sign in':'Create account'}</Text></Pressable></View>:null}
    </View>
   </ScrollView></KeyboardAvoidingView></Screen>
  </Modal></>;
