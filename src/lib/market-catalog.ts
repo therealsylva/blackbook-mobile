@@ -18,6 +18,8 @@ export function normalizeMarketCatalog(trading:Row[],indices:Row[],known:MarketD
    // Display-only projections have no contract. Never permit an order using
    // inferred economics, stale seed values, or guessed fee/margin settings.
    terms:terms??previous?.terms??{priceDecimals:'6',quoteMinorPerIndexUnitPerLot:'0',minimumOrderLots:'0',feePolicyVersion:''},
+   statistics: row.statistics ? {...previous?.statistics,...row.statistics as RemoteMarket['statistics']} : previous?.statistics,
+   indexChangePct: (row.indexChangePct ?? previous?.indexChangePct) as number | undefined,
    feePolicy:(row.feePolicy??previous?.feePolicy) as FeePolicy,
    marginPolicy:(row.marginPolicy??previous?.marginPolicy??{initialMarginPpm:'1000000',maintenanceMarginPpm:'1000000'}) as RemoteMarket['marginPolicy'],tradable:meta.symbol!=='OSI'&&row.tradable!==false&&row.launchEligible!==false&&(tradable||Boolean(previous?.tradable)),
   } as RemoteMarket);

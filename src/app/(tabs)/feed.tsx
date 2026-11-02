@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MarketAvatar } from '@/components/market/market-avatar';
+import { MarketIdentityAvatar } from '@/components/market/market-identity-avatar';
+import { rankMarkets } from '@/lib/market-rankings';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useExchange } from '@/context/exchange-context';
@@ -19,19 +20,14 @@ const STORIES = [
   { kicker: 'Club indices', title: 'Bayern Munich: compare market price with reference R', symbol: 'BAY', meta: 'Index overview' },
   { kicker: 'Player indices', title: 'Haaland: explore the published index history', symbol: 'HLD', meta: 'Index overview' },
 ];
-const STRATEGIES: Array<{ icon: IconName; title: string; copy: string }> = [{"icon": "chart", "title": "Index Range & Recalibration", "copy": "See the published upper and lower trading bands. Verified performance updates recalibrate the index and its range."}, {"icon": "positions", "title": "Perpetual Trading · No Funding Rate", "copy": "Go long or short without an expiry date or recurring funding payments. Close your position when you choose."}, {"icon": "swap", "title": "Relative-Value Pairs", "copy": "Trade one entity’s performance against another. BAR/RMD rises when Barcelona strengthens relative to Real Madrid."}, {"icon": "markets", "title": "Index Baskets", "copy": "Follow multiple clubs through one index. EPL-20 averages all 20 clubs; EPL-5 follows the season’s fixed top five."}];
+const STRATEGIES: Array<{ icon: IconName; title: string; copy: string }> = [{"icon": "chart", "title": "Index Range & Recalibration", "copy": "See the published upper and lower trading bands. Verified performance updates recalibrate the index and its range."}, {"icon": "positions", "title": "Perpetual Trading · No Funding Rate", "copy": "Go long or short without an expiry date or recurring funding payments. Close your position when you choose."}, {"icon": "swap", "title": "Pairs", "copy": "Trade one entity’s performance against another. BAR/RMD rises when Barcelona strengthens relative to Real Madrid."}, {"icon": "markets", "title": "Index Baskets", "copy": "Follow multiple clubs through one index. EPL-20 averages all 20 clubs; EPL-5 follows the season’s fixed top five."}];
 
 export default function FeedScreen() {
   const styles = useStyles();
   const router = useRouter();
-  const { markets, priceFor, changeFor } = useExchange();
+  const { markets, pairMarkets, priceFor, changeFor } = useExchange();
   const [tab, setTab] = useState<FeedTab>('Highlights');
-  const movers = useMemo(() => {
-    const gains = [...markets].sort((a, b) => changeFor(b.symbol) - changeFor(a.symbol));
-    const volume = [...markets].sort((a, b) => (b.volumeUsd24h??-1) - (a.volumeUsd24h??-1));
-    const volatility = [...markets].sort((a, b) => (b.volatility24h??-1) - (a.volatility24h??-1));
-    return { gainers: gains.slice(0, 4), losers: gains.slice(-4).reverse(), volume: volume.filter(m=>Number.isFinite(m.volumeUsd24h)).slice(0, 4), volatility: volatility.filter(m=>Number.isFinite(m.volatility24h)).slice(0, 4) };
-  }, [changeFor, markets]);
+  const movers = useMemo(() => rankMarkets([...markets, ...pairMarkets], changeFor), [changeFor, markets, pairMarkets]);
   const openMarket = (symbol: string) => router.push({ pathname: '/market/[symbol]', params: { symbol } });
 
   return (
@@ -102,9 +98,9 @@ function TrendRow({ market, price, change, onPress }: { market: Market; price: n
   const styles = useStyles();
   return (
     <Pressable onPress={() => onPress(market.symbol)} style={({ pressed }) => [styles.trendRow, pressed && styles.pressed]}>
-      <MarketAvatar assetKey={market.assetKey} size={42} symbol={market.symbol} />
-      <View style={styles.trendCopy}><Text style={styles.trendName}>{market.name}</Text><Text style={styles.trendSymbol}>{market.symbol} · ${market.volume} vol</Text></View>
-      <View style={styles.trendQuote}><Text style={styles.trendPrice}>{formatPrice(price)}</Text><Text style={[styles.trendChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text></View>
+      <MarketIdentityAvatar market={market} size={42} />
+      <View style={styles.trendCopy}><Text numberOfLines={1} style={styles.trendName}>{market.name}</Text><Text style={styles.trendSymbol}>{market.symbol} · ${market.volume} vol</Text></View>
+      <View style={styles.trendQuote}><Text style={styles.trendPrice}>{formatPrice(price)}</Text><Text style={[styles.trendChange, { color: !Number.isFinite(change) || change === 0 ? colors.textMuted : change > 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text></View>
     </Pressable>
   );
 }
@@ -114,7 +110,7 @@ function StoryRow({ story, market, onPress }: { story: typeof STORIES[number]; m
   const styles = useStyles();
   return (
     <Pressable disabled={!market} onPress={() => market && onPress(market.symbol)} style={({ pressed }) => [styles.storyRow, pressed && styles.pressed]}>
-      {market ? <MarketAvatar assetKey={market.assetKey} size={48} symbol={market.symbol} /> : null}
+      {market ? <MarketIdentityAvatar market={market} size={48} /> : null}
       <View style={styles.storyCopy}><Text style={styles.kicker}>{story.kicker} · {story.meta}</Text><Text style={styles.storyTitle}>{story.title}</Text></View>
       <Icon color={colors.textMuted} name="chevron" size={17} />
     </Pressable>
@@ -135,7 +131,7 @@ function StrategyRow({ strategy }: { strategy: typeof STRATEGIES[number] }) {
 
 function ListingRow({ market, onPress }: { market: Market; onPress: (symbol: string) => void }) {
   const styles = useStyles();
-  return <Pressable onPress={() => onPress(market.symbol)} style={styles.listingRow}><MarketAvatar assetKey={market.assetKey} size={38} symbol={market.symbol} /><Text style={styles.listingName}>{market.name}</Text><Text style={styles.listingTicker}>{market.symbol}</Text></Pressable>;
+  return <Pressable onPress={() => onPress(market.symbol)} style={styles.listingRow}><MarketIdentityAvatar market={market} size={38} /><Text style={styles.listingName}>{market.name}</Text><Text style={styles.listingTicker}>{market.symbol}</Text></Pressable>;
 }
 
 function MoverSection({ title, markets, priceFor, changeFor, onPress }: { title: string; markets: Market[]; priceFor: (symbol: string) => number; changeFor: (symbol: string) => number; onPress: (symbol: string) => void }) {
@@ -156,7 +152,7 @@ const useStyles = createThemedStyles((colors) => ({
   sectionTitle: { color: colors.text, fontFamily: typography.bold, fontSize: 20, letterSpacing: -0.5 },
   sectionAction: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11 },
   trendRow: { alignItems: 'center', flexDirection: 'row', minHeight: 66, paddingHorizontal: spacing.page },
-  trendCopy: { flex: 1, marginLeft: spacing.sm },
+  trendCopy: { flex: 1, minWidth: 0, marginLeft: spacing.sm },
   trendName: { color: colors.text, fontFamily: typography.bold, fontSize: 14 },
   trendSymbol: { color: colors.textMuted, fontFamily: typography.mono, fontSize: 9, marginTop: 4 },
   trendQuote: { alignItems: 'flex-end' },

@@ -14,10 +14,11 @@ else
   git -C "$BB_DOWNLOAD_TREE" switch --orphan mobile-apk-downloads
 fi
 cp "$BB_APK_SOURCE" "$BB_DOWNLOAD_TREE/BlackBook-$BB_VERSION.apk"
-node - "$BB_DOWNLOAD_TREE/update.json" "$BB_VERSION" "$BB_VERSION_CODE" <<'JS'
+node - "$BB_DOWNLOAD_TREE/update.json" "$BB_VERSION" "$BB_VERSION_CODE" "$BB_APK_SOURCE" <<'JS'
 const fs = require('node:fs');
-const [, , path, version, versionCode] = process.argv;
-fs.writeFileSync(path, JSON.stringify({ version, versionCode: Number(versionCode), url: `https://raw.githubusercontent.com/therealsylva/blackbook-mobile/mobile-apk-downloads/BlackBook-${version}.apk` }, null, 2) + '\n');
+const { createHash } = require('node:crypto');
+const [, , path, version, versionCode, apkPath] = process.argv;
+fs.writeFileSync(path, JSON.stringify({ version, versionCode: Number(versionCode), sha256: createHash('sha256').update(fs.readFileSync(apkPath)).digest('hex'), url: `https://raw.githubusercontent.com/therealsylva/blackbook-mobile/mobile-apk-downloads/BlackBook-${version}.apk` }, null, 2) + '\n');
 JS
 git -C "$BB_DOWNLOAD_TREE" config user.name 'BlackBook Builds'
 git -C "$BB_DOWNLOAD_TREE" config user.email 'github-actions[bot]@users.noreply.github.com'

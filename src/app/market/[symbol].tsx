@@ -35,7 +35,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
 
   const price = priceFor(market.symbol);
   const change = changeFor(market.symbol);
-  const direction = change >= 0 ? colors.positive : colors.negative;
+  const direction = !Number.isFinite(change) || change === 0 ? colors.textMuted : change > 0 ? colors.positive : colors.negative;
 
   const openTrade = () => {
     setActiveSymbol(market.symbol);
@@ -60,6 +60,7 @@ export function MarketOverview({ selectedSymbol }: { selectedSymbol?: string }) 
             <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65} style={styles.price}>{formatPrice(price)}</Text>
           </View>
           <Text style={[styles.change, { color: direction }]}>{formatMarketChange(change,settings.changeDisplay)}</Text>
+          {!Number.isFinite(change) && settings.changeDisplay === 'Index update' ? <Text style={styles.symbol}>No index update recorded in available history</Text> : null}
         </View>
 
         <View style={styles.chart}>

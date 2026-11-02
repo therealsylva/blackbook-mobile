@@ -48,7 +48,7 @@ export async function installConnectedFixture(context){
    await route.fulfill({status:200,contentType:'application/json',json});
   }catch(e){failures.push(e.message);await route.fulfill({status:500,contentType:'application/json',json:{error:'fixture_failed'}});}
  });
- return {orders,requests,failures,preferences,accounts,fills,cash};
+ return {catalog,orders,requests,failures,preferences,accounts,fills,cash};
 }
 export async function signInFixture(page){
  await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
