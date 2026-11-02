@@ -76,7 +76,7 @@ function PositionsList() {
   if (!positions.length && !unavailablePositions.length) return <Empty title={ready?"No open positions":error?"Positions temporarily unavailable":"Loading positions…"} />;
   return <>{unavailablePositions.map((position) => <View key={position.positionId} style={styles.item}><View style={styles.itemMain}><View style={styles.itemCopy}><Text style={styles.itemTitle}>Market details unavailable</Text><Text style={styles.context}>Position {position.marketId}</Text><Text style={styles.context}>Lots: {position.positionLots}</Text><Text style={styles.context}>Position details are unavailable. Please retry shortly.</Text></View></View></View>)}{positions.map((position) => {
     const market = marketFor(position.symbol); if (!market) return null;
-    const pnl = positionPnl(position); const current = priceFor(position.symbol); const open = expanded.has(position.id);
+    const pnl = positionPnl(position); const current = position.markPrice ?? NaN; const open = expanded.has(position.id);
     const pnlPercent = (pnl / Math.max(position.margin, 1)) * 100;
     return (
       <View key={position.id} style={styles.item}>
