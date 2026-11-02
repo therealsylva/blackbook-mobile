@@ -30,9 +30,9 @@ export function normalizeMarketCatalog(trading:Row[],indices:Row[],known:MarketD
 export function selectedMarketChange(market:Pick<RemoteMarket,'indexChangePct'|'statistics'>|undefined,basis:'Index update'|'24h market'):number {
  const value=basis==='24h market'?market?.statistics?.changePct24h:market?.indexChangePct;
  if(value===null||value===undefined||value===''){
-  // A successful statistics response with no trades is a neutral session.
-  // Missing/failed statistics remain unavailable rather than reporting zero.
-  if(basis==='24h market' && market?.statistics?.volumeLots24h==='0')return 0;
+  // Published markets without a 24h comparison display the neutral default.
+  // Keep unknown markets and the separate index-update metric unavailable.
+  if(basis==='24h market' && market)return 0;
   return NaN;
  }
  const parsed=Number(value);return Number.isFinite(parsed)?parsed:NaN;
