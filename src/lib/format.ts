@@ -40,4 +40,4 @@ export function formatLeverage(value: number) {
   return `${new Intl.NumberFormat(locale, {maximumFractionDigits: 2}).format(value)}x`;
 }
 
-export function formatMarketChange(value:number, basis:'Index update'|'24h market') { return `${formatPercent(value)} · ${basis==='Index update'?'Index':'24h'}`; }
+export function formatMarketChange(value:number, basis:'Index update'|'24h market') { if(!Number.isFinite(value))return basis==='Index update'?'Index —':'24h —';return `${formatPercent(value)} · ${basis==='Index update'?'Index':'24h'}`; }

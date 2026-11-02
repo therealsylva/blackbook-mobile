@@ -78,6 +78,7 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright
           node .github/scripts/capture-auth.mjs
           node .github/scripts/capture-ui.mjs
+          node .github/scripts/capture-ui-changes.mjs
           node .github/scripts/capture-review.mjs
           node .github/scripts/capture-round-two.mjs
           node .github/scripts/capture-estimates.mjs

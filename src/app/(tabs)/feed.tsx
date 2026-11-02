@@ -100,7 +100,7 @@ function TrendRow({ market, price, change, onPress }: { market: Market; price: n
     <Pressable onPress={() => onPress(market.symbol)} style={({ pressed }) => [styles.trendRow, pressed && styles.pressed]}>
       <MarketIdentityAvatar market={market} size={42} />
       <View style={styles.trendCopy}><Text numberOfLines={1} style={styles.trendName}>{market.name}</Text><Text style={styles.trendSymbol}>{market.symbol} · ${market.volume} vol</Text></View>
-      <View style={styles.trendQuote}><Text style={styles.trendPrice}>{formatPrice(price)}</Text><Text style={[styles.trendChange, { color: change >= 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text></View>
+      <View style={styles.trendQuote}><Text style={styles.trendPrice}>{formatPrice(price)}</Text><Text style={[styles.trendChange, { color: !Number.isFinite(change) || change === 0 ? colors.textMuted : change > 0 ? colors.positive : colors.negative }]}>{formatMarketChange(change,settings.changeDisplay)}</Text></View>
     </Pressable>
   );
 }
