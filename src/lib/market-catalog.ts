@@ -1,6 +1,6 @@
 import type {MarketDefinition} from '../data/markets';
 import type {FeePolicy} from './trading-fees';
-export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};statistics?:{changePct24h?:number|string|null;volumeLots24h?:string;volumeMinor24h?:string;rangePct24h?:number;highPriceTicks24h?:string;lowPriceTicks24h?:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
+export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};statistics?:{lastPriceTicks?:string;changePct24h?:number|string|null;volumeLots24h?:string;volumeMinor24h?:string;rangePct24h?:number;highPriceTicks24h?:string;lowPriceTicks24h?:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
 type Row=Record<string,unknown>;
 const canonicalSymbol=(value:unknown)=>String(value??'').split('/').map(s=>s==='FCB'?'BAR':s).join('/');
 /** Join on stable entity identity; backend symbols may differ from app tickers. */
@@ -36,4 +36,11 @@ export function selectedMarketChange(market:Pick<RemoteMarket,'indexChangePct'|'
   return NaN;
  }
  const parsed=Number(value);return Number.isFinite(parsed)?parsed:NaN;
+}
+
+/** Quote cards use the API market price, never an imported chart's last candle. */
+export function marketQuote(market:Pick<RemoteMarket,'statistics'|'referenceTicks'|'terms'>):number {
+ const ticks=market.statistics?.lastPriceTicks??market.referenceTicks;
+ const price=Number(ticks)/10**Number(market.terms.priceDecimals);
+ return price>0&&Number.isFinite(price)?price:NaN;
 }
