@@ -1,6 +1,6 @@
 import type {MarketDefinition} from '../data/markets';
 import type {FeePolicy} from './trading-fees';
-export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};statistics?:{changePct24h?:number|string|null;volumeLots24h?:string;volumeMinor24h?:string;rangePct24h?:number;highPriceTicks24h?:string;lowPriceTicks24h?:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
+export type RemoteMarket={marketId:string;entityId:string;symbol:string;displayName?:string;kind:string;marketVersion:string;marketHash:string;referenceTicks:string;lowerTicks:string;upperTicks:string;terms:{priceDecimals:string;quoteMinorPerIndexUnitPerLot:string;minimumOrderLots:string;feePolicyVersion:string};feePolicy:FeePolicy;marginPolicy:{initialMarginPpm:string;maintenanceMarginPpm:string};statistics?:{lastPriceTicks?:string;changePct24h?:number|string|null;volumeLots24h?:string;volumeMinor24h?:string;rangePct24h?:number;highPriceTicks24h?:string;lowPriceTicks24h?:string};tradable:boolean;indexChangePct?:number;asOf?:string;phase?:string};
 type Row=Record<string,unknown>;
 const canonicalSymbol=(value:unknown)=>String(value??'').split('/').map(s=>s==='FCB'?'BAR':s).join('/');
 /** Join on stable entity identity; backend symbols may differ from app tickers. */
@@ -30,10 +30,17 @@ export function normalizeMarketCatalog(trading:Row[],indices:Row[],known:MarketD
 export function selectedMarketChange(market:Pick<RemoteMarket,'indexChangePct'|'statistics'>|undefined,basis:'Index update'|'24h market'):number {
  const value=basis==='24h market'?market?.statistics?.changePct24h:market?.indexChangePct;
  if(value===null||value===undefined||value===''){
-  // A successful statistics response with no trades is a neutral session.
-  // Missing/failed statistics remain unavailable rather than reporting zero.
-  if(basis==='24h market' && market?.statistics?.volumeLots24h==='0')return 0;
+  // Published markets without a 24h comparison display the neutral default.
+  // Keep unknown markets and the separate index-update metric unavailable.
+  if(basis==='24h market' && market)return 0;
   return NaN;
  }
  const parsed=Number(value);return Number.isFinite(parsed)?parsed:NaN;
+}
+
+/** Quote cards use the API market price, never an imported chart's last candle. */
+export function marketQuote(market:Pick<RemoteMarket,'statistics'|'referenceTicks'|'terms'>):number {
+ const ticks=market.statistics?.lastPriceTicks??market.referenceTicks;
+ const price=Number(ticks)/10**Number(market.terms.priceDecimals);
+ return price>0&&Number.isFinite(price)?price:NaN;
 }
