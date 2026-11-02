@@ -11,6 +11,7 @@ export interface Position {
   side: Side;
   size: number;
   entryPrice: number;
+  markPrice?: number;
   leverage: number;
   margin: number;
   openedAt: number;
