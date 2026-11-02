@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import artworkCredits from '@/data/artwork-credits.json';
-import { APP_VERSION, checkForUpdate, downloadUpdate, type AppUpdate } from '@/lib/app-updates';
+import { APP_VERSION, checkForUpdate, downloadUpdate, openUpdateInstallSettings, type AppUpdate } from '@/lib/app-updates';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Screen } from '@/components/ui/screen';
@@ -25,14 +25,29 @@ export default function AboutScreen() {
   const styles = useStyles();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [checking, setChecking] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [installReady, setInstallReady] = useState(false);
+  const [needsPermission, setNeedsPermission] = useState(false);
+  const [percent, setPercent] = useState(0);
+  const busy = useRef(false);
   const [update, setUpdate] = useState<AppUpdate | null>(null);
   const [status, setStatus] = useState('');
   const check = async () => {
-    if (checking) return;
-    setChecking(true);
-    try { const latest = await checkForUpdate(); setUpdate(latest); setStatus(latest ? `Version ${latest.version} available` : 'You have the latest version.'); }
+    if (busy.current) return;
+    busy.current = true; setChecking(true);
+    try { const latest = await checkForUpdate(); setUpdate(latest); setInstallReady(false); setNeedsPermission(false); setStatus(latest ? `Version ${latest.version} available` : 'You have the latest version.'); }
     catch { setStatus('Could not check for updates. Try again.'); }
-    finally { setChecking(false); }
+    finally { setChecking(false); busy.current = false; }
+  };
+  const download = async () => {
+    if (!update || busy.current) return;
+    busy.current = true; setDownloading(true); setPercent(0);
+    try {
+      const result = await downloadUpdate(update, progress => { setPercent(progress.percent); setStatus(progress.message); });
+      setInstallReady(true); setNeedsPermission(result === 'permission-required');
+      setStatus(result === 'permission-required' ? 'Allow BlackBook to install updates, then tap Install update.' : 'Android installer opened. If you cancelled, tap Install update to try again.');
+    } catch (error) { setStatus(error instanceof Error ? error.message : 'Download failed. Tap to retry.'); }
+    finally { setDownloading(false); busy.current = false; }
   };
   return (
     <Screen edges={['top', 'bottom']}>
@@ -40,8 +55,9 @@ export default function AboutScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.brand}><Text accessibilityLabel="BlackBook" style={styles.wordmark}>BlackBook</Text><Text style={styles.version}>Version {APP_VERSION}</Text></View>
         <SettingsSection title="App updates">
-          <SettingRow icon="download" label={checking ? 'Checking…' : 'Check for updates'} onPress={check} />
-          {update && Platform.OS === 'android' ? <SettingRow icon="download" label={`Download BlackBook ${update.version}`} onPress={() => { void downloadUpdate(update).catch(() => Alert.alert('Download unavailable', 'Please try again.')); }} /> : null}
+          <SettingRow icon="download" label={checking ? 'Checking…' : 'Check for updates'} onPress={checking || downloading ? undefined : check} />
+          {update && Platform.OS === 'android' ? <SettingRow icon="download" label={downloading ? 'Downloading update…' : installReady ? 'Install update' : `Download BlackBook ${update.version}`} value={downloading ? `${percent}%` : undefined} onPress={checking || downloading ? undefined : () => { void download(); }} /> : null}
+          {needsPermission ? <SettingRow icon="settings" label="Allow app updates" onPress={() => { void openUpdateInstallSettings().catch(() => setStatus('Could not open installation settings. Please try again.')); }} /> : null}
         </SettingsSection>
         {status ? <Text style={styles.disclosure}>{status}</Text> : null}
         {update && Platform.OS !== 'android' ? <Text style={styles.disclosure}>APK downloads are available on Android.</Text> : null}

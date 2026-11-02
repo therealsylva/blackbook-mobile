@@ -1,0 +1,8 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+group = 'com.modnight.blackbook.updater'
+version = '1.0.0'
+android { namespace 'com.modnight.blackbook.updater' }
+dependencies { implementation 'androidx.core:core-ktx:1.17.0' }

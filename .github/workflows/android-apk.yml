@@ -11,6 +11,7 @@ on:
       - package-lock.json
       - app.json
       - src/**
+      - modules/**
       - assets/**
       - scripts/**
       - MOBILE_REBUILD_TODO.md
@@ -49,7 +50,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Validate native exchange
-        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees && npm run test:commands && npm run test:avatar && node --experimental-strip-types --test scripts/quote-estimate.test.mjs scripts/isolated-liquidation.test.mjs
+        run: npm run validate && npm run check:demo && npm run test:catalog && npm run test:fees && npm run test:commands && npm run test:avatar && npm run test:ui-data && node --experimental-strip-types --test scripts/quote-estimate.test.mjs scripts/isolated-liquidation.test.mjs
       - name: Check Expo dependency alignment
         run: npx expo install --check
       - name: Type-check

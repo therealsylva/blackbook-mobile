@@ -14,16 +14,16 @@ import { useTheme } from '@/theme/theme-context';
 import { createThemedStyles } from '@/theme/use-themed-styles';
 import type { OpenOrder, Position, TradeRecord } from '@/types/exchange';
 
-type PortfolioTab = 'Positions' | 'Orders' | 'Journal';
+type PortfolioTab = 'Positions' | 'Orders' | 'P&L' | 'Journal';
 
 export default function PortfolioScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { cashBalance, usedMargin, totalEquity, unrealizedPnl, positions, unavailablePositions, orders, history, settings } = useExchange();
+  const { cashBalance, usedMargin, totalEquity, unrealizedPnl, realizedPnl, positions, unavailablePositions, orders, history, settings } = useExchange();
   const [tab, setTab] = useState<PortfolioTab>('Positions');
   const {session}=useAuth();
   if(!session)return <AccountPrompt title="Your portfolio" description="Sign in to see your positions, orders and trading history."/>;
-  const counts = { Positions: positions.length + unavailablePositions.length, Orders: orders.length, Journal: history.length };
+  const counts = { Positions: positions.length + unavailablePositions.length, Orders: orders.length, 'P&L': history.length, Journal: history.length };
 
   return (
     <Screen>
@@ -34,6 +34,7 @@ export default function PortfolioScreen() {
           <Text style={styles.eyebrow}>Total equity</Text>
           <Text style={styles.equityValue}>{formatMoney(totalEquity, settings.currency)}</Text>
           <Text style={[styles.today, { color: unrealizedPnl >= 0 ? colors.positive : colors.negative }]}>{unrealizedPnl >= 0 ? '+' : ''}{formatMoney(unrealizedPnl, settings.currency)} unrealized</Text>
+          <Text style={[styles.today, { color: realizedPnl >= 0 ? colors.positive : colors.negative }]}>{realizedPnl >= 0 ? '+' : ''}{formatMoney(realizedPnl, settings.currency)} realized · after fees</Text>
           <View style={styles.balanceMetrics}>
             <BalanceMetric label="Available" value={formatMoney(cashBalance, settings.currency)} />
             <BalanceMetric label="In use" value={formatMoney(usedMargin, settings.currency)} />
@@ -41,10 +42,10 @@ export default function PortfolioScreen() {
         </View>
 
         <View style={styles.tabs}>
-          {(['Positions', 'Orders', 'Journal'] as const).map((item) => (
+          {(['Positions', 'Orders', 'P&L', 'Journal'] as const).map((item) => (
             <Pressable key={item} onPress={() => setTab(item)} style={[styles.tab, tab === item && styles.tabActive]}>
               <Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item}</Text>
-              <View style={[styles.tabBadge, tab === item && styles.tabBadgeActive]}><Text style={[styles.tabCount, tab === item && styles.tabCountActive]}>{counts[item]}</Text></View>
+              {item !== 'P&L' ? <View style={[styles.tabBadge, tab === item && styles.tabBadgeActive]}><Text style={[styles.tabCount, tab === item && styles.tabCountActive]}>{counts[item]}</Text></View> : null}
             </Pressable>
           ))}
         </View>
@@ -53,6 +54,7 @@ export default function PortfolioScreen() {
           {tab === 'Positions' ? <PositionsList /> : null}
           {tab === 'Orders' ? <OrdersList /> : null}
           {tab === 'Journal' ? <JournalList /> : null}
+          {tab === 'P&L' ? <JournalList pnlHistory /> : null}
         </View>
       </ScrollView>
     </Screen>
@@ -144,11 +146,11 @@ function OrdersList() {
   })}</>;
 }
 
-function JournalList() {
+function JournalList({ pnlHistory = false }: { pnlHistory?: boolean }) {
   const { colors } = useTheme();
   const styles = useStyles();
   const { history, marketFor, settings, ready, error } = useExchange();
-  if (!history.length) return <Empty title={ready?"No journal entries":error?"Journal temporarily unavailable":"Loading journal…"} />;
+  if (!history.length) return <Empty title={ready?(pnlHistory?"No P&L history yet":"No journal entries"):error?"Journal temporarily unavailable":"Loading journal…"} />;
   return <>{history.map((record: TradeRecord, index) => {
     const market = marketFor(record.symbol); if (!market) return null;
     const prior = history[index - 1];
@@ -163,11 +165,12 @@ function JournalList() {
           </View>
           <View style={styles.journalCopy}>
             <View style={styles.journalHeadline}>
-              <Text numberOfLines={1} style={styles.journalTitle}>{journalTitle(record, market.name)}</Text>
+              <Text numberOfLines={1} style={styles.journalTitle}>{pnlHistory ? market.name : journalTitle(record, market.name)}</Text>
               <Text style={styles.journalTicker}>{market.symbol}</Text>
             </View>
-            <Text style={styles.journalDetail}>{record.side === 'long' ? 'Long' : 'Short'} · {formatLeverage(record.leverage)} · {formatMoney(record.size, settings.currency)}</Text>
+            <Text style={styles.journalDetail}>{record.side === 'long' ? 'Buy' : 'Sell'} · {formatLeverage(record.leverage)} · {formatMoney(record.size, settings.currency)}</Text>
             <Text style={styles.journalDetail}>{formatPrice(record.entryPrice)}{record.exitPrice ? ` → ${formatPrice(record.exitPrice)}` : ''} · fee {formatMoney(record.fee, settings.currency)}</Text>
+            {pnlHistory ? <Text style={styles.journalDetail}>Net realized P&L · after trading fees</Text> : null}
           </View>
           {record.pnl !== undefined ? <Text style={[styles.journalPnl, { color: record.pnl >= 0 ? colors.positive : colors.negative }]}>{record.pnl >= 0 ? '+' : ''}{formatMoney(record.pnl, settings.currency)}</Text> : null}
         </View>
@@ -219,7 +222,7 @@ const useStyles = createThemedStyles((colors) => ({
   tabs: { backgroundColor: colors.control, borderRadius: radii.pill, flexDirection: 'row', gap: 3, marginHorizontal: spacing.page, marginTop: spacing.lg, padding: 3 },
   tab: { alignItems: 'center', borderRadius: radii.pill, flex: 1, flexDirection: 'row', gap: 6, justifyContent: 'center', minHeight: 38 },
   tabActive: { backgroundColor: colors.surfaceRaised },
-  tabText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 12.5 },
+  tabText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 11.5 },
   tabTextActive: { color: colors.text },
   tabBadge: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderRadius: radii.pill, height: 18, justifyContent: 'center', minWidth: 18, paddingHorizontal: 5 },
   tabBadgeActive: { backgroundColor: colors.text },

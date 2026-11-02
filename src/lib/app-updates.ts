@@ -1,23 +1,40 @@
 import Constants from 'expo-constants';
-import * as Linking from 'expo-linking';
-export const APP_VERSION = Constants.expoConfig?.version ?? '0.2.1';
-export interface AppUpdate { version: string; url: string }
-const DOWNLOAD_ROOT = 'https://tradeblackbook.org/downloads/';
-function compareVersions(a: string, b: string) {
-  const left = a.split('.').map(Number); const right = b.split('.').map(Number);
-  for (let index = 0; index < 3; index++) { const difference = (left[index] ?? 0) - (right[index] ?? 0); if (difference) return difference; }
-  return 0;
+import { requireOptionalNativeModule } from 'expo';
+import { Platform } from 'react-native';
+import { DOWNLOAD_ROOT, parseUpdate, type AppUpdate } from './update-policy';
+export type { AppUpdate } from './update-policy';
+
+export interface UpdateProgress { message: string; percent: number }
+type InstallResult = 'permission-required' | 'installer-opened';
+interface Updater {
+  addListener(event: 'progress', listener: (progress: UpdateProgress) => void): { remove(): void };
+  version: string;
+  versionCode: number;
+  downloadAndInstall(version: string, versionCode: number, url: string, checksum: string | null): Promise<InstallResult>;
+  openInstallSettings(): Promise<void>;
 }
+const updater = Platform.OS === 'android' ? requireOptionalNativeModule<Updater>('BlackBookUpdater') : null;
+export const APP_VERSION = updater?.version || Constants.expoConfig?.version || '0.2.18';
+
 export async function checkForUpdate(): Promise<AppUpdate | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const response = await fetch(`${DOWNLOAD_ROOT}update.json`, { signal: controller.signal, headers: { 'Cache-Control': 'no-cache' } });
     if (!response.ok) throw new Error('Update check unavailable. Please try again.');
-    const update = await response.json();
-    if (typeof update.version !== 'string' || !/^\d+\.\d+\.\d+$/.test(update.version) || update.url !== `${DOWNLOAD_ROOT}BlackBook-${update.version}.apk`) throw new Error('Invalid update information');
-    return compareVersions(update.version, APP_VERSION) > 0 ? { version: update.version, url: update.url } : null;
+    return parseUpdate(await response.json(), APP_VERSION, updater?.versionCode ?? 0);
   } finally { clearTimeout(timeout); }
 }
-export async function downloadUpdate(update: AppUpdate) { await Linking.openURL(update.url); }
 
+export async function downloadUpdate(update: AppUpdate, onProgress: (progress: UpdateProgress) => void): Promise<InstallResult> {
+  if (!updater) throw new Error('In-app installation is available in the Android APK.');
+  const subscription = updater.addListener('progress', onProgress);
+  try {
+    return await updater.downloadAndInstall(update.version, update.versionCode ?? 0, update.url, update.sha256 ?? null);
+  } finally { subscription.remove(); }
+}
+
+export async function openUpdateInstallSettings() {
+  if (!updater) throw new Error('App installation settings are available on Android.');
+  await updater.openInstallSettings();
+}
