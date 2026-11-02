@@ -32,14 +32,14 @@ test('index and market changes stay distinct and never silently fall back',()=>{
  assert.equal(selectedMarketChange(market,'Index update'),-2.4);
  assert.equal(selectedMarketChange(market,'24h market'),0.3);
  assert.equal(selectedMarketChange({statistics:{changePct24h:'0.3'}},'24h market'),0.3);
- assert.ok(Number.isNaN(selectedMarketChange({statistics:{changePct24h:null}},'24h market')));
- assert.ok(Number.isNaN(selectedMarketChange({indexChangePct:-2.4},'24h market')));
+ assert.equal(selectedMarketChange({statistics:{changePct24h:null}},'24h market'),0);
+ assert.equal(selectedMarketChange({indexChangePct:-2.4},'24h market'),0);
  assert.ok(Number.isNaN(selectedMarketChange({statistics:{changePct24h:0.3}},'Index update')));
 });
 
- test('an observed empty trading session is zero but missing statistics remain unavailable',()=>{
+ test('missing 24h comparisons default to zero without replacing index updates',()=>{
  assert.equal(selectedMarketChange({statistics:{changePct24h:null,volumeLots24h:'0'}},'24h market'),0);
- assert.ok(Number.isNaN(selectedMarketChange({statistics:{changePct24h:null,volumeLots24h:'10'}},'24h market')));
+ assert.equal(selectedMarketChange({statistics:{changePct24h:null,volumeLots24h:'10'}},'24h market'),0);
  assert.ok(Number.isNaN(selectedMarketChange(undefined,'24h market')));
  });
 
