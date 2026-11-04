@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {installConnectedFixture,signInFixture} from './connected-fixture.mjs';
 
+const app=JSON.parse(await readFile(new URL('../../app.json',import.meta.url),'utf8')).expo;
+const versionParts=app.version.split('.').map(Number);
+versionParts[2]+=1;
+const nextVersion=versionParts.join('.'),nextCode=app.android.versionCode+1;
 const browser=await chromium.launch({executablePath:process.env.BROWSER_BIN,args:['--no-sandbox']});
 await mkdir('ui-renders',{recursive:true});
 try {
@@ -37,10 +41,10 @@ try {
       await page.goto('http://127.0.0.1:4173/pair/int-acm',{waitUntil:'networkidle'});
       await page.screenshot({path:`ui-renders/milan-${theme.toLowerCase()}-${width}.png`,fullPage:true});
     }
-    await context.route('https://tradeblackbook.org/downloads/update.json',route=>route.fulfill({json:{version:'0.2.19',versionCode:21,url:'https://tradeblackbook.org/downloads/BlackBook-0.2.19.apk'}}));
+    await context.route('https://tradeblackbook.org/downloads/update.json',route=>route.fulfill({json:{version:nextVersion,versionCode:nextCode,url:`https://tradeblackbook.org/downloads/BlackBook-${nextVersion}.apk`}}));
     await page.goto('http://127.0.0.1:4173/settings/about',{waitUntil:'networkidle'});
     await page.getByText('Check for updates',{exact:true}).click();
-    await page.getByText('Version 0.2.19 available',{exact:true}).waitFor();
+    await page.getByText(`Version ${nextVersion} available`,{exact:true}).waitFor();
     await page.screenshot({path:`ui-renders/update-check-${width}.png`,fullPage:true});
     await context.close();console.log(`UI changes ${width}: net P&L, pairs, themed Juventus/Milan and update checking passed`);
   }
