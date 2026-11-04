@@ -41,12 +41,12 @@ export function AuthProvider({children}:PropsWithChildren){
  const recover=async(email:string)=>{const {error}=await client().auth.resetPasswordForEmail(email,{redirectTo:redirect});if(error)throw error;};
  const sendCode=async(email:string,purpose:EmailCodePurpose)=>{
   const auth=client().auth;
-  const result=purpose==='signup'?await auth.resend({type:'signup',email}):purpose==='recovery'?await auth.resetPasswordForEmail(email):await auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+  const result=purpose==='signup'?await auth.resend({type:'signup',email,options:{emailRedirectTo:redirect}}):purpose==='recovery'?await auth.resetPasswordForEmail(email,{redirectTo:redirect}):await auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:redirect}});
   if(result.error)throw result.error;
  };
  const verifyCode=async(email:string,token:string,purpose:EmailCodePurpose)=>{
   if(!/^\d{8}$/.test(token))throw new Error('Enter the 8-digit code from your email.');
-  const {data,error}=await client().auth.verifyOtp({email,token,type:purpose});
+  const {data,error}=await client().auth.verifyOtp({email,token,type:purpose==='signup'?'email':purpose});
   if(error)throw error;
   if(!data.session)throw new Error('Unable to sign in. Request a new code and try again.');
   if(purpose==='recovery'){setRecovery(true);setView('signin');}else setView(null);

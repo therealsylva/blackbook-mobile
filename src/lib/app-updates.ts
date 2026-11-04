@@ -14,7 +14,7 @@ interface Updater {
   openInstallSettings(): Promise<void>;
 }
 const updater = Platform.OS === 'android' ? requireOptionalNativeModule<Updater>('BlackBookUpdater') : null;
-export const APP_VERSION = updater?.version || Constants.expoConfig?.version || '0.2.18';
+export const APP_VERSION = updater?.version || Constants.expoConfig?.version || '0.2.19';
 
 export async function checkForUpdate(): Promise<AppUpdate | null> {
   const controller = new AbortController();

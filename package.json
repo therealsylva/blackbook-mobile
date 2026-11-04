@@ -17,7 +17,7 @@
     "check": "npm run validate && npm run typecheck",
     "generate:splash": "node ./scripts/build-splash-vector.mjs",
     "prebuild:android": "npm run generate:splash && expo prebuild --platform android --clean",
-    "build:apk": "npm run check:connection && npm run prebuild:android && cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true",
+    "build:apk": "npm run check:connection -- --production && npm run prebuild:android && cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true",
     "check:demo": "node scripts/check-demo-markets.cjs",
     "check:connection": "node scripts/check-connection.mjs",
     "test:catalog": "node --experimental-strip-types --test scripts/market-catalog.test.mjs",

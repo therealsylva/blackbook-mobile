@@ -9,9 +9,11 @@ import connection from './public-connection.json';
 // Public client settings, never service-role credentials. Keep statically named
 // Expo env reads so custom builds can override the checked-in public defaults.
 const apiUrl=(process.env.EXPO_PUBLIC_BLACKBOOK_API_URL?.trim()||connection.apiUrl).replace(/\/$/,'');
-const authUrl=process.env.EXPO_PUBLIC_SUPABASE_URL?.trim()||connection.authUrl;
-const key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()||connection.publishableKey;
-export const configured=Boolean(authUrl&&key);
+const overrideAuthUrl=process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
+const overrideKey=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+const authUrl=overrideAuthUrl||connection.authUrl;
+const key=overrideKey||connection.publishableKey;
+export const configured=Boolean(authUrl&&key&&Boolean(overrideAuthUrl)===Boolean(overrideKey));
 let writes=Promise.resolve();
 const storage={
  async getItem(name:string){
