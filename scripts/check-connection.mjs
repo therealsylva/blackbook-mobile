@@ -8,3 +8,11 @@ for(const value of [api,auth]){const url=new URL(value);assert.equal(url.protoco
 assert.ok(key.startsWith('sb_publishable_'),'Mobile must use a public publishable key, never service-role credentials');
 assert.equal(Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL?.trim()),Boolean(process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()),'Override the auth URL and publishable key together');
 console.log('Release connection verified: public HTTPS API, Supabase URL and publishable client key.');
+
+if (process.argv.includes('--production')) {
+ assert.equal(auth, defaults.authUrl, 'Production APK must use the checked-in Supabase project');
+ assert.equal(key, defaults.publishableKey, 'Production APK must use the matching checked-in publishable key');
+ const workflow=await readFile(new URL('../.github/workflows/android-apk.yml',import.meta.url),'utf8');
+ assert.doesNotMatch(workflow,/EXPO_PUBLIC_SUPABASE_(?:URL|PUBLISHABLE_KEY):/, 'Release workflow must inherit the checked-in public connection');
+ console.log('Production APK auth matches the checked-in project and key.');
+}

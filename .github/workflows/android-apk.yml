@@ -33,8 +33,6 @@ jobs:
     env:
       CI: "true"
       EXPO_PUBLIC_BLACKBOOK_API_URL: ${{ vars.EXPO_PUBLIC_BLACKBOOK_API_URL }}
-      EXPO_PUBLIC_SUPABASE_URL: https://ijlpqmfxiybpqvvxrnxf.supabase.co
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_HDO9-OdFtT91XSltK4v3Vw_cT77tYuW
     steps:
       - name: Check out source
         uses: actions/checkout@v5
@@ -55,8 +53,10 @@ jobs:
         run: npx expo install --check
       - name: Type-check
         run: npm run typecheck
+      - name: Check auth configuration safeguards
+        run: python3 -m unittest discover -s scripts -p '*_test.py'
       - name: Verify release connection
-        run: npm run check:connection
+        run: npm run check:connection -- --production
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
       - name: Build stripped ARM64 release APK
@@ -74,6 +74,8 @@ jobs:
             echo 'Unexpected non-ARM64 native libraries found.'
             exit 1
           fi
+      - name: Verify embedded auth project
+        run: python3 scripts/verify-apk-connection.py android/app/build/outputs/apk/release/app-release.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

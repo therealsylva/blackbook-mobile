@@ -49,7 +49,7 @@ for(const width of [360,390,430]){
  failSignup=true;await page.getByRole('button',{name:'Resend code',exact:true}).click();
  await page.getByText('Please wait before requesting another email.',{exact:true}).waitFor();
  failSignup=false;await page.getByRole('button',{name:'Resend code',exact:true}).click();assert.equal(authRequests.at(-1).path,'/auth/v1/resend');assert.equal(authRequests.at(-1).body.type,'signup');
- await page.getByLabel('8-digit code',{exact:true}).fill('12345678');await page.getByRole('button',{name:'Verify code',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});assert.equal(authRequests.findLast(r=>r.path.endsWith('/verify')).body.type,'signup');
+ await page.getByLabel('8-digit code',{exact:true}).fill('12345678');await page.getByRole('button',{name:'Verify code',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});assert.equal(authRequests.findLast(r=>r.path.endsWith('/verify')).body.type,'email');
  // Clear the fixture session, then verify recovery and email login independently.
  await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'networkidle'});
  await page.getByRole('button',{name:'Sign in',exact:true}).last().click();await page.getByLabel('Email',{exact:true}).fill('ui@blackbook.test');
