@@ -5,32 +5,26 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const source = await readFile(join(root, 'assets/blackbook-wordmark.svg'), 'utf8');
 const viewBox = source.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
-const primaryPath = source.match(/<path[^>]*id="path0"[^>]*d="([^"]+)"/);
+const paths = [...source.matchAll(/<path[^>]*d="([^"]+)"/g)].map((match) => match[1]);
 
-if (!viewBox || !primaryPath) {
-  throw new Error('The canonical BlackBook wordmark is missing its viewBox or primary path.');
+if (!viewBox || paths.length === 0) {
+  throw new Error('The canonical BlackBook wordmark is missing its viewBox or paths.');
 }
 
-const widthDp = 210;
-const canvasSize = 640;
-const translateX = 120;
-const translateY = 225.5;
-const pathData = primaryPath[1].replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+const [, viewportWidth, viewportHeight] = viewBox;
+const pathElements = paths
+  .map((pathData) => `    <path android:fillColor="#FFFFFF" android:pathData="${pathData.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}" />`)
+  .join('\n');
+
 const vector = `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-  android:width="${widthDp}dp"
-  android:height="${widthDp}dp"
-  android:viewportWidth="${canvasSize}"
-  android:viewportHeight="${canvasSize}">
-  <group
-    android:translateX="${translateX}"
-    android:translateY="${translateY}">
-    <path
-      android:fillColor="#FFFFFF"
-      android:pathData="${pathData}" />
-  </group>
+  android:width="210dp"
+  android:height="70dp"
+  android:viewportWidth="${viewportWidth}"
+  android:viewportHeight="${viewportHeight}">
+${pathElements}
 </vector>
 `;
 
 await writeFile(join(root, 'assets/splashscreen-logo.xml'), vector);
-console.log('Generated a padded Android splash vector from assets/blackbook-wordmark.svg.');
+console.log(`Generated Android splash vector from all ${paths.length} wordmark paths.`);
