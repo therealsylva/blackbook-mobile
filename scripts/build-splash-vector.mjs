@@ -16,13 +16,20 @@ const pathElements = paths
   .map((pathData) => `    <path android:fillColor="#FFFFFF" android:pathData="${pathData.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}" />`)
   .join('\n');
 
+const scale = 400 / Number(viewportWidth);
 const vector = `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
   android:width="210dp"
-  android:height="70dp"
-  android:viewportWidth="${viewportWidth}"
-  android:viewportHeight="${viewportHeight}">
+  android:height="210dp"
+  android:viewportWidth="640"
+  android:viewportHeight="640">
+  <group
+    android:translateX="120"
+    android:translateY="225.5"
+    android:scaleX="${scale}"
+    android:scaleY="${scale}">
 ${pathElements}
+  </group>
 </vector>
 `;
 
