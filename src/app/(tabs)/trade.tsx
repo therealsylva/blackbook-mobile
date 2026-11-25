@@ -189,7 +189,7 @@ export default function TradeScreen() {
             <View style={styles.summaryLine}>
               <Summary label="Exposure" value={formatMoney(exposure, settings.currency)} />
               <Summary label="Fee" value={formatMoney(estimate.fee, settings.currency)} />
-              <Summary label="Est. isolated liq." value={liquidation===Infinity?'Below zero':formatPrice(liquidation)} />
+              <Summary label="Est. isolated liq." value={estimate.bandCovered?'Band covered':liquidation===Infinity?'Below zero':formatPrice(liquidation)} />
             </View>
 
             {advanced ? (
