@@ -1,3 +1,4 @@
+import {activeDegenPlan, degenNames} from '@/lib/degen';
 import {ChoiceSheet} from '@/components/ui/choice-sheet';
 import {executionLabel,marketExecutionOptions,type MarketExecution} from '@/lib/market-execution';
 import {createContext,useContext} from 'react';
@@ -39,8 +40,9 @@ export default function TradeScreen() {
   const {session,requestAuth}=useAuth();
   const {
     activeSymbol, setActiveSymbol, marketFor, priceFor, changeFor, seriesFor, candlesFor, historyLoadingFor,
-    cashBalance, positions, orders, settings, updateSetting, placeOrder, isTradableFor, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error,
+    cashBalance, positions, orders, settings, updateSetting, placeOrder, isTradableFor, maxLeverageFor, liquidationEstimate, orderEstimate, busy, ready, accountMode, error, degen,
   } = useExchange();
+  const degenPlan = accountMode === 'demo' ? undefined : activeDegenPlan(degen);
   const market = marketFor(activeSymbol) ?? marketFor('RMD');
   const advanced = settings.interfaceMode === 'advanced';
   const [pairOpen, setPairOpen] = useState(false);
@@ -182,7 +184,7 @@ export default function TradeScreen() {
             <Field label="Margin" value={amount} onChangeText={setAmount} unit="$" />
             <Text style={styles.available}>Estimated fee {formatMoney(estimate.fee, settings.currency)} · balance needed {formatMoney(estimate.requiredBalance, settings.currency)}</Text>
 
-            <View style={{marginBottom:16}}><LeverageControl value={effectiveLeverage} max={maxLeverageFor(market.symbol)} onChange={setLeverage} onFocus={scrollFocused}/></View>
+            <View style={{marginBottom:16}}><LeverageControl plan={degenPlan && degenPlan.id !== 'free' ? degenNames[degenPlan.id] : undefined} value={effectiveLeverage} max={maxLeverageFor(market.symbol)} onChange={setLeverage} onFocus={scrollFocused}/></View>
 
             <View style={styles.summaryLine}>
               <Summary label="Exposure" value={formatMoney(exposure, settings.currency)} />
