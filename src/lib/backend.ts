@@ -54,7 +54,7 @@ async function request<T>(path:string,body:unknown,method:string,token?:string):
  try{
   const response=await fetch(`${apiUrl}${path}`,{method,signal:controller.signal,headers:{...(token?{authorization:`Bearer ${token}`} : {}),'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
   const result=await response.json();
-  if(!response.ok)throw Object.assign(new Error(typeof result.error==='string'?result.error.replace(/_/g,' '):'BlackBook is unavailable. Please try again.'),{status:response.status});
+  if(!response.ok)throw Object.assign(new Error(typeof result.error==='string'?result.error.replace(/_/g,' '):'BlackBook is unavailable. Please try again.'),{status:response.status, code:typeof result.error==='string'?result.error:undefined});
   return result as T;
  }catch(error){if(controller.signal.aborted)throw new Error('The connection timed out. Please try again.');throw error;}finally{clearTimeout(timer);}
 }

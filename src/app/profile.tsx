@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import {uploadAvatar} from '@/lib/avatar-upload';
 import {supabase} from '@/lib/backend';
+import {activeDegenPlan, degenNames} from '@/lib/degen';
 import {useSheetInputFocus} from '@/components/ui/bottom-sheet';
 import {AccountPrompt} from '@/components/account/account-prompt';
 import { useState } from 'react';
@@ -25,8 +26,9 @@ export default function ProfileScreen() {
   const styles = useStyles();
   const router = useRouter();
   const notify=useNotification();
-  const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode } = useExchange();
+  const { profile, updateProfile, settings, updateSetting, accountMode, setAccountMode, degen } = useExchange();
   const {signOut,session}=useAuth();
+  const degenPlan=activeDegenPlan(degen);
   const [tab, setTab] = useState<ProfileTab>('My info');
   const [editOpen, setEditOpen] = useState(false);
   const [choice, setChoice] = useState<Choice>(null);
@@ -81,6 +83,7 @@ export default function ProfileScreen() {
 
         <View style={{marginHorizontal:spacing.page,padding:spacing.md,backgroundColor:colors.section,borderRadius:16,gap:10}}>
           <ProfileRow icon="mode" label="Account mode" onPress={()=>setChoice('accountMode')} value={accountMode==='demo'?'Demo':'Live'}/>
+          <ProfileRow icon="orders" label="Degen" value={degenPlan ? degenNames[degenPlan.id] : undefined} onPress={()=>router.push('/degen')}/>
 
         </View>
         <ScrollView contentContainerStyle={styles.tabs} horizontal showsHorizontalScrollIndicator={false}>

@@ -25,6 +25,13 @@ export async function installConnectedFixture(context){
    if(!path.startsWith('/v1/markets')&&!path.startsWith('/v1/indices'))assert.equal(request.headers().authorization,'Bearer '+accessToken,'Private API request must carry the signed-in session');
    let json;
    if(path==='/v1/preferences'){if(body)Object.assign(preferences,body);json={preferences};}
+   else if(path==='/v1/account/degen'){
+    assert.equal(request.method(),'GET');
+    json={plan:'plus',paidUntil:new Date(Date.now()+86400000).toISOString(),autoRenew:true,plans:[
+     {id:'free',priceMinor:0,mobileLeverage:15,desktopLeverage:30,available:true},
+     {id:'plus',priceMinor:100,mobileLeverage:30,desktopLeverage:60,available:true},
+    ]};
+   }
    else if(path==='/v1/funding-options')json={items:[{blockchain:'SOLANA',symbol:'USDC',tokenId:'sol',withdrawalsEnabled:false},{blockchain:'POLYGON',symbol:'USDC',tokenId:'pol',withdrawalsEnabled:true}]};
    else if(path==='/v1/wallets'){assert.equal(body.blockchain,'POLYGON');json={id:'wallet',state:'active',blockchain:'POLYGON',address:'0x'+'1'.repeat(40)};}
    else if(path==='/v1/withdrawals')json={id:'withdraw',state:'pending_review'};

@@ -25,3 +25,44 @@ export function orderEntryPrice({side,type,targetPrice,priceDecimals,referenceTi
  const price=Number(ticks)/scale;
  return Number.isFinite(price)&&price>0?price:NaN;
 }
+
+export function estimateBameEntry({side, leverage, assessmentTicks, upperTicks, lowerTicks, capTicks, quote, priceDecimals, lots, reservedFee, feeRatePpm}: {
+  side: 'long' | 'short'; leverage: number; assessmentTicks: string; upperTicks: string; lowerTicks: string;
+  capTicks: string; quote: string; priceDecimals: string; lots: number; reservedFee: number; feeRatePpm: number;
+}) {
+  const inputs = [assessmentTicks, upperTicks, lowerTicks, capTicks, quote, priceDecimals];
+  if (!inputs.every(value => typeof value === 'string')
+    || ![assessmentTicks, upperTicks, lowerTicks, capTicks].every(value => /^[1-9][0-9]*$/.test(value))
+    || !/^[0-9]+(?:\.[0-9]{1,6})?$/.test(quote) || !/^[0-9]+$/.test(priceDecimals)
+    || Number(priceDecimals) > 12 || !Number.isSafeInteger(lots) || lots < 1
+    || !Number.isInteger(leverage) || leverage < 1 || leverage > 2000 || !Number.isFinite(reservedFee)
+    || !Number.isSafeInteger(feeRatePpm) || feeRatePpm < 0 || feeRatePpm > 1000000) return null;
+  const [whole, decimals = ''] = quote.split('.');
+  const units = BigInt(whole + decimals);
+  const scale = 10n ** BigInt(priceDecimals);
+  const quoteScale = scale * 10n ** BigInt(decimals.length);
+  const quantity = BigInt(lots);
+  const upper = BigInt(upperTicks);
+  const lower = BigInt(lowerTicks);
+  if (upper < lower || units <= 0n) return null;
+  const unbounded = BigInt(assessmentTicks);
+  const price = unbounded < lower ? lower : unbounded > upper ? upper : unbounded;
+  const reservePrice = BigInt(capTicks) > upper ? upper : BigInt(capTicks);
+  const ceil = (value: bigint, divisor: bigint) => (value + divisor - 1n) / divisor;
+  const initial = ceil(price * quantity * units, quoteScale * BigInt(leverage));
+  const loss = ceil((side === 'long' ? price - lower : upper - price) * quantity * units, quoteScale);
+  const covered = initial >= loss;
+  const reserve = ceil(reservePrice * quantity * units, quoteScale * BigInt(leverage));
+  const fractionalExitFee = units < 10n ** BigInt(decimals.length)
+      && (upper * units * BigInt(feeRatePpm)) % (quoteScale * 1000000n) !== 0n;
+    const roundingHold = lots > 1 ? (fractionalExitFee ? 3 : 1) : 0;
+  const equityRate = leverage <= 60 ? 100000
+    : leverage <= 100 ? 100000 + (leverage - 60) * 1250
+    : leverage <= 500 ? 150000 + (leverage - 100) * 500
+    : 350000 + (leverage - 500) * 100;
+  const lossBudget = initial - initial * BigInt(equityRate) / 1000000n;
+  const lossInIndexPoints = Number(lossBudget) * Number(quoteScale) / (Number(quantity * units) * Number(scale));
+  const trigger = Number(price) / Number(scale) + (side === 'long' ? -lossInIndexPoints : lossInIndexPoints);
+  return {covered, liquidation:covered ? NaN : trigger > 0 ? trigger : Infinity,
+    requiredBalance:(Number(reserve) + 2 * Math.round(reservedFee * 100) + roundingHold) / 100};
+}
