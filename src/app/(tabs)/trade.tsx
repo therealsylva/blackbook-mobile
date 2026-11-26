@@ -117,11 +117,21 @@ export default function TradeScreen() {
             <>
               <View style={styles.toolbar}>
                 <View style={styles.panelPill}>
-                  {(['Chart', 'Book'] as const).map((item) => (
-                    <Pressable key={item} onPress={() => setPanel(item)} style={[styles.panelChoice, panel === item && styles.panelChoiceActive]}>
-                      <Text style={[styles.panelText, panel === item && styles.panelTextActive]}>{item}</Text>
-                    </Pressable>
-                  ))}
+                  {(['Chart', 'Book'] as const).map((item) => {
+                    const disabled = item === 'Book';
+                    const selected = panel === item;
+                    return (
+                      <Pressable
+                        key={item}
+                        accessibilityRole="tab"
+                        accessibilityState={{ disabled, selected }}
+                        disabled={disabled}
+                        onPress={() => setPanel(item)}
+                        style={[styles.panelChoice, selected && styles.panelChoiceActive, disabled && styles.panelChoiceDisabled]}>
+                        <Text style={[styles.panelText, selected && styles.panelTextActive]}>{item}</Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
                 <RangeRail onChange={changeRange} range={range} ranges={ADVANCED_RANGES} />
               </View>
@@ -274,6 +284,7 @@ const useStyles = createThemedStyles((colors) => ({
   panelPill: { backgroundColor: colors.surface, borderRadius: radii.pill, flexDirection: 'row', padding: 2 },
   panelChoice: { alignItems: 'center', borderRadius: radii.pill, height: 28, justifyContent: 'center', paddingHorizontal: 12 },
   panelChoiceActive: { backgroundColor: colors.text },
+  panelChoiceDisabled: { opacity: 0.46 },
   panelText: { color: colors.textMuted, fontFamily: typography.semibold, fontSize: 10 },
   panelTextActive: { color: colors.bg },
   advancedMarket: { backgroundColor: colors.chart },
